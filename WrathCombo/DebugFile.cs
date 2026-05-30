@@ -141,7 +141,6 @@ public static class DebugFile
             AddContentInfo();
 
             AddSettingsInfo();
-            AddAutoRotationInfo();
 
             AddFeatures(job);
             AddConfigs(job);
@@ -487,52 +486,6 @@ public static class DebugFile
         AddLine("END SETTINGS INFO");
 
         AddLine();
-    }
-
-    private static void AddAutoRotationInfo()
-    {
-        var config = new
-            AutoRotationConfigIPCWrapper(Service.Configuration.RotationConfig);
-
-        AddLine("START AUTO ROTATION INFO");
-        AddLine($"Auto Rotation Enabled: {P.IPC.GetAutoRotationState()}");
-        PrintConfigProperties(config);
-        AddLine("END AUTO ROTATION INFO");
-
-        AddLine();
-
-        return;
-
-        void PrintConfigProperties(object obj, string prefix = "")
-        {
-            foreach (var property in obj.GetType()
-                         .GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                var value = property.GetValue(obj);
-                if (value != null && (value.GetType().IsClass && value.GetType() != typeof(string)))
-                {
-                    PrintConfigProperties(value, $"{prefix}{property.Name}.");
-                }
-                else
-                {
-                    try
-                    {
-                        var controlled =
-                            property.Name == "Enabled"
-                                ? P.UIHelper.AutoRotationStateControlled() is not
-                                    null
-                                : P.UIHelper.AutoRotationConfigControlled(
-                                    property.Name) is not null;
-                        var ctrlText = controlled ? " (IPC)" : "";
-                        AddLine($"{prefix}{property.Name}: {value} {ctrlText}");
-                    }
-                    catch
-                    {
-                        AddLine($"{prefix}{property.Name}: {value}");
-                    }
-                }
-            }
-        }
     }
 
     private static void AddFeatures(ClassJob? job = null)

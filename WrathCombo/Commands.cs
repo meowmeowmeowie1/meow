@@ -111,9 +111,6 @@ public partial class WrathCombo
             case "combo":
                 HandleComboCommands(argumentParts); break;
 
-            case "auto":
-                HandleAutoCommands(argumentParts); break;
-
             case "ignore":
                 HandleIgnoreCommand(); break;
 
@@ -123,13 +120,6 @@ public partial class WrathCombo
             case "settings":
             case "config": // unlisted
                 HandleOpenCommand(tab: OpenWindow.Settings, forceOpen: true); break;
-
-            case "autosettings":
-            case "autorotationsettings": // unlisted
-            case "autoconfig": // unlisted
-            case "autorotationconfig": // unlisted
-                HandleOpenCommand(tab: OpenWindow.AutoRotation, forceOpen: true);
-                break;
 
             case "pve":
                 HandleOpenCommand(tab: OpenWindow.PvE, forceOpen: true); break;
@@ -465,91 +455,6 @@ public partial class WrathCombo
             + (Service.Configuration.ActionChanging ? "ON" : "OFF"));
     }
 
-    /// <summary>
-    ///     Handles the auto command, which calls <see cref="ToggleAutoRotation" />.
-    /// </summary>
-    /// <value>
-    ///     <c>target</c> - modify targeting mode<br />
-    ///     <c>&lt;blank&gt;</c> - toggle<br />
-    ///     <c>on</c> - enable<br />
-    ///     <c>off</c> - disable<br />
-    ///     <c>toggle</c> - toggle
-    /// </value>
-    /// <param name="argument">
-    ///     The way to change the auto-rotation setting.<br />
-    ///     If no argument is provided, the setting is toggled.
-    /// </param>
-    private void HandleAutoCommands(string[] argument)
-    {
-        // ADD: Handle targeting mode changes
-        if (argument.Length >= 4 && argument[1] == "target")
-        {
-            var role = argument[2].ToLowerInvariant();
-            var mode = argument[3];
-
-            switch (role)
-            {
-                case "damage" when Enum.TryParse<DPSRotationMode>(mode, true, out var dpsMode):
-                    {
-                        Service.Configuration.RotationConfig.DPSRotationMode = dpsMode;
-                        Service.Configuration.Save();
-
-                        var dpsControlled = P.UIHelper.AutoRotationConfigControlled("DPSRotationMode") is not null;
-                        var ctrlText = dpsControlled ? " " + OptionControlledByIPC : "";
-
-                        DuoLog.Information($"Damage targeting mode set to: {dpsMode.ToString().Replace('_', ' ')}{ctrlText}");
-                        return;
-                    }
-                case "healer" when Enum.TryParse<HealerRotationMode>(mode, true, out var healerMode):
-                    {
-                        Service.Configuration.RotationConfig.HealerRotationMode = healerMode;
-                        Service.Configuration.Save();
-
-                        var healerControlled = P.UIHelper.AutoRotationConfigControlled("HealerRotationMode") is not null;
-                        var ctrlText = healerControlled ? " " + OptionControlledByIPC : "";
-
-                        DuoLog.Information($"Healer targeting mode set to: {healerMode.ToString().Replace('_', ' ')}{ctrlText}");
-                        return;
-                    }
-                default:
-                    DuoLog.Error("Usage: /qoltweaks auto target <damage|healer> <mode>");
-                    return;
-            }
-        }
-
-        // Handle Normal Toggling of Auto-Rotation
-        var toggledVal = !Service.Configuration.RotationConfig.Enabled;
-        var newVal = argument.Length > 1
-            ? argument[1] == "toggle"
-                ? toggledVal
-                : argument[1] == "on"
-            : toggledVal;
-
-        if (newVal != Service.Configuration.RotationConfig.Enabled)
-            ToggleAutoRotation(newVal);
-    }
-
-    /// <summary>
-    ///     Toggles the auto-rotation setting.
-    /// </summary>
-    /// <param name="value">
-    ///     Whether to enable or disable auto-rotation.
-    /// </param>
-    private static void ToggleAutoRotation(bool value)
-    {
-        Service.Configuration.RotationConfig.Enabled = value;
-        Service.Configuration.Save();
-
-        var stateControlled =
-            P.UIHelper.AutoRotationStateControlled() is not null;
-
-        if (!Service.Configuration.SuppressAutorotCommand)
-            DuoLog.Information(
-                "Auto-Rotation set to "
-                + (Service.Configuration.RotationConfig.Enabled ? "ON" : "OFF")
-                + (stateControlled ? " " + OptionControlledByIPC : "")
-            );
-    }
 
     /// <summary>
     ///     Handles the ignore command.

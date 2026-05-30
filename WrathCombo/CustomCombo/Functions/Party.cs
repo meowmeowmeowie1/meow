@@ -78,7 +78,7 @@ internal abstract partial class CustomComboFunctions
             }
         }
 
-        if ((Service.Configuration.AddOutOfPartyNPCsToRetargeting) || (AutoRotationController.cfg?.Enabled == true && AutoRotationController.cfg.HealerSettings.IncludeNPCs && Player.Job.IsHealer()))
+        if (Service.Configuration.AddOutOfPartyNPCsToRetargeting)
         {
             foreach (var npc in Svc.Objects.OfType<IBattleNpc>().Where(x => !existingIds.Contains(x.GameObjectId)))
             {

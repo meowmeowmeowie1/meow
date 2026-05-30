@@ -210,10 +210,9 @@ public class UIHelper(Leasing leasing)
         }
 
         // Bail if the config is not controlled, fast-ish
-        if ((AutoRotationConfigsControlled.TryGetValue(configName,
+        if (AutoRotationConfigsControlled.TryGetValue(configName,
                  out var configNotControlled) &&
-             string.IsNullOrEmpty(configNotControlled.controllers)) ||
-            _leasing.CheckAutoRotationConfigControlled(configOption) is null)
+             string.IsNullOrEmpty(configNotControlled.controllers))
         {
             if (string.IsNullOrEmpty(configNotControlled.controllers))
             {

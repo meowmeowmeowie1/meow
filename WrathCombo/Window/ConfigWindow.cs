@@ -231,12 +231,6 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
             OpenWindow = OpenWindow.PvP;
 
         ImGui.Spacing();
-        if (ImGui.Selectable(MainWindowUI.Button_AutoRotation, OpenWindow == OpenWindow.AutoRotation))
-            OpenWindow = OpenWindow.AutoRotation;
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-
         ImGui.Spacing();
         if (ImGui.Selectable(MainWindowUI.Button_Settings, OpenWindow == OpenWindow.Settings))
             OpenWindow = OpenWindow.Settings;
@@ -286,9 +280,6 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
                 break;
             case OpenWindow.Debug:
                 Debug.Draw();
-                break;
-            case OpenWindow.AutoRotation:
-                AutoRotationTab.Draw();
                 break;
         };
     }
@@ -355,7 +346,6 @@ public enum OpenWindow
     PvE = 1,
     PvP = 2,
     Settings = 3,
-    AutoRotation = 4,
     About = 5,
     Debug = 6,
 }

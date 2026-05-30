@@ -85,7 +85,7 @@ internal static class SimpleTarget
         /// Used exclusively for one-button healing features where retargeting may be optional.
         /// </summary>
         /// <seealso cref="AllyToHeal"/>
-        public static IGameObject? OneButtonHealLogic => AutoRotationController.AutorotHealTarget ?? AllyToHeal;
+        public static IGameObject? OneButtonHealLogic => AllyToHeal;
 
         /// <summary>
         ///     The Default Heal Stack, with customization options.

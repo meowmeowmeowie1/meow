@@ -154,9 +154,7 @@ public static class ConflictingPluginsChecks
             }
 
             // Check for a targeting conflict
-            TargetingSettingConflicted =
-                IPC.IsAutoTargetingEnabled() &&
-                AutoRotationController.cfg.DPSRotationMode != DPSRotationMode.Manual;
+            TargetingSettingConflicted = false;
 
             // Check for a queue conflict
             QueueSettingConflicted = IPC.IsUsingCustomQueuing();

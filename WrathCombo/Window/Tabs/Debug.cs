@@ -169,7 +169,6 @@ internal class Debug : ConfigWindow, IDisposable
                     _previousConfig = Service.Configuration;
                     Service.Configuration = config;
                     P.IPC = Provider.Init();
-                    AutoRotationController.cfg = null;
                     UpdateCaches(true, true, false);
                     _debugError = "";
                 }
@@ -1055,27 +1054,6 @@ internal class Debug : ConfigWindow, IDisposable
 
                 ImGuiEx.Spacing(new Vector2(20, 20));
 
-                if (ImGui.Button("Mimic AutoDuty"))
-                {
-                    // https://github.com/ffxivcode/AutoDuty/blob/master/AutoDuty/IPC/IPCSubscriber.cs#L460
-                    if (!P.IPC.IsCurrentJobAutoRotationReady())
-                        P.IPC.SetCurrentJobAutoRotationReady(_wrathLease!.Value);
-
-                    P.IPC.SetAutoRotationState(_wrathLease!.Value);
-                    P.IPC.SetAutoRotationConfigState(_wrathLease!.Value, AutoRotationConfigOption.InCombatOnly, false);
-                    P.IPC.SetAutoRotationConfigState(_wrathLease!.Value, AutoRotationConfigOption.AutoRez, true);
-                    P.IPC.SetAutoRotationConfigState(_wrathLease!.Value, AutoRotationConfigOption.AutoRezDPSJobs, true);
-                    P.IPC.SetAutoRotationConfigState(_wrathLease!.Value, AutoRotationConfigOption.IncludeNPCs, true);
-                    P.IPC.SetAutoRotationConfigState(_wrathLease!.Value, AutoRotationConfigOption.DPSRotationMode, DPSRotationMode.Lowest_Current);
-                    P.IPC.SetAutoRotationConfigState(_wrathLease!.Value, AutoRotationConfigOption.HealerRotationMode, HealerRotationMode.Lowest_Current);
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Mimic Questionable"))
-                {
-                    // https://git.carvel.li/liza/Questionable/src/commit/de90882ecbb609c2f79fecc1ec17b751dc8763f2/Questionable/Controller/CombatModules/WrathComboModule.cs#L68
-                    P.IPC.SetAutoRotationState(_wrathLease!.Value);
-                    P.IPC.SetCurrentJobAutoRotationReady(_wrathLease!.Value);
-                }
             }
 
             ImGuiEx.Spacing(new Vector2(0f, SpacingSmall));
@@ -1394,7 +1372,6 @@ internal class Debug : ConfigWindow, IDisposable
         _previousConfig = null;
 
         P.IPC = Provider.Init();
-        AutoRotationController.cfg = null;
         UpdateCaches(true, true, false);
     }
 

@@ -285,8 +285,6 @@ public static class ActionWatching
                 UsedOnDict[(actionId, targetObjectId)] = currentTick;
             }
 
-            if (actionSheet.Unknown4 != 1 && castTime > 0)
-                AutoRotationController.HealThrottle = Environment.TickCount64 + 1000;
         }
 
         if (castTime == 0)
@@ -294,13 +292,6 @@ public static class ActionWatching
 
         if (Service.Configuration.EnabledOutputLog)
             OutputLog();
-
-        if (AutoRotationController.AutorotRaidwiding && AutoRotationController.RaidwideActions.Any(x => x.Action == actionId))
-        {
-            AutoRotationController.BlacklistedRaidwides.Add(actionId);
-            if (actionId != SGE.Eukrasia)
-                AutoRotationController.AutorotRaidwides++;
-        }
 
         UpdatingActions = false;
     }
@@ -354,7 +345,6 @@ public static class ActionWatching
             SendActionHook!.Original(targetObjectId, actionType, actionId, sequence, a5, a6, a7, a8, a9);
 
             OverrideTarget = null;
-            AutoRotationController.AutorotHealTarget = null;
             Service.ActionReplacer.EnableActionReplacingIfRequired();
         }
         catch (Exception ex)
@@ -447,7 +437,7 @@ public static class ActionWatching
                         }
                 }
 
-                var disablingReplacingTemp = mode == ActionManager.UseActionMode.Queue || AutoRotationController.AutorotRaidwiding;
+                var disablingReplacingTemp = mode == ActionManager.UseActionMode.Queue;
                 if (disablingReplacingTemp) // This is so we can remove queue suppression
                     Service.ActionReplacer.DisableActionReplacingIfRequired(); // It gets re-enabled at the end of sending. 
 
@@ -494,7 +484,7 @@ public static class ActionWatching
                         targetId = originalTargetId;
 
                 // Support Retargeted ground actions
-                if ((areaTargeted && changed) || AutoRotationController.WouldLikeToGroundTarget)
+                if (areaTargeted && changed)
                 {
                     var location = Player.Position;
                     replacedWith = Service.ActionReplacer.LastActionInvokeFor.TryGetValue(actionId, out var replacedGT) ? replacedGT : replacedWith;

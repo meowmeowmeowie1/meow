@@ -167,7 +167,6 @@ internal abstract partial class CustomComboFunctions
             if (value)
             {
                 combatStart = DateTime.Now;
-                AutoRotationController.Paused = false;
             }
         }
     }

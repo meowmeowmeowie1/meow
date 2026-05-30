@@ -141,11 +141,6 @@ internal partial class DRK
                     return target;
             }
 
-        if (flags.HasFlag(Combo.AoE))
-            return AutoRotationController.DPSTargeting.BaseSelection
-                .OrderByDescending(x => GetTargetDistance(x))
-                .FirstOrDefault();
-
         return null;
     }
 
