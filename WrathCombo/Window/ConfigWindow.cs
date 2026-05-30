@@ -20,7 +20,6 @@ using WrathCombo.Services;
 using WrathCombo.Window.Tabs;
 using static WrathCombo.Core.PresetStorage;
 using static WrathCombo.CustomComboNS.Functions.Jobs;
-using PunishGui = PunishLib.ImGuiMethods;
 namespace WrathCombo.Window;
 
 /// <summary> Plugin configuration window. </summary>
@@ -276,12 +275,33 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
                 Settings.Draw();
                 break;
             case OpenWindow.About:
-                PunishGui.AboutTab.Draw(P.Name);
+                DrawAboutTab();
                 break;
             case OpenWindow.Debug:
                 Debug.Draw();
                 break;
         };
+    }
+
+    private static void DrawAboutTab()
+    {
+        var version = Svc.PluginInterface.Manifest.AssemblyVersion;
+        var winW = ImGui.GetContentRegionAvail().X;
+
+        var title = $"{P.Name} {version}";
+        ImGui.SetCursorPosX((winW - ImGui.CalcTextSize(title).X) * 0.5f);
+        ImGui.Text(title);
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        var desc = "Standalone WrathCombo fork: job rotation toggles + KBM action-press mirror.";
+        ImGui.TextWrapped(desc);
+
+        ImGui.Spacing();
+        ImGui.Text("Repo:");
+        ImGui.SameLine();
+        ImGui.TextUnformatted("https://github.com/meowmeowmeowie1/MyTweak");
     }
 
     private static void DrawCollapseButton()

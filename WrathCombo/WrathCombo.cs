@@ -13,7 +13,6 @@ using ECommons.ExcelServices;
 using ECommons.GameHelpers;
 using Lumina.Excel.Sheets;
 using Newtonsoft.Json.Linq;
-using PunishLib;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -154,7 +153,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
         P = this;
         pluginInterface.Create<Service>();
         ECommonsMain.Init(pluginInterface, this, Module.All);
-        PunishLibMain.Init(pluginInterface, "QoL Tweaks");
 
         ActionRequestIPCProvider.Initialize();
 
