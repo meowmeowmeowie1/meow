@@ -29,11 +29,12 @@ namespace WrathCombo;
 
 public partial class WrathCombo
 {
-    private const string Command = "/qoltweaks";
-    private const string OldCommand = "/ccombo";
-    private const string LegacyCommand = "/customcombo";
+    private const string Command = "/mytweak";
+    private const string OldCommand = "/qoltweaks";
+    private const string LegacyCommand = "/ccombo";
+    private const string LegacyCommand2 = "/customcombo";
 
-    private static readonly Dictionary<Job, Preset[]> BurstPresetMap = new()
+    internal static readonly Dictionary<Job, Preset[]> BurstPresetMap = new()
     {
         { Job.PLD, [Preset.PLD_ST_AdvancedMode_FoF, Preset.PLD_AoE_AdvancedMode_FoF, Preset.PLD_ST_AdvancedMode_Requiescat, Preset.PLD_AoE_AdvancedMode_Requiescat] }, // PLD
         { Job.WAR, [Preset.WAR_ST_InnerRelease, Preset.WAR_AoE_InnerRelease, Preset.WAR_ST_Infuriate, Preset.WAR_AoE_Infuriate] }, // WAR
@@ -65,12 +66,14 @@ public partial class WrathCombo
     private void RegisterCommands()
     {
         EzCmd.Add(Command, OnCommand,
-            "Open a window to edit QoL Tweaks settings.\n" +
-            $"{Command} auto → Toggle Auto-rotation on/off.\n" +
-            $"{Command} debug → Dumps a debug log onto your desktop for developers.\n" +
+            "Open the MyTweak settings window.\n" +
+            $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
+            $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
+            $"{Command} debug → Dumps a debug log onto your desktop.\n" +
             $"{OldCommand} → Short alias, still works!");
         EzCmd.Add(OldCommand, OnCommand);
         EzCmd.Add(LegacyCommand, OnCommand);
+        EzCmd.Add(LegacyCommand2, OnCommand);
     }
 
     /// <summary>
@@ -96,6 +99,15 @@ public partial class WrathCombo
         {
             case "burst":
                 HandleBurstControl(argumentParts); break;
+
+            case "disable":
+            case "enable":
+            case "off":
+            case "on":
+                HandleMasterToggle(argumentParts); break;
+
+            case "overlay":
+                HandleOverlayToggle(argumentParts); break;
 
             case "unsetall":
             case "set":
@@ -729,6 +741,45 @@ public partial class WrathCombo
     /// <param name="argument">
     ///     The subcommand: <c>hold</c>, <c>resume</c>, or blank to toggle based on current state.
     /// </param>
+    private void HandleOverlayToggle(string[] argument)
+    {
+        var sub = argument.Length > 1 ? argument[1] : "";
+        var hide = sub switch
+        {
+            "hide" or "off" => true,
+            "show" or "on" => false,
+            _ => !Service.Configuration.StatusOverlayHidden,
+        };
+
+        Service.Configuration.StatusOverlayHidden = hide;
+        Service.Configuration.Save();
+
+        DuoLog.Information($"Status overlay {(hide ? "HIDDEN" : "VISIBLE")}");
+    }
+
+    private void HandleMasterToggle(string[] argument)
+    {
+        var verb = argument[0];
+        var sub = argument.Length > 1 ? argument[1] : "";
+
+        var disable = verb switch
+        {
+            "disable" or "off" => true,
+            "enable" or "on" => false,
+            _ => !Service.Configuration.MasterDisabled,
+        };
+
+        if (sub is "toggle")
+            disable = !Service.Configuration.MasterDisabled;
+
+        Service.Configuration.MasterDisabled = disable;
+        Service.Configuration.Save();
+
+        Service.ActionReplacer.UpdateFilteredCombos();
+
+        DuoLog.Information($"MyTweak {(disable ? "DISABLED" : "ENABLED")}");
+    }
+
     private void HandleBurstControl(string[] argument)
     {
         if (!PresetStorage.AllPresets.Any(p => p.Value.JobInfo?.Job == Player.Job && p.Value.ComboType == ComboType.Advanced && PresetStorage.IsEnabled(p.Key)))

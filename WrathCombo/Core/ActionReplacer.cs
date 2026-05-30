@@ -107,6 +107,9 @@ internal sealed class ActionReplacer : IDisposable
     {
         try
         {
+            if (Service.Configuration.MasterDisabled)
+                return OriginalHook(actionID);
+
             if (FilteredCombos is null)
                 UpdateFilteredCombos();
 

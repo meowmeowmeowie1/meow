@@ -437,6 +437,15 @@ public partial class Configuration : IPluginConfiguration
 
     public Dictionary<uint, uint> IgnoredNPCs { get; set; } = new();
 
+    // MyTweak master kill-switch: when true, combo icon replacement AND the
+    // KBM action-press mirror both short-circuit. Slash: /mytweak disable.
+    public bool MasterDisabled { get; set; }
+
+    // Position + visibility of the floating status overlay.
+    public bool StatusOverlayHidden { get; set; }
+    public float StatusOverlayPosX { get; set; } = 20f;
+    public float StatusOverlayPosY { get; set; } = 120f;
+
     #endregion
 
     #region Job-specific

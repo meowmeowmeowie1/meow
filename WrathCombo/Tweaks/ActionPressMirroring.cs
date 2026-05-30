@@ -56,7 +56,8 @@ internal static unsafe class ActionPressMirroring
     private static void PulseActionBarSlotDetour(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
-        if (Service.Configuration.DuplicateActionPresses)
+        if (Service.Configuration.DuplicateActionPresses
+            && !Service.Configuration.MasterDisabled)
         {
             try
             {
@@ -65,7 +66,7 @@ internal static unsafe class ActionPressMirroring
             }
             catch (Exception ex)
             {
-                Svc.Log.Error(ex, "[QoL Tweaks] ActionPressMirroring failed");
+                Svc.Log.Error(ex, "[MyTweak] ActionPressMirroring failed");
             }
         }
 
