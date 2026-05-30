@@ -5,7 +5,7 @@
   "DalamudApiLevel": 15,
   "Punchline": "Job rotation toggles + KBM press mirror.",
   "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle.",
-  "RepoUrl": "https://github.com/meowmeowmeowie1/myrepo",
+  "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
   "Changelog": "v1.0.5.1: clickable status overlay (click MyTweak/Burst lines to toggle), branding cleanup. v1.0.5.0: initial release.",
   "Tags": [
     "qol",

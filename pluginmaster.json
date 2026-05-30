@@ -1,29 +1,28 @@
 [
   {
     "Author": "meowmeowmeowie1",
-    "Name": "QoL Tweaks",
-    "InternalName": "QoLTweaks",
-    "AssemblyVersion": "1.0.4.22",
-    "TestingAssemblyVersion": "1.0.4.22",
-    "Punchline": "Quality-of-life tweaks for a smoother experience.",
-    "Description": "A personal collection of quality-of-life tweaks: helpers resolve when you press a button, and your hotbar icons are never swapped.",
-    "Changelog": "Reverted the experimental cross-hotbar pulse hook (it caused input delay); back to the stable keyboard mirroring with the dance-step/rotation behavior.",
-    "RepoUrl": "https://github.com/meowmeowmeowie1/myrepo",
+    "Name": "MyTweak",
+    "InternalName": "MyTweak",
+    "AssemblyVersion": "1.0.5.1",
+    "TestingAssemblyVersion": "1.0.5.1",
+    "Punchline": "Job rotation toggles + KBM press mirror.",
+    "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle. /mytweak burst hold uses per-job preset codes.",
+    "Changelog": "v1.0.5.1: clickable overlay, branding cleanup, moved to meow repo.",
+    "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
     "Tags": [
       "qol",
+      "combos",
+      "rotation",
       "tweaks",
-      "performance",
-      "auto",
-      "automation",
       "utility",
       "pve",
       "pvp"
     ],
-    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/myrepo/releases/latest/download/QoLTweaks.zip",
-    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/myrepo/releases/latest/download/QoLTweaks.zip",
-    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/myrepo/releases/latest/download/QoLTweaks.zip",
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.1/MyTweak.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.1/MyTweak.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.1/MyTweak.zip",
     "DownloadCount": 0
   }
 ]

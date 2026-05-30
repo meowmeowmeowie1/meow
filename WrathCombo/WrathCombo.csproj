@@ -9,7 +9,7 @@
         <!-- This is the version that will be used when pushing to the repo.-->
         <Description>Standalone WrathCombo fork: job rotation toggles + keyboard/mouse press mirror.</Description>
         <Copyright>Copyleft attick 2021 thanks attick UwU</Copyright>
-        <PackageProjectUrl>https://github.com/meowmeowmeowie1/MyTweak</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/meowmeowmeowie1/meow</PackageProjectUrl>
         <PackageId>MyTweak</PackageId>
         <Product>MyTweak</Product>
     </PropertyGroup>
