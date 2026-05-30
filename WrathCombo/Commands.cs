@@ -33,6 +33,7 @@ public partial class WrathCombo
     private const string OldCommand = "/qoltweaks";
     private const string LegacyCommand = "/ccombo";
     private const string LegacyCommand2 = "/customcombo";
+    private const string TweakToggleCommand = "/tweak";
 
     // Per-job burst preset codes from user's existing job-titled macros.
     // /wrath toggle <code> targets these specific Preset enum values by id.
@@ -76,6 +77,8 @@ public partial class WrathCombo
         EzCmd.Add(OldCommand, OnCommand);
         EzCmd.Add(LegacyCommand, OnCommand);
         EzCmd.Add(LegacyCommand2, OnCommand);
+        EzCmd.Add(TweakToggleCommand, OnTweakToggleCommand,
+            "Toggle MyTweak's master kill-switch (silent).");
     }
 
     /// <summary>
@@ -776,10 +779,14 @@ public partial class WrathCombo
 
         Service.Configuration.MasterDisabled = disable;
         Service.Configuration.Save();
-
         Service.ActionReplacer.UpdateFilteredCombos();
+    }
 
-        DuoLog.Information($"MyTweak {(disable ? "DISABLED" : "ENABLED")}");
+    private void OnTweakToggleCommand(string command, string arguments)
+    {
+        Service.Configuration.MasterDisabled = !Service.Configuration.MasterDisabled;
+        Service.Configuration.Save();
+        Service.ActionReplacer.UpdateFilteredCombos();
     }
 
     private void HandleBurstControl(string[] argument)
@@ -813,7 +820,5 @@ public partial class WrathCombo
             else
                 PresetStorage.DisablePreset(preset, ConfigChangeSource.Command);
         }
-
-        DuoLog.Information($"{Player.Job} Burst {(enable ? "RESUMED" : "HELD")}");
     }
 }
