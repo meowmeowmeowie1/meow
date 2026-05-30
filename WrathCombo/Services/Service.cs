@@ -1,4 +1,3 @@
-using WrathCombo.AutoRotation;
 using WrathCombo.Core;
 using WrathCombo.Data;
 namespace WrathCombo.Services;
@@ -17,7 +16,4 @@ internal class Service
 
     /// <summary> Gets or sets the plugin icon replacer. </summary>
     internal static ActionReplacer ActionReplacer { get; set; } = null!;
-
-    /// <summary> Gets or sets the plugin's Auto-Rotation controller for event handling</summary>
-    internal static AutoRotationController AutoRotationController { get; set; } = null!;
 }

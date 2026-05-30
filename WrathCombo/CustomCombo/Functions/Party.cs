@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.DalamudServices;
@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using WrathCombo.AutoRotation;
 using WrathCombo.Combos.PvE;
 using WrathCombo.Extensions;
 using WrathCombo.Services;

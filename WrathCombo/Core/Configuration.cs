@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using Dalamud.Configuration;
 using Newtonsoft.Json;
-using WrathCombo.AutoRotation;
 using WrathCombo.Window;
 using WrathCombo.Attributes;
 using WrathCombo.Window.Functions;
@@ -435,8 +434,6 @@ public partial class Configuration : IPluginConfiguration
     #region AutoAction Settings
 
     public Dictionary<Preset, bool> AutoActions { get; set; } = [];
-
-    public AutoRotationConfig RotationConfig { get; set; } = new();
 
     public Dictionary<uint, uint> IgnoredNPCs { get; set; } = new();
 

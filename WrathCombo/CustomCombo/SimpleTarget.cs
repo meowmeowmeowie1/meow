@@ -8,7 +8,6 @@ using ECommons.GameHelpers;
 using ECommons.Logging;
 using System;
 using System.Linq;
-using WrathCombo.AutoRotation;
 using WrathCombo.Combos.PvE;
 using WrathCombo.Core;
 using WrathCombo.Data;

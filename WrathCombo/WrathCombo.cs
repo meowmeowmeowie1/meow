@@ -23,7 +23,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using WrathCombo.API.Enum;
-using WrathCombo.AutoRotation;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
@@ -56,7 +55,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
         ConnectCallback = new HappyEyeballsCallback().ConnectCallback,
     };
     private readonly HttpClient httpClient = new(httpHandler) { Timeout = TimeSpan.FromSeconds(5) };
-    private readonly IDtrBarEntry DtrBarEntry;
     public readonly IDtrBarEntry OpenerDtr;
     internal Provider IPC;
     internal Search IPCSearch = null!;
@@ -68,26 +66,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
     private readonly TextPayload starterMotd = new("[QoL Tweaks Message of the Day] ");
     private static Job? jobID;
-    private static bool EnteringInstancedContent
-    {
-        get
-        {
-            return field;
-        }
-        set
-        {
-            if (field != value)
-            {
-                if (Service.Configuration.RotationConfig.EnableInInstance && value)
-                    Service.Configuration.RotationConfig.Enabled = true;
-
-                if (Service.Configuration.RotationConfig.DisableAfterInstance && !value)
-                    Service.Configuration.RotationConfig.Enabled = false;
-
-                field = value;
-            }
-        }
-    }
+    private static bool EnteringInstancedContent { get; set; }
 
     public static readonly List<Job> DisabledJobsPVE =
     [
@@ -189,7 +168,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
         Service.ComboCache = new CustomComboCache();
         Service.ActionReplacer = new ActionReplacer();
-        Service.AutoRotationController = new AutoRotationController();
         ActionRetargeting = new ActionRetargeting();
         ActionWatching.Enable();
         ActionPressMirroring.Enable();
@@ -225,15 +203,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
         RegisterCommands();
 
-        DtrBarEntry ??= Svc.DtrBar.Get("QoL Tweaks");
-        DtrBarEntry.OnClick = (_) =>
-        {
-            ToggleAutoRotation(!Service.Configuration.RotationConfig.Enabled);
-        };
-        DtrBarEntry.Tooltip = new SeString(
-        new TextPayload("Click to toggle QoL Tweaks' Auto-Rotation.\n"),
-        new TextPayload("Disable this icon in /xlsettings -> Server Info Bar"));
-
         OpenerDtr ??= Svc.DtrBar.Get("QoL Tweaks Opener");
 
         Svc.ClientState.Login += PrintLoginMessage;
@@ -263,12 +232,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
     private void OnErrorToast(ref SeString message, ref bool isHandled)
     {
-        var txt = message.TextValue;
-        if (Svc.Data.GetExcelSheet<LogMessage>().TryGetFirst(x => x.Text == txt, out var row))
-        {
-            if (row.RowId == 2288) //Aetherial Interference
-                AutoRotationController.Paused = true;
-        }
     }
 
     private void RemoveNullAutos()
@@ -342,8 +305,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
             BlueMageService.PopulateBLUSpells();
             TargetHelper.Draw();
 
-            AutoRotationController.Run();
-
             if (Player.IsDead)
             {
                 ActionRetargeting.Retargets.Clear();
@@ -351,30 +312,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
             }
 
             #endregion
-
-            // Skip the IPC checking if hidden
-            if (!DtrBarEntry.UserHidden)
-            {
-                #region DTR Bar Updating
-
-                var autoOn = IPC.GetAutoRotationState();
-                var icon = new IconPayload(autoOn
-                    ? BitmapFontIcon.SwordUnsheathed
-                    : BitmapFontIcon.SwordSheathed);
-
-                var text = autoOn ? ": On" : ": Off";
-                if (!Service.Configuration.ShortDTRText && autoOn)
-                    text += $" ({P.IPCSearch.ActiveJobPresets} active)";
-                var ipcControlledText =
-                    P.UIHelper.AutoRotationStateControlled() is not null
-                        ? " (Locked)"
-                        : "";
-
-                var payloadText = new TextPayload(text + ipcControlledText);
-                DtrBarEntry.Text = new SeString(icon, payloadText);
-
-                #endregion
-            }
 
             if (Service.Configuration.ShowOpenerDtr)
             {
@@ -472,7 +409,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
             }
 
         ws.RemoveAllWindows();
-        Svc.DtrBar.Remove("QoL Tweaks");
         Svc.DtrBar.Remove("QoL Tweaks Opener");
         Configuration.ConfigChanged -= DebugFile.LoggingConfigChanges;
         Svc.Framework.Update -= OnFrameworkUpdate;
@@ -482,7 +418,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
         Service.ActionReplacer.Dispose();
         Service.ComboCache.Dispose();
-        Service.AutoRotationController.Dispose();
         ActionWatching.Dispose();
         ActionPressMirroring.Dispose();
         CustomComboFunctions.TimerDispose();

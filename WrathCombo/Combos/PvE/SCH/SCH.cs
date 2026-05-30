@@ -1,7 +1,6 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.GameFunctions;
 using System.Linq;
-using WrathCombo.AutoRotation;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.Data;

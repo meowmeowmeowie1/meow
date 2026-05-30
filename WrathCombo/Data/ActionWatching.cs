@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Hooking;
 using ECommons;
@@ -17,7 +17,6 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
-using WrathCombo.AutoRotation;
 using WrathCombo.Combos.PvE;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
@@ -157,7 +156,7 @@ public static class ActionWatching
                         $"Type: {effType} | " +
                         $"Value: {effValue} | " +
                         $"Params: [{eff.Param0}, {eff.Param1}, {eff.Param2}, {eff.Param3}, {eff.Param4}] | " +
-                        $"Action: {debugActionName} (ID: {actionId}) → " +
+                        $"Action: {debugActionName} (ID: {actionId}) ? " +
                         $"Target: {debugTargetName} | " +
                         $"Flags: [AtSource: {eff.AtSource}, FromTarget: {eff.FromTarget}]"
                     );

@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using Dalamud.Game.ClientState.JobGauge.Types;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -6,7 +6,6 @@ using ECommons.GameFunctions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WrathCombo.AutoRotation;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Data;

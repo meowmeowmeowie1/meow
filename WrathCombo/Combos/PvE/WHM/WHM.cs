@@ -1,7 +1,6 @@
 #region
 using System.Linq;
 using ECommons.GameFunctions;
-using WrathCombo.AutoRotation;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.Data;

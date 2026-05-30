@@ -17,7 +17,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using WrathCombo.AutoRotation;
 using WrathCombo.Combos.PvE;
 using WrathCombo.Combos.PvP;
 using WrathCombo.Core;

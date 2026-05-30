@@ -1,4 +1,4 @@
-﻿#region Directives
+#region Directives
 
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
@@ -24,7 +24,6 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using WrathCombo.API.Enum;
-using WrathCombo.AutoRotation;
 using WrathCombo.Combos.PvE;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
@@ -71,8 +70,8 @@ internal class Debug : ConfigWindow, IDisposable
     private const float SpacingSmall = 10f;
     private const float SpacingMedium = 20f;
     private const string UnknownName = "???";
-    private const string SymbolDuration = "";
-    private const string SymbolParameter = "";
+    private const string SymbolDuration = "?";
+    private const string SymbolParameter = "?";
 
     internal new static unsafe void Draw()
     {
@@ -239,9 +238,9 @@ internal class Debug : ConfigWindow, IDisposable
                 // Build First Column
                 string firstColumn = (string.IsNullOrEmpty(statusName), string.IsNullOrEmpty(sourceName)) switch
                 {
-                    (false, false) => $"{sourceName} → {statusName}:", // Both Exist
+                    (false, false) => $"{sourceName} ? {statusName}:", // Both Exist
                     (false, true) => $"{statusName}:",                // Only 'statusName'
-                    (true, false) => $"{sourceName} → {UnknownName}", // Only 'sourceName'
+                    (true, false) => $"{sourceName} ? {UnknownName}", // Only 'sourceName'
                     (true, true) => UnknownName                      // Neither
                 };
 
@@ -283,9 +282,9 @@ internal class Debug : ConfigWindow, IDisposable
                     // Build First Column
                     string firstColumn = (string.IsNullOrEmpty(statusName), string.IsNullOrEmpty(sourceName)) switch
                     {
-                        (false, false) => $"{sourceName} → {statusName}:", // Both Exist
+                        (false, false) => $"{sourceName} ? {statusName}:", // Both Exist
                         (false, true) => $"{statusName}:",                // Only 'statusName'
-                        (true, false) => $"{sourceName} → {UnknownName}", // Only 'sourceName'
+                        (true, false) => $"{sourceName} ? {UnknownName}", // Only 'sourceName'
                         (true, true) => UnknownName                      // Neither
                     };
 
@@ -1296,7 +1295,7 @@ internal class Debug : ConfigWindow, IDisposable
             if (ImGui.TreeNode("Heal Target Data"))
             {
                 CustomStyleText("Current:", SimpleTarget.Stack.AllyToHeal.Name);
-                ImGuiEx.InfoMarker("Cycles from Party UI Mouseover → Soft Target → Hard Target → Player.");
+                ImGuiEx.InfoMarker("Cycles from Party UI Mouseover ? Soft Target ? Hard Target ? Player.");
 
                 CustomStyleText("Shield:", $"{(SimpleTarget.Stack.AllyToHeal as ICharacter).ShieldPercentage}%");
                 CustomStyleText("Health:", $"{MathF.Round(GetTargetHPPercent(SimpleTarget.Stack.AllyToHeal), 2)}% / {MathF.Round(GetTargetHPPercent(SimpleTarget.Stack.AllyToHeal, true), 2)}% (+Shield)");

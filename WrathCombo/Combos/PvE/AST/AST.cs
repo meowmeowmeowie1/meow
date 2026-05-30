@@ -8,7 +8,6 @@ using WrathCombo.Extensions;
 using static WrathCombo.Combos.PvE.AST.Config;
 using EZ = ECommons.Throttlers.EzThrottler;
 using TS = System.TimeSpan;
-using WrathCombo.AutoRotation;
 namespace WrathCombo.Combos.PvE;
 
 internal partial class AST : Healer
