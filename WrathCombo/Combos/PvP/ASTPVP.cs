@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.Types;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
@@ -71,7 +71,7 @@ internal static class ASTPvP
                     break;
                 
                 case Preset.ASTPvP_Burst_Heal:
-                    DrawAdditionalBoolChoice(ASTPvP_BurstHealRetarget, "Retarget", "Retargets Aspected Benefic to the Heal Stack(In QoL Tweaks Settings)");
+                    DrawAdditionalBoolChoice(ASTPvP_BurstHealRetarget, "Retarget", "Retargets Aspected Benefic to the Heal Stack(In MyTweak Settings)");
                     DrawAdditionalBoolChoice(ASTPvP_BurstHeal_DoubleCast, "Double Cast", "Adds Doublecast to Aspected Benefic");
                     DrawSliderInt(1, 100, ASTPvP_Burst_HealThreshold, "HP% to use Aspected Benefic");
                     break;
@@ -79,7 +79,7 @@ internal static class ASTPvP
                 
                 case Preset.ASTPvP_Heal:
                     DrawAdditionalBoolChoice(ASTPvP_Heal_DoubleCast, "Double Cast", "Adds Doublecast to Aspected Benefic");
-                    DrawAdditionalBoolChoice(ASTPvP_Heal_Retarget, "Retarget", "Retargets Aspected Benefic to the Heal Stack(In QoL Tweaks Settings)");
+                    DrawAdditionalBoolChoice(ASTPvP_Heal_Retarget, "Retarget", "Retargets Aspected Benefic to the Heal Stack(In MyTweak Settings)");
                     break;
             }
         }

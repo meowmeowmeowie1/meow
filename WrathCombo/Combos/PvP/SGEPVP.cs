@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.Types;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
@@ -62,7 +62,7 @@ internal static class SGEPvP
                     break;
                 
                 case Preset.SGEPvP_BurstMode_KardiaReminder:
-                    DrawAdditionalBoolChoice(SGEPvP_BurstMode_KardiaReminder_Retarget, "Mobile Kardia Option", "Retarget Kardia according to your heal stack. \nThis will move Kardia around via weaves. Will use Heal stack.(In QoL Tweaks Settings)");
+                    DrawAdditionalBoolChoice(SGEPvP_BurstMode_KardiaReminder_Retarget, "Mobile Kardia Option", "Retarget Kardia according to your heal stack. \nThis will move Kardia around via weaves. Will use Heal stack.(In MyTweak Settings)");
                     if (SGEPvP_BurstMode_KardiaReminder_Retarget)
                     {
                         DrawSliderInt(0, 100, SGEPvP_KardiaThreshold, "Minimum HP% to move Kardia. Set to 100% to disable this check. ");

@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using Dalamud.Plugin;
 using ECommons.DalamudServices;
@@ -154,7 +154,7 @@ public class Conflict
     private const string SettingsConflictStart = "Conflicting Plugin";
     private const string SettingsConflictEnd = "Setting(s) Detected!";
 
-    private const string WrathConflictStart = "Conflicting QoL Tweaks";
+    private const string WrathConflictStart = "Conflicting MyTweak";
     private const string WrathConflictEnd = "Setting(s) Detected!";
 
     private const string GameConflictStart = "Conflicting Game";

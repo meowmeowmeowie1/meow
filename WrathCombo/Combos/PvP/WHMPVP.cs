@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.Types;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
@@ -57,13 +57,13 @@ internal static class WHMPvP
                     break;
                 
                 case Preset.WHMPvP_Heals:
-                    DrawHorizontalMultiChoice(WHMPvP_Heals_Options, "Retarget Cure 2","To the Heal Stack (In QoL Tweaks Settings)", 3, 0);
-                    DrawHorizontalMultiChoice(WHMPvP_Heals_Options, "Retarget Cure 3","To the Heal Stack (In QoL Tweaks Settings)", 3, 1);
-                    DrawHorizontalMultiChoice(WHMPvP_Heals_Options, "Retarget Aquaveil","To the Heal Stack (In QoL Tweaks Settings)", 3, 2);
+                    DrawHorizontalMultiChoice(WHMPvP_Heals_Options, "Retarget Cure 2","To the Heal Stack (In MyTweak Settings)", 3, 0);
+                    DrawHorizontalMultiChoice(WHMPvP_Heals_Options, "Retarget Cure 3","To the Heal Stack (In MyTweak Settings)", 3, 1);
+                    DrawHorizontalMultiChoice(WHMPvP_Heals_Options, "Retarget Aquaveil","To the Heal Stack (In MyTweak Settings)", 3, 2);
                     break;
                 
                 case Preset.WHMPvP_Burst_Heals:
-                    DrawAdditionalBoolChoice(WHMPvP_Burst_HealsRetarget, "Retarget", "Retargets  to the Heal Stack(In QoL Tweaks Settings)");
+                    DrawAdditionalBoolChoice(WHMPvP_Burst_HealsRetarget, "Retarget", "Retargets  to the Heal Stack(In MyTweak Settings)");
                     DrawSliderInt(1, 100, WHMPvP_Burst_HealsThreshold, "HP% to use Heals");
                     DrawHorizontalMultiChoice(WHMPvP_Burst_Heals_Options, "Cure 2","Adds Cure 2", 3, 0);
                     DrawHorizontalMultiChoice(WHMPvP_Burst_Heals_Options, "Cure 3","Adds Cure 3", 3, 1);

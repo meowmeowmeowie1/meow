@@ -1015,9 +1015,9 @@ internal class Debug : ConfigWindow, IDisposable
             _wrathLease = null;
         }
 
-        if (ImGui.CollapsingHeader("QoL Tweaks IPC"))
+        if (ImGui.CollapsingHeader("MyTweak IPC"))
         {
-            CustomStyleText("QoL Tweaks Leased:", _wrathLease is not null);
+            CustomStyleText("MyTweak Leased:", _wrathLease is not null);
             if (_wrathLease is null)
             {
                 ImGui.Indent();

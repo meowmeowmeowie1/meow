@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using Dalamud.Networking.Http;
 using ECommons;
@@ -452,7 +452,7 @@ public partial class Helper(ref Leasing leasing)
 /// </summary>
 internal static class Logging
 {
-    private const string Prefix = "[QoL Tweaks IPC] ";
+    private const string Prefix = "[MyTweak IPC] ";
 
     private static StackTrace StackTrace => new();
 

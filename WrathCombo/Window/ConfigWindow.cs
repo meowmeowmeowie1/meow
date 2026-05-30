@@ -201,7 +201,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
                 Svc.PluginInterface.AssemblyLocation.Directory?.FullName!,
                 "images\\qoltweaks.png");
             if (EzThrottler.Throttle("logTypeOfWrathIconUsed", 45000))
-                PluginLog.Verbose("Using Local QoL Tweaks Icon");
+                PluginLog.Verbose("Using Local MyTweak Icon");
         }
         catch (Exception)
         {
@@ -209,7 +209,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
             imagePath = Svc.PluginInterface.Manifest.IconUrl ?? "";
             if (EzThrottler.Throttle("logTypeOfWrathIconUsed", 45000))
                 PluginLog.Verbose(
-                    "Using Remote QoL Tweaks Icon\n             " +
+                    "Using Remote MyTweak Icon\n             " +
                     Svc.PluginInterface.AssemblyLocation.Directory?.FullName! +
                     "images\\qoltweaks.png");
         }
@@ -295,7 +295,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
         ImGui.Spacing();
         ImGui.Spacing();
 
-        var desc = "Standalone WrathCombo fork: job rotation toggles + KBM action-press mirror.";
+        var desc = "Job rotation toggles + keyboard/mouse action-press mirror.";
         ImGui.TextWrapped(desc);
 
         ImGui.Spacing();

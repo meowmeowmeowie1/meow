@@ -42,7 +42,7 @@ internal static unsafe class ActionPressMirroring
         }
         catch (Exception ex)
         {
-            Svc.Log.Error(ex, "[QoL Tweaks] ActionPressMirroring: failed to hook (signature?)");
+            Svc.Log.Error(ex, "[MyTweak] ActionPressMirroring: failed to hook (signature?)");
         }
     }
 

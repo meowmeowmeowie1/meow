@@ -539,7 +539,7 @@ public partial class WrathCombo
                 if (argument[1] == "path")
                 {
                     DuoLog.Information(
-                        $"QoLTweaksDebug.txt should have been created at:\n" +
+                        $"MyTweakDebug.txt should have been created at:\n" +
                         $"{DebugFile.GetDebugFilePath()}");
                     return;
                 }

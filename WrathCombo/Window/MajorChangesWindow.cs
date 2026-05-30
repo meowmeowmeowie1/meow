@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
@@ -26,7 +26,7 @@ internal class MajorChangesWindow : Dalamud.Interface.Windowing.Window
     /// <summary>
     ///     Create a major changes window, with some settings about it.
     /// </summary>
-    public MajorChangesWindow() : base("QoL Tweaks | New Changes")
+    public MajorChangesWindow() : base("MyTweak | New Changes")
     {
         PluginLog.Debug(
             "MajorChangesWindow: " +
@@ -51,7 +51,7 @@ internal class MajorChangesWindow : Dalamud.Interface.Windowing.Window
     /// </summary>
     public override void Draw()
     {
-        PadOutMinimumWidthFor("QoL Tweaks | New Changes");
+        PadOutMinimumWidthFor("MyTweak | New Changes");
 
         #region Tanks
 

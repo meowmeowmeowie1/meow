@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.Types;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
@@ -52,7 +52,7 @@ internal static class SCHPvP
                     break;
 
                 case Preset.SCHPvP_Adlo:
-                    DrawAdditionalBoolChoice(SCHPvP_Adlo_Retarget, "Retarget Adlo","Will use Heal stack.(In QoL Tweaks Settings)");
+                    DrawAdditionalBoolChoice(SCHPvP_Adlo_Retarget, "Retarget Adlo","Will use Heal stack.(In MyTweak Settings)");
                     DrawSliderInt(1, 100, SCHPvP_AdloThreshold, "HP% to use Adlo");
                     break;
                 

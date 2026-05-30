@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.Gui.Dtr;
+using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -64,7 +64,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
     internal static bool IsAprilFools => DateTime.UtcNow.Day == 1 && DateTime.UtcNow.Month == 4;
 
-    private readonly TextPayload starterMotd = new("[QoL Tweaks Message of the Day] ");
+    private readonly TextPayload starterMotd = new("[MyTweak Message of the Day] ");
     private static Job? jobID;
     private static bool EnteringInstancedContent { get; set; }
 
@@ -193,7 +193,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
         RegisterCommands();
 
-        OpenerDtr ??= Svc.DtrBar.Get("QoL Tweaks Opener");
+        OpenerDtr ??= Svc.DtrBar.Get("MyTweak Opener");
 
         Svc.ClientState.Login += PrintLoginMessage;
         if (Svc.ClientState.IsLoggedIn) ResetFeatures();
@@ -265,7 +265,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
     }
 
     public const string OptionControlledByIPC =
-        "(being overwritten by another plugin, check the setting in /qoltweaks)";
+        "(being overwritten by another plugin, check the setting in /mytweak)";
 
     private void OnFrameworkUpdate(IFramework framework)
     {
@@ -399,7 +399,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
             }
 
         ws.RemoveAllWindows();
-        Svc.DtrBar.Remove("QoL Tweaks Opener");
+        Svc.DtrBar.Remove("MyTweak Opener");
         Configuration.ConfigChanged -= DebugFile.LoggingConfigChanges;
         Svc.Framework.Update -= OnFrameworkUpdate;
         Svc.ClientState.TerritoryChanged -= ClientState_TerritoryChanged;
