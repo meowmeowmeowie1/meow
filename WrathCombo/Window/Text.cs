@@ -12,7 +12,6 @@ using WrathCombo.Core;
 using WrathCombo.Resources.Localization.JobConfigs;
 using WrathCombo.Resources.Localization.Misc;
 using WrathCombo.Resources.Localization.Presets;
-using WrathCombo.Resources.Localization.UI.AutoRotation;
 using WrathCombo.Resources.Localization.UI.Features;
 using WrathCombo.Resources.Localization.UI.MainWindow;
 using WrathCombo.Resources.Localization.UI.Misc;
@@ -61,7 +60,6 @@ namespace WrathCombo.Window
 
             // Update cultures in resource managers
             // UI
-            AutoRotationUI.Culture = _gameCulture;
             FeaturesUI.Culture = _gameCulture;
             MainWindowUI.Culture = _gameCulture;
             MiscUI.Culture = _gameCulture;

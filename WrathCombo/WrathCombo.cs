@@ -173,17 +173,6 @@ public sealed partial class WrathCombo : IDalamudPlugin
         PingPluginIPC.Init();
         ConflictingPluginsChecks.Begin();
 
-        // Subscribe to language changes to update localized text if needed (Client != Selected UI)
-        Svc.PluginInterface.LanguageChanged += Text.OnLanguageChanged;
-
-        // Ensure startup culture matches Dalamud UI language
-        var dalamudCulture = Svc.PluginInterface.UiLanguage.ToCulture();
-
-        if (!Equals(CultureInfo.CurrentUICulture, dalamudCulture))
-        {
-            Text.OnLanguageChanged(Svc.PluginInterface.UiLanguage);
-        }
-
         ConfigWindow = new ConfigWindow();
         Settings.SanitiseSettings();
         _majorChangesWindow = new MajorChangesWindow();

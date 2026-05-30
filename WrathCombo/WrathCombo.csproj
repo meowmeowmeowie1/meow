@@ -226,11 +226,6 @@
         <AutoGen>True</AutoGen>
         <DependentUpon>CustomComboPresets.resx</DependentUpon>
       </Compile>
-      <Compile Update="Resources\Localization\UI\AutoRotation\AutoRotationUI.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>AutoRotationUI.resx</DependentUpon>
-      </Compile>
       <Compile Update="Resources\Localization\UI\Features\FeaturesUI.Designer.cs">
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
@@ -368,10 +363,6 @@
       <EmbeddedResource Update="Resources\Localization\Presets\CustomComboPresets.resx">
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>CustomComboPresets.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Resources\Localization\UI\AutoRotation\AutoRotationUI.resx">
-        <Generator>ResXFileCodeGenerator</Generator>
-        <LastGenOutput>AutoRotationUI.Designer.cs</LastGenOutput>
       </EmbeddedResource>
       <EmbeddedResource Update="Resources\Localization\UI\Features\FeaturesUI.resx">
         <Generator>ResXFileCodeGenerator</Generator>
