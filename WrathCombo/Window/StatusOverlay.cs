@@ -17,7 +17,8 @@ internal sealed class StatusOverlay : Dalamud.Interface.Windowing.Window
                | ImGuiWindowFlags.NoScrollbar
                | ImGuiWindowFlags.AlwaysAutoResize
                | ImGuiWindowFlags.NoFocusOnAppearing
-               | ImGuiWindowFlags.NoNav)
+               | ImGuiWindowFlags.NoNav
+               | ImGuiWindowFlags.NoBackground)
     {
         DisableWindowSounds = true;
         RespectCloseHotkey = false;
@@ -29,46 +30,49 @@ internal sealed class StatusOverlay : Dalamud.Interface.Windowing.Window
 
     public override void Draw()
     {
-        // Row 1: master toggle. Whole line is a clickable Selectable that
-        // toggles MasterDisabled when left-clicked.
+        // Two stacked symbols, no labels, no background. Click to toggle.
         var disabled = Service.Configuration.MasterDisabled;
-        var masterLabel = disabled ? "MyTweak: DISABLED" : "MyTweak: ON";
-        var masterColor = disabled ? ImGuiColors.DalamudRed : ImGuiColors.HealerGreen;
+        DrawSymbol(
+            disabled ? "X" : "O",
+            disabled ? ImGuiColors.DalamudRed : ImGuiColors.HealerGreen,
+            "##master",
+            () =>
+            {
+                Service.Configuration.MasterDisabled = !disabled;
+                Service.Configuration.Save();
+                Service.ActionReplacer.UpdateFilteredCombos();
+            });
 
-        ImGui.PushStyleColor(ImGuiCol.Text, masterColor);
-        if (ImGui.Selectable($"{masterLabel}##master", false,
-                ImGuiSelectableFlags.None, new Vector2(0, 0)))
-        {
-            Service.Configuration.MasterDisabled = !disabled;
-            Service.Configuration.Save();
-            Service.ActionReplacer.UpdateFilteredCombos();
-        }
-        ImGui.PopStyleColor();
-
-        // Row 2: burst hold. Click to flip every preset in the current job's
-        // burst map. Inactive (no map for job) → grey, no click handler.
-        var held = IsBurstHeld(out var jobLabel);
+        var held = IsBurstHeld(out _);
         if (held is null)
         {
-            ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
-            ImGui.TextUnformatted($"Burst ({jobLabel}): n/a");
-            ImGui.PopStyleColor();
+            DrawSymbol("-", ImGuiColors.DalamudGrey, "##burstNA", null);
         }
         else
         {
-            var burstColor = held.Value
-                ? ImGuiColors.DalamudYellow
-                : ImGuiColors.HealerGreen;
-            var burstLabel = $"Burst ({jobLabel}): {(held.Value ? "HELD" : "ARMED")}";
-
-            ImGui.PushStyleColor(ImGuiCol.Text, burstColor);
-            if (ImGui.Selectable($"{burstLabel}##burst", false,
-                    ImGuiSelectableFlags.None, new Vector2(0, 0)))
-            {
-                ToggleBurstForCurrentJob(held.Value);
-            }
-            ImGui.PopStyleColor();
+            DrawSymbol(
+                held.Value ? "X" : "O",
+                held.Value ? ImGuiColors.DalamudYellow : ImGuiColors.ParsedBlue,
+                "##burst",
+                () => ToggleBurstForCurrentJob(held.Value));
         }
+    }
+
+    private static void DrawSymbol(string glyph, Vector4 color, string id, System.Action? onClick)
+    {
+        ImGui.PushStyleColor(ImGuiCol.Text, color);
+        ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(1f, 1f, 1f, 0.10f));
+        ImGui.PushStyleColor(ImGuiCol.HeaderActive, new Vector4(1f, 1f, 1f, 0.20f));
+        ImGui.PushStyleColor(ImGuiCol.Header, new Vector4(0, 0, 0, 0));
+
+        var size = ImGui.CalcTextSize(glyph);
+        if (ImGui.Selectable($"{glyph}{id}", false,
+                onClick is null ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None,
+                size))
+        {
+            onClick?.Invoke();
+        }
+        ImGui.PopStyleColor(4);
     }
 
     private static bool? IsBurstHeld(out string jobLabel)
