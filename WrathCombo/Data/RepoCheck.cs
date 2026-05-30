@@ -22,7 +22,7 @@ public static class RepoCheckFunctions
                 InstalledFromUrl = "!! Self-Built !!"
             };
         }
-        var manifest = Path.Join(f.DirectoryName, "QoLTweaks.json");
+        var manifest = Path.Join(f.DirectoryName, "MyTweak.json");
 
         // Load the manifest
         try

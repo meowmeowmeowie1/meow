@@ -5,18 +5,18 @@
     <PropertyGroup>
         <Authors>Team Wrath</Authors>
         <Company>-</Company>
-        <Version>1.0.4.26</Version>
+        <Version>1.0.5.0</Version>
         <!-- This is the version that will be used when pushing to the repo.-->
-        <Description>XIVCombo for very lazy players</Description>
+        <Description>Standalone WrathCombo fork: job rotation toggles + keyboard/mouse press mirror.</Description>
         <Copyright>Copyleft attick 2021 thanks attick UwU</Copyright>
-        <PackageProjectUrl>https://github.com/meowmeowmeowie1/myrepo</PackageProjectUrl>
-        <PackageId>QoLTweaksKBM</PackageId>
-        <Product>QoLTweaksKBM</Product>
+        <PackageProjectUrl>https://github.com/meowmeowmeowie1/MyTweak</PackageProjectUrl>
+        <PackageId>MyTweak</PackageId>
+        <Product>MyTweak</Product>
     </PropertyGroup>
 
     <!-- Build Parameters -->
     <PropertyGroup>
-        <AssemblyName>QoLTweaksKBM</AssemblyName>
+        <AssemblyName>MyTweak</AssemblyName>
         <TargetFramework>net10.0-windows</TargetFramework>
         <Configurations>Debug;Release</Configurations>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
@@ -38,8 +38,8 @@
     <!-- Required Paths -->
     <PropertyGroup>
         <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-        <DalamudDevPlugins>$(appdata)\XIVLauncher\devPlugins\QoLTweaksKBM\</DalamudDevPlugins>
-        <DalamudPluginPath>$(appdata)\XIVLauncher\installedPlugins\QoLTweaksKBM\$(version)</DalamudPluginPath>
+        <DalamudDevPlugins>$(appdata)\XIVLauncher\devPlugins\MyTweak\</DalamudDevPlugins>
+        <DalamudPluginPath>$(appdata)\XIVLauncher\installedPlugins\MyTweak\$(version)</DalamudPluginPath>
     </PropertyGroup>
 
     <!-- Path Overrides for Linux -->
@@ -426,7 +426,7 @@
 
     <!-- Release Manifest -->
     <ItemGroup>
-        <None Update="QoLTweaksKBM.json">
+        <None Update="MyTweak.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

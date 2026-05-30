@@ -1,0 +1,19 @@
+{
+  "Author": "meowmeowmeowie1",
+  "Name": "MyTweak",
+  "InternalName": "MyTweak",
+  "DalamudApiLevel": 15,
+  "Punchline": "WrathCombo job toggles + KBM press mirror, standalone build.",
+  "Description": "Standalone fork of QoLTweaksKBM v26. Keeps WrathCombo's per-job combo presets (the rotation toggles) and the keyboard/mouse action-press mirror, with auto-rotation, multilingual resources, and IPC connections stripped out. Designed to load against a minimal/self-injected Dalamud.",
+  "RepoUrl": "https://github.com/meowmeowmeowie1/MyTweak",
+  "Changelog": "v1.0.5.0: initial MyTweak release. Forked from QoLTweaksKBM v26. Removed auto-rotation engine, multilingual resources, and Splatoon/IPC connections. Keeps combo preset toggles and KBM press mirror.",
+  "Tags": [
+    "qol",
+    "combos",
+    "rotation",
+    "tweaks",
+    "utility",
+    "pve",
+    "pvp"
+  ]
+}
