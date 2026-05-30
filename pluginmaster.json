@@ -1,0 +1,29 @@
+[
+  {
+    "Author": "meowmeowmeowie1",
+    "Name": "QoL Tweaks",
+    "InternalName": "QoLTweaks",
+    "AssemblyVersion": "1.0.4.22",
+    "TestingAssemblyVersion": "1.0.4.22",
+    "Punchline": "Quality-of-life tweaks for a smoother experience.",
+    "Description": "A personal collection of quality-of-life tweaks: helpers resolve when you press a button, and your hotbar icons are never swapped.",
+    "Changelog": "Reverted the experimental cross-hotbar pulse hook (it caused input delay); back to the stable keyboard mirroring with the dance-step/rotation behavior.",
+    "RepoUrl": "https://github.com/meowmeowmeowie1/myrepo",
+    "ApplicableVersion": "any",
+    "DalamudApiLevel": 15,
+    "Tags": [
+      "qol",
+      "tweaks",
+      "performance",
+      "auto",
+      "automation",
+      "utility",
+      "pve",
+      "pvp"
+    ],
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/myrepo/releases/latest/download/QoLTweaks.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/myrepo/releases/latest/download/QoLTweaks.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/myrepo/releases/latest/download/QoLTweaks.zip",
+    "DownloadCount": 0
+  }
+]
