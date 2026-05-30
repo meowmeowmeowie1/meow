@@ -34,29 +34,31 @@ public partial class WrathCombo
     private const string LegacyCommand = "/ccombo";
     private const string LegacyCommand2 = "/customcombo";
 
+    // Per-job burst preset codes from user's existing job-titled macros.
+    // /wrath toggle <code> targets these specific Preset enum values by id.
     internal static readonly Dictionary<Job, Preset[]> BurstPresetMap = new()
     {
-        { Job.PLD, [Preset.PLD_ST_AdvancedMode_FoF, Preset.PLD_AoE_AdvancedMode_FoF, Preset.PLD_ST_AdvancedMode_Requiescat, Preset.PLD_AoE_AdvancedMode_Requiescat] }, // PLD
-        { Job.WAR, [Preset.WAR_ST_InnerRelease, Preset.WAR_AoE_InnerRelease, Preset.WAR_ST_Infuriate, Preset.WAR_AoE_Infuriate] }, // WAR
-        { Job.DRK, [Preset.DRK_ST_CD_Delirium, Preset.DRK_AoE_CD_Delirium, Preset.DRK_ST_CD_Shadow, Preset.DRK_AoE_CD_Shadow, Preset.DRK_ST_CD_Bringer, Preset.DRK_AoE_CD_Bringer] }, // DRK
-        { Job.GNB, [Preset.GNB_ST_NoMercy, Preset.GNB_AoE_NoMercy, Preset.GNB_ST_Bloodfest, Preset.GNB_AoE_Bloodfest] }, // GNB
-        { Job.WHM, [Preset.WHM_ST_MainCombo_PresenceOfMind, Preset.WHM_AoE_DPS_PresenceOfMind] }, // WHM
-        { Job.SCH, [Preset.SCH_ST_ADV_DPS_ChainStrat, Preset.SCH_AoE_ADV_DPS_ChainStrat] }, // SCH
-        { Job.AST, [Preset.AST_AOE_Divination, Preset.AST_DPS_Divination] }, // AST
-        { Job.SGE, [Preset.SGE_AoE_DPS_Psyche, Preset.SGE_AoE_DPS_Phlegma, Preset.SGE_ST_DPS_Psyche, Preset.SGE_ST_DPS_Phlegma] }, // SGE
-        { Job.DRG, [Preset.DRG_ST_BattleLitany, Preset.DRG_ST_LanceCharge, Preset.DRG_AoE_BattleLitany, Preset.DRG_AoE_LanceCharge, Preset.DRG_ST_DragonfireDive, Preset.DRG_AoE_DragonfireDive, Preset.DRG_ST_LifeSurge, Preset.DRG_AoE_LifeSurge] }, // DRG
-        { Job.MNK, [Preset.MNK_STUseBrotherhood, Preset.MNK_AoEUseBrotherhood, Preset.MNK_AoEUseROF, Preset.MNK_STUseROF] }, // MNK
-        { Job.NIN, [Preset.NIN_ST_AdvancedMode_TrickAttack, Preset.NIN_ST_AdvancedMode_Mug, Preset.NIN_AoE_AdvancedMode_TrickAttack, Preset.NIN_AoE_AdvancedMode_Mug] }, // NIN
-        { Job.SAM, [Preset.SAM_ST_CDs_Ikishoten, Preset.SAM_AOE_CDs_Ikishoten, Preset.SAM_ST_CDs_MeikyoShisui, Preset.SAM_AoE_MeikyoShisui] }, // SAM
-        { Job.RPR, [Preset.RPR_ST_Gluttony, Preset.RPR_AoE_Gluttony, Preset.RPR_ST_ArcaneCircle, Preset.RPR_AoE_ArcaneCircle] }, // RPR
-        { Job.VPR, [Preset.VPR_ST_SerpentsIre, Preset.VPR_ST_Reawaken, Preset.VPR_AoE_SerpentsIre, Preset.VPR_AoE_Reawaken, Preset.VPR_AoE_ReawakenCombo] }, // VPR
-        { Job.BRD, [Preset.BRD_Adv_Buffs, Preset.BRD_AoE_Adv_Buffs] }, // BRD
-        { Job.MCH, [Preset.MCH_ST_Adv_Stabilizer, Preset.MCH_ST_Adv_WildFire, Preset.MCH_ST_Adv_TurretQueen, Preset.MCH_ST_Adv_Reassemble, Preset.MCH_ST_Adv_Tools, Preset.MCH_AoE_Adv_Reassemble, Preset.MCH_AoE_Adv_Queen, Preset.MCH_AoE_Adv_Stabilizer, Preset.MCH_AoE_Adv_Tools] }, // MCH
-        { Job.DNC, [Preset.DNC_ST_Adv_TS, Preset.DNC_ST_Adv_SS, Preset.DNC_ST_Adv_FanProccs, Preset.DNC_ST_Adv_Feathers, Preset.DNC_AoE_Adv_Devilment, Preset.DNC_AoE_Adv_Flourish, Preset.DNC_AoE_Adv_SS, Preset.DNC_AoE_Adv_FanProccs, Preset.DNC_AoE_Adv_Feathers, Preset.DNC_AoE_Adv_DawnDance] }, // DNC
-        { Job.BLM, [Preset.BLM_ST_LeyLines, Preset.BLM_AoE_LeyLines, Preset.BLM_ST_Amplifier, Preset.BLM_AoE_Amplifier] }, // BLM
-        { Job.SMN, [Preset.SMN_AoE_Advanced_Combo_SearingLight, Preset.SMN_ST_Advanced_Combo_SearingLight, Preset.SMN_ST_Advanced_Combo_DemiSummons, Preset.SMN_AoE_Advanced_Combo_DemiSummons] }, // SMN
-        { Job.RDM, [Preset.RDM_ST_Embolden, Preset.RDM_AoE_Embolden, Preset.RDM_ST_Manafication, Preset.RDM_AoE_Manafication] }, // RDM
-        { Job.PCT, [Preset.PCT_ST_AdvancedMode_ScenicMuse, Preset.PCT_AoE_AdvancedMode_ScenicMuse, Preset.PCT_ST_AdvancedMode_HammerStampCombo, Preset.PCT_AoE_AdvancedMode_HammerStampCombo] }, // PCT
+        { Job.PLD, [(Preset)11003, (Preset)11016, (Preset)11010, (Preset)11019] },
+        { Job.WAR, [(Preset)18003, (Preset)18019, (Preset)18007, (Preset)18018] },
+        { Job.DRK, [(Preset)5015, (Preset)5054, (Preset)5016, (Preset)5055, (Preset)5018, (Preset)5057] },
+        { Job.GNB, [(Preset)7008, (Preset)7201, (Preset)7011, (Preset)7204] },
+        { Job.WHM, [(Preset)19008, (Preset)19195] },
+        { Job.SCH, [(Preset)16003, (Preset)16054] },
+        { Job.AST, [(Preset)1043, (Preset)1016] },
+        { Job.SGE, [(Preset)14051, (Preset)14010, (Preset)14008, (Preset)14005] },
+        { Job.DRG, [(Preset)6103, (Preset)6104, (Preset)6203, (Preset)6204, (Preset)6107, (Preset)6207, (Preset)6106, (Preset)6206] },
+        { Job.MNK, [(Preset)9009, (Preset)9030, (Preset)9032, (Preset)9011] },
+        { Job.NIN, [(Preset)10006, (Preset)10007, (Preset)10022, (Preset)10023] },
+        { Job.SAM, [(Preset)15012, (Preset)15108, (Preset)15018, (Preset)15114] },
+        { Job.RPR, [(Preset)12009, (Preset)12108, (Preset)12006, (Preset)12105] },
+        { Job.VPR, [(Preset)30005, (Preset)30011, (Preset)30104, (Preset)30110, (Preset)30112] },
+        { Job.BRD, [(Preset)3017, (Preset)3032] },
+        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8107, (Preset)8103, (Preset)8102, (Preset)8112] },
+        { Job.DNC, [(Preset)4018, (Preset)4045] },
+        { Job.BLM, [(Preset)2103, (Preset)2202, (Preset)2102, (Preset)2201] },
+        { Job.SMN, [(Preset)17053, (Preset)17017, (Preset)17020, (Preset)17061] },
+        { Job.RDM, [(Preset)13010, (Preset)13207, (Preset)13011, (Preset)13208] },
+        { Job.PCT, [(Preset)20021, (Preset)20054, (Preset)20027, (Preset)20060] },
     };
 
     /// <summary>
