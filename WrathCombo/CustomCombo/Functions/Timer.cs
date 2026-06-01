@@ -71,7 +71,7 @@ internal abstract partial class CustomComboFunctions
                 continue;
 
             if (!onPlayerStatuses.Contains(status.StatusId))
-                OnStatusChanged.Invoke(status.StatusId, true);
+                OnStatusChanged?.Invoke(status.StatusId, true);
 
             onPlayerStatuses.Add(status.StatusId);
         }
@@ -84,7 +84,7 @@ internal abstract partial class CustomComboFunctions
         {
             if (!LocalPlayer.StatusList.Any(x => x.StatusId == status))
             {
-                OnStatusChanged.Invoke(status, false);
+                OnStatusChanged?.Invoke(status, false);
                 onPlayerStatuses.Remove(status);
             }
         }
