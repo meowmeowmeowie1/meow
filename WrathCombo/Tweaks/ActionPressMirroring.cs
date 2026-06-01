@@ -4,6 +4,7 @@ using System;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -56,6 +57,12 @@ internal static unsafe class ActionPressMirroring
     private static void PulseActionBarSlotDetour(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
+        // DIAGNOSTIC (temporary): logs on every pulse, BEFORE the config gate,
+        // so we can see whether the hook fires for controller presses, the gate
+        // state, and which cross-hotbar addons are visible + their set ids.
+        // Read via /xllog and filter for "xhb-diag". Removed once tuned.
+        DumpCrossDiag(ab, slotIndex);
+
         if (Service.Configuration.DuplicateActionPresses
             && !Service.Configuration.MasterDisabled)
         {
@@ -261,6 +268,63 @@ internal static unsafe class ActionPressMirroring
             // RaptureHotbarId is a byte; targetSet is a cross set id (10..17).
             bar->RaptureHotbarId = (byte)targetSet;
             _pulseHook!.Original(bar, targetSlot, a3, a4);
+        }
+    }
+
+    // DIAGNOSTIC (temporary): one throttled dump per press of the gate state,
+    // the pressed slot, whether the action lives on a cross set, and the
+    // present/visible/set-id of every known action-bar addon. Lets us discover
+    // which addons host the user's visible cross-hotbar sets.
+    private static void DumpCrossDiag(AddonActionBarBase* ab, uint slotIndex)
+    {
+        if (!EzThrottler.Throttle("xhbDiag", 750))
+            return;
+
+        try
+        {
+            var hotbarModule = RaptureHotbarModule.Instance();
+            if (hotbarModule == null) return;
+
+            var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
+            var type = pressedSlot == null
+                ? default
+                : pressedSlot->CommandType;
+            var cmdId = pressedSlot == null ? 0u : pressedSlot->CommandId;
+            var resolved = pressedSlot == null ? 0u : ResolveActionId(type, cmdId);
+
+            Svc.Log.Information(
+                $"[MyTweak][xhb-diag] PRESS dup={Service.Configuration.DuplicateActionPresses} " +
+                $"master={Service.Configuration.MasterDisabled} pressRHID={ab->RaptureHotbarId} " +
+                $"slot={slotIndex} type={type} cmdId={cmdId} resolved={resolved}");
+
+            if (pressedSlot != null
+                && TryFindCrossSet(hotbarModule, type, resolved, out var fset, out var fslot))
+                Svc.Log.Information(
+                    $"[MyTweak][xhb-diag] resolved action on cross set {fset} slot {fslot}");
+            else
+                Svc.Log.Information(
+                    "[MyTweak][xhb-diag] resolved action NOT found on cross sets 10..17");
+
+            foreach (var name in AllActionBars)
+            {
+                nint p = Svc.GameGui.GetAddonByName(name, 1);
+                if (p == nint.Zero)
+                {
+                    Svc.Log.Information($"[MyTweak][xhb-diag]   {name}: absent");
+                    continue;
+                }
+
+                var ub = (AtkUnitBase*)p;
+                var vis = ub->RootNode != null
+                          && (ub->RootNode->NodeFlags & NodeFlags.Visible) != 0;
+                var b = (AddonActionBarBase*)p;
+                Svc.Log.Information(
+                    $"[MyTweak][xhb-diag]   {name}: visible={vis} RHID={b->RaptureHotbarId} slots={b->SlotCount}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Svc.Log.Error(ex, "[MyTweak][xhb-diag] failed");
         }
     }
 
