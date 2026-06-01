@@ -47,6 +47,12 @@ internal static unsafe class ActionPressMirroring
             Svc.Log.Information(
                 $"[MyTweak][xhb-diag] PulseActionBarSlot hook installed={_pulseHook != null} " +
                 $"enabled={_pulseHook?.IsEnabled} addr=0x{(_pulseHook?.Address ?? 0):X}");
+
+            // DIAGNOSTIC: the pulse hook never fires for controller input, so
+            // ride the device-independent SendAction signal instead to confirm
+            // controller presses reach us AND dump the visible action-bar
+            // addons (so we can see which ones host the user's cross sets).
+            global::WrathCombo.Data.ActionWatching.OnActionSend += OnActionSendDiag;
         }
         catch (Exception ex)
         {
@@ -56,9 +62,44 @@ internal static unsafe class ActionPressMirroring
 
     internal static void Dispose()
     {
+        global::WrathCombo.Data.ActionWatching.OnActionSend -= OnActionSendDiag;
         _pulseHook?.Disable();
         _pulseHook?.Dispose();
         _pulseHook = null;
+    }
+
+    // DIAGNOSTIC: fires whenever the player commits an action (any input
+    // device). Dumps the visible action bars + their RaptureHotbar set ids so
+    // we can see which addons display the user's cross-hotbar sets.
+    private static void OnActionSendDiag()
+    {
+        if (!EzThrottler.Throttle("xhbSendDiag", 500))
+            return;
+
+        try
+        {
+            var last = global::WrathCombo.Data.ActionWatching.LastAction;
+            Svc.Log.Information(
+                $"[MyTweak][xhb-diag2] SEND fired (controller OK). lastAction={last} dup={Service.Configuration.DuplicateActionPresses} master={Service.Configuration.MasterDisabled}");
+
+            foreach (var name in AllActionBars)
+            {
+                nint p = Svc.GameGui.GetAddonByName(name, 1);
+                if (p == nint.Zero)
+                    continue; // only log present addons to cut noise
+
+                var ub = (AtkUnitBase*)p;
+                var vis = ub->RootNode != null
+                          && (ub->RootNode->NodeFlags & NodeFlags.Visible) != 0;
+                var b = (AddonActionBarBase*)p;
+                Svc.Log.Information(
+                    $"[MyTweak][xhb-diag2]   {name}: visible={vis} RHID={b->RaptureHotbarId} slots={b->SlotCount}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Svc.Log.Error(ex, "[MyTweak][xhb-diag2] failed");
+        }
     }
 
     private static void PulseActionBarSlotDetour(
