@@ -258,7 +258,8 @@ internal static unsafe class ActionPressMirroring
             // Point the WXHB display at the set containing the pressed action,
             // then pulse the matching slot. The game's per-frame UpdateHotbarSlot
             // repaints the slots from RaptureHotbarId, so the set visibly swaps.
-            bar->RaptureHotbarId = targetSet;
+            // RaptureHotbarId is a byte; targetSet is a cross set id (10..17).
+            bar->RaptureHotbarId = (byte)targetSet;
             _pulseHook!.Original(bar, targetSlot, a3, a4);
         }
     }
