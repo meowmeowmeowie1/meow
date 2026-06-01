@@ -446,6 +446,10 @@ public partial class Configuration : IPluginConfiguration
     public float StatusOverlayPosX { get; set; } = 20f;
     public float StatusOverlayPosY { get; set; } = 120f;
 
+    // Visibility of the floating "next action" tracker window (ST + AoE next
+    // action + burst armed/held). Hidden by default. Slash: /mytweak tracker.
+    public bool NextActionTrackerHidden { get; set; } = true;
+
     #endregion
 
     #region Job-specific

@@ -47,6 +47,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
     private readonly MajorChangesWindow _majorChangesWindow;
     private readonly TargetHelper TargetHelper;
     internal readonly StatusOverlay StatusOverlay;
+    internal readonly NextActionTracker NextActionTracker;
     internal static WrathCombo? P;
     private readonly WindowSystem ws;
     private static readonly SocketsHttpHandler httpHandler = new()
@@ -179,11 +180,13 @@ public sealed partial class WrathCombo : IDalamudPlugin
         _majorChangesWindow = new MajorChangesWindow();
         TargetHelper = new();
         StatusOverlay = new StatusOverlay { IsOpen = true };
+        NextActionTracker = new NextActionTracker { IsOpen = true };
         ws = new();
         ws.AddWindow(ConfigWindow);
         ws.AddWindow(_majorChangesWindow);
         ws.AddWindow(TargetHelper);
         ws.AddWindow(StatusOverlay);
+        ws.AddWindow(NextActionTracker);
 
         Configuration.ConfigChanged += DebugFile.LoggingConfigChanges;
 

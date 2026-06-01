@@ -61,7 +61,13 @@ internal static unsafe class ActionPressMirroring
         {
             try
             {
-                if (MirrorPulse(ab, slotIndex, a3, a4))
+                var mirrored = MirrorPulse(ab, slotIndex, a3, a4);
+
+                // Additionally replicate the controller cross-hotbar SELECTION
+                // onto a WXHB display surface (independent of the single pulse).
+                MirrorCrossSetSelection(ab, slotIndex, a3, a4);
+
+                if (mirrored)
                     return;
             }
             catch (Exception ex)
@@ -177,6 +183,112 @@ internal static unsafe class ActionPressMirroring
                     _pulseHook!.Original(bar, i, a3, a4);
                     return true;
                 }
+            }
+        }
+
+        return false;
+    }
+
+    // --- Controller cross-hotbar (WXHB) selection mirror ---------------------
+    //
+    // On a controller, pressing an action SELECTS the cross-hotbar set that
+    // holds it (a visible UI change) before the pulse. We replicate that
+    // selection onto the expanded cross hotbar (WXHB: _ActionDoubleCrossL / R),
+    // used as a display surface: point it at the set that contains the pressed
+    // action so it shows + highlights that set, then pulse the matching slot.
+    // The live single cross bar (_ActionCross) is intentionally never modified.
+    //
+    // The cross-hotbar sets occupy RaptureHotbar IDs 10..17 (8 sets of 16
+    // buttons; the on-screen set number is id - 9). This is confirmed via the
+    // game's own AddonActionCross logic (GetBarTarget returns 0xA..0x13, and the
+    // active set is stored as an sbyte at AddonActionCross+0x254).
+    //
+    // PATCH NOTE: the WXHB derives its displayed set from controller input every
+    // frame (AddonActionDoubleCrossBase.OnRequestedUpdate/Update), so a plain
+    // RaptureHotbarId write may be reverted on some configs. If the set switch
+    // doesn't visually stick in-game, this is the spot to add an explicit
+    // OnRequestedUpdate/Update re-assert (offsets are build-specific; re-verify
+    // each major patch). Everything here is guarded so a layout change degrades
+    // to "no selection mirror" rather than a crash.
+    private static readonly string[] WxhbBars =
+    [
+        "_ActionDoubleCrossL", "_ActionDoubleCrossR",
+    ];
+
+    private const uint FirstCrossSet = 10;
+    private const uint LastCrossSet = 17;
+    private const uint CrossSetSlotCount = 16;
+
+    private static void MirrorCrossSetSelection(
+        AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
+    {
+        var hotbarModule = RaptureHotbarModule.Instance();
+        if (hotbarModule == null) return;
+
+        var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
+        if (pressedSlot == null) return;
+
+        var type = pressedSlot->CommandType;
+        var pressedResolved = ResolveActionId(type, pressedSlot->CommandId);
+
+        // Same short-circuits as MirrorPulse: never mirror mid-dance / dance steps.
+        if (IsDancing()) return;
+        if (type == RaptureHotbarModule.HotbarSlotType.Action
+            && (Array.IndexOf(DanceStepActions, pressedSlot->CommandId) >= 0
+                || Array.IndexOf(DanceStepActions, pressedResolved) >= 0))
+            return;
+
+        if (!TryFindCrossSet(hotbarModule, type, pressedResolved,
+                out var targetSet, out var targetSlot))
+            return;
+
+        foreach (var barName in WxhbBars)
+        {
+            nint barPtr = Svc.GameGui.GetAddonByName(barName, 1);
+            if (barPtr == nint.Zero)
+                continue;
+
+            var unitBase = (AtkUnitBase*)barPtr;
+            if (unitBase->RootNode == null
+                || (unitBase->RootNode->NodeFlags & NodeFlags.Visible) == 0)
+                continue;
+
+            var bar = (AddonActionBarBase*)barPtr;
+
+            // Point the WXHB display at the set containing the pressed action,
+            // then pulse the matching slot. The game's per-frame UpdateHotbarSlot
+            // repaints the slots from RaptureHotbarId, so the set visibly swaps.
+            bar->RaptureHotbarId = targetSet;
+            _pulseHook!.Original(bar, targetSlot, a3, a4);
+        }
+    }
+
+    // Scan the 8 cross-hotbar sets (RaptureHotbar IDs 10..17) for the slot that
+    // holds the resolved action; returns the set + slot index within it.
+    private static bool TryFindCrossSet(
+        RaptureHotbarModule* hotbarModule,
+        RaptureHotbarModule.HotbarSlotType type,
+        uint resolved,
+        out uint set, out uint slot)
+    {
+        set = 0;
+        slot = 0;
+
+        for (var s = FirstCrossSet; s <= LastCrossSet; s++)
+        {
+            for (var i = 0U; i < CrossSetSlotCount; i++)
+            {
+                var barSlot = hotbarModule->GetSlotById(s, i);
+                if (barSlot == null)
+                    continue;
+                if (barSlot->CommandType != type)
+                    continue;
+                if (GameAdjusted(type, barSlot->CommandId) != resolved)
+                    continue;
+
+                set = s;
+                slot = i;
+                return true;
             }
         }
 
