@@ -4,9 +4,9 @@
   "InternalName": "MyTweak",
   "DalamudApiLevel": 15,
   "Punchline": "Job rotation toggles + KBM press mirror.",
-  "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle.",
+  "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle. New: a Next Action Tracker window (/mytweak tracker) showing the next ST + AoE action and burst state for your job, plus a controller cross-hotbar (WXHB) selection mirror.",
   "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
-  "Changelog": "v1.0.5.3: add /tweak slash for silent master toggle, silence all burst hold/resume chat echoes. v1.0.5.2: minimal symbol overlay.",
+  "Changelog": "v1.0.6.0: add Next Action Tracker window (/mytweak tracker) for live ST/AoE next action + burst state, and a controller cross-hotbar (WXHB) selection mirror on press. v1.0.5.3: /tweak slash for silent master toggle.",
   "Tags": [
     "qol",
     "combos",

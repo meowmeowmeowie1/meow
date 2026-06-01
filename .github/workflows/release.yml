@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/affectionate-johnson-sJ0GR
+      - claude/plugin-button-selection-tracking-YWOuc
     paths-ignore:
       - 'pluginmaster.json'
       - 'README.md'
@@ -60,13 +61,17 @@ jobs:
             echo "Could not find DalamudPackager output (latest.zip)"; exit 1
           fi
           echo "Found: $zip"
-          cp "$zip" QoLTweaks.zip
-          echo "zip=QoLTweaks.zip" >> "$GITHUB_OUTPUT"
+          # Name the asset MyTweak.zip and tag it mytweak-v<version> so the
+          # download links in pluginmaster.json resolve.
+          cp "$zip" MyTweak.zip
+          version=$(grep -oPm1 '(?<=<Version>)[^<]+' WrathCombo/WrathCombo.csproj)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "zip=MyTweak.zip" >> "$GITHUB_OUTPUT"
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: QoLTweaks build ${{ github.run_number }}
+          tag_name: mytweak-v${{ steps.pkg.outputs.version }}
+          name: MyTweak v${{ steps.pkg.outputs.version }}
           make_latest: true
           files: ${{ steps.pkg.outputs.zip }}
