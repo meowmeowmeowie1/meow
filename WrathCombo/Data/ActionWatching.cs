@@ -307,6 +307,7 @@ public static class ActionWatching
             }
             if (actionType is 1)
             {
+                LastSentActionId = actionId;
                 OnActionSend?.Invoke();
 
                 if (!InCombat())
@@ -397,6 +398,11 @@ public static class ActionWatching
     }
     public static int LastActionUseCount { get; set; } = 0;
     public static int LastActionType { get; set; } = 0;
+
+    // The action id of the most recent SendAction (set synchronously when the
+    // action is committed, before the delayed LastAction update). Used by the
+    // action-press mirror so it reflects the action just pressed, not the prior.
+    public static uint LastSentActionId { get; private set; } = 0;
     public static uint LastWeaponskill { get; set; } = 0;
     public static uint LastAbility { get; set; } = 0;
     public static uint LastSpell { get; set; } = 0;

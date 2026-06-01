@@ -6,7 +6,7 @@
   "Punchline": "Job rotation toggles + KBM press mirror.",
   "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle. New: a Next Action Tracker window (/mytweak tracker) showing the next ST + AoE action and burst state for your job, plus a controller cross-hotbar (WXHB) selection mirror.",
   "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
-  "Changelog": "v1.0.6.2: fix NullReferenceException spam in CheckStatuses (OnStatusChanged invoked with no subscriber). Keeps xhb-diag logging for the cross-hotbar mirror. v1.0.6.0: Next Action Tracker window (/mytweak tracker) + cross-hotbar selection mirror.",
+  "Changelog": "v1.0.6.5: action-press mirror now works on CONTROLLER (drives off SendAction instead of the pulse hook) and flashes every visible hotbar copy of the action you use. Removed diagnostic logging.",
   "Tags": [
     "qol",
     "combos",
