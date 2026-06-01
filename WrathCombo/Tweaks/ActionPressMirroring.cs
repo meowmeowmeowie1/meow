@@ -40,10 +40,17 @@ internal static unsafe class ActionPressMirroring
             _pulseHook ??= Svc.Hook.HookFromSignature<PulseActionBarSlotDelegate>(
                 PulseSignature, PulseActionBarSlotDetour);
             _pulseHook?.Enable();
+
+            // DIAGNOSTIC: confirm the hook actually resolved + enabled, so we
+            // can tell "signature didn't match this game version" apart from
+            // "hook is fine but never fires for controller input".
+            Svc.Log.Information(
+                $"[MyTweak][xhb-diag] PulseActionBarSlot hook installed={_pulseHook != null} " +
+                $"enabled={_pulseHook?.IsEnabled} addr=0x{(_pulseHook?.Address ?? 0):X}");
         }
         catch (Exception ex)
         {
-            Svc.Log.Error(ex, "[MyTweak] ActionPressMirroring: failed to hook (signature?)");
+            Svc.Log.Error(ex, "[MyTweak][xhb-diag] ActionPressMirroring: FAILED to hook (signature?)");
         }
     }
 
