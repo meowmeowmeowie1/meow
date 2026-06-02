@@ -3,11 +3,11 @@
     "Author": "meowmeowmeowie1",
     "Name": "MyTweak",
     "InternalName": "MyTweak",
-    "AssemblyVersion": "1.0.6.5",
-    "TestingAssemblyVersion": "1.0.6.5",
+    "AssemblyVersion": "1.0.6.6",
+    "TestingAssemblyVersion": "1.0.6.6",
     "Punchline": "Job rotation toggles + KBM press mirror.",
     "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle. /mytweak burst hold uses per-job preset codes. New: a Next Action Tracker window (/mytweak tracker) showing the next ST + AoE action and burst state for your job, plus a controller cross-hotbar (WXHB) selection mirror.",
-    "Changelog": "v1.0.6.5: action-press mirror now works on CONTROLLER (drives off SendAction instead of the pulse hook) and flashes every visible hotbar copy of the action you use. Removed diagnostic logging.",
+    "Changelog": "v1.0.6.6: Next Action Tracker is now a visible, movable window (title bar + background) and is shown once on upgrade. Live ST + AoE next action icons + burst state. Toggle with /mytweak tracker show|hide.",
     "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
@@ -20,9 +20,9 @@
       "pve",
       "pvp"
     ],
-    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.6.5/MyTweak.zip",
-    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.6.5/MyTweak.zip",
-    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.6.5/MyTweak.zip",
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.6.6/MyTweak.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.6.6/MyTweak.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.6.6/MyTweak.zip",
     "DownloadCount": 0
   }
 ]

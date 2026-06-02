@@ -8,21 +8,19 @@ using WrathCombo.Services;
 namespace WrathCombo.Window;
 
 /// <summary>
-///     A small floating window that shows, live, the action the current job's
+///     A small movable window that shows, live, the action the current job's
 ///     Single-Target and AoE combos would produce right now, plus the burst
-///     armed/held state. Hidden by default; toggled with <c>/mytweak tracker</c>.
+///     armed/held state. Toggle with <c>/mytweak tracker</c>.
 /// </summary>
 internal sealed class NextActionTracker : Dalamud.Interface.Windowing.Window
 {
     public NextActionTracker()
-        : base("MyTweak##NextActionTracker",
-               ImGuiWindowFlags.NoTitleBar
-               | ImGuiWindowFlags.NoResize
+        : base("MyTweak — Next Action##NextActionTracker",
+               ImGuiWindowFlags.NoResize
                | ImGuiWindowFlags.NoScrollbar
                | ImGuiWindowFlags.AlwaysAutoResize
                | ImGuiWindowFlags.NoFocusOnAppearing
-               | ImGuiWindowFlags.NoNav
-               | ImGuiWindowFlags.NoBackground)
+               | ImGuiWindowFlags.NoNav)
     {
         DisableWindowSounds = true;
         RespectCloseHotkey = false;
@@ -40,28 +38,39 @@ internal sealed class NextActionTracker : Dalamud.Interface.Windowing.Window
 
         DrawActionRow("ST", ActionResolution.TryGetSingleTarget(out var st), st);
         DrawActionRow("AoE", ActionResolution.TryGetAoE(out var aoe), aoe);
+        ImGui.Separator();
         DrawBurst();
     }
 
     private static void DrawActionRow(string label, bool has, uint actionId)
     {
+        // Label column.
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextUnformatted(label);
+        ImGui.SameLine(48f * ImGui.GetIO().FontGlobalScale);
+
         if (!has)
         {
-            ImGui.TextDisabled($"{label}: —");
+            ImGui.TextDisabled("—  (no combo enabled)");
             return;
         }
 
+        var size = new Vector2(32f, 32f) * ImGui.GetIO().FontGlobalScale;
         var icon = Icons.GetTextureFromIconId(ActionResolution.ActionIcon(actionId));
+        var name = ActionResolution.ActionName(actionId);
+
         if (icon != null)
         {
-            var size = new Vector2(32f, 32f) * ImGui.GetIO().FontGlobalScale;
             ImGui.Image(icon.Handle, size);
+            ImGui.SameLine();
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted(name);
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip($"{label}: {ActionResolution.ActionName(actionId)}");
+                ImGui.SetTooltip(name);
         }
         else
         {
-            ImGui.TextUnformatted($"{label}: {ActionResolution.ActionName(actionId)}");
+            ImGui.TextUnformatted(name);
         }
     }
 

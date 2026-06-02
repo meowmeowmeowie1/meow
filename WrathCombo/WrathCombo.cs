@@ -179,6 +179,15 @@ public sealed partial class WrathCombo : IDalamudPlugin
         Settings.SanitiseSettings();
         _majorChangesWindow = new MajorChangesWindow();
         TargetHelper = new();
+        // One-time reveal of the Next Action Tracker on upgrade, so existing
+        // users (whose config saved it hidden) actually see it once.
+        if (!Service.Configuration.NextActionTrackerIntroduced)
+        {
+            Service.Configuration.NextActionTrackerHidden = false;
+            Service.Configuration.NextActionTrackerIntroduced = true;
+            Service.Configuration.Save();
+        }
+
         StatusOverlay = new StatusOverlay { IsOpen = true };
         NextActionTracker = new NextActionTracker { IsOpen = true };
         ws = new();
