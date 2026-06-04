@@ -72,6 +72,7 @@ public partial class WrathCombo
             "Open the MyTweak settings window.\n" +
             $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
+            $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
             $"{Command} debug → Dumps a debug log onto your desktop.\n" +
             $"{OldCommand} → Short alias, still works!");
         EzCmd.Add(OldCommand, OnCommand);
@@ -113,6 +114,9 @@ public partial class WrathCombo
 
             case "overlay":
                 HandleOverlayToggle(argumentParts); break;
+
+            case "tracker":
+                HandleNextTrackerToggle(argumentParts); break;
 
             case "unsetall":
             case "set":
@@ -760,6 +764,27 @@ public partial class WrathCombo
         Service.Configuration.Save();
 
         DuoLog.Information($"Status overlay {(hide ? "HIDDEN" : "VISIBLE")}");
+    }
+
+    /// <summary>
+    ///     Toggles the next-action tracker window (ST + AoE next action + burst
+    ///     state). Subcommand: <c>show</c>/<c>on</c>, <c>hide</c>/<c>off</c>, or
+    ///     blank to flip.
+    /// </summary>
+    private void HandleNextTrackerToggle(string[] argument)
+    {
+        var sub = argument.Length > 1 ? argument[1] : "";
+        var hide = sub switch
+        {
+            "hide" or "off" => true,
+            "show" or "on" => false,
+            _ => !Service.Configuration.NextActionTrackerHidden,
+        };
+
+        Service.Configuration.NextActionTrackerHidden = hide;
+        Service.Configuration.Save();
+
+        DuoLog.Information($"Next-action tracker {(hide ? "HIDDEN" : "VISIBLE")}");
     }
 
     private void HandleMasterToggle(string[] argument)

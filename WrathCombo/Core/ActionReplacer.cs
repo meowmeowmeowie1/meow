@@ -59,10 +59,34 @@ internal sealed class ActionReplacer : IDisposable
         isActionReplaceableHook = Svc.Hook.HookFromAddress<IsActionReplaceableDelegate>(Service.Address.IsActionIdReplaceable, IsActionReplaceableDetour);
 
         if (Service.Configuration.ActionChanging)
-        {
-            getActionHook.Enable();
             isActionReplaceableHook.Enable();
-        }
+
+        // The icon-swap hook only runs when action changing is on AND
+        // Performance Mode is off. See ApplyActionChangingHookState.
+        ApplyActionChangingHookState();
+    }
+
+    /// <summary>
+    ///     Applies the correct enabled-state to the icon-swap hook
+    ///     (<see cref="getActionHook" />) based on
+    ///     <see cref="Configuration.ActionChanging" /> and
+    ///     <see cref="Configuration.PerformanceMode" />.
+    /// </summary>
+    /// <remarks>
+    ///     In Performance Mode the hook is fully disabled so the game keeps its
+    ///     native hotbar icons (no per-frame swap work at all). Combos are still
+    ///     resolved at button-press time via
+    ///     <see cref="Data.ActionWatching.UseActionDetour" />.
+    /// </remarks>
+    internal void ApplyActionChangingHookState()
+    {
+        var shouldRun = Service.Configuration.ActionChanging
+                        && !Service.Configuration.PerformanceMode;
+
+        if (shouldRun && !getActionHook.IsEnabled)
+            getActionHook.Enable();
+        if (!shouldRun && getActionHook.IsEnabled)
+            getActionHook.Disable();
     }
 
     public void Dispose()
@@ -83,7 +107,10 @@ internal sealed class ActionReplacer : IDisposable
 
     public void EnableActionReplacingIfRequired()
     {
-        if (Service.Configuration.ActionChanging)
+        // Respect Performance Mode: the icon-swap hook must stay disabled while
+        // it is active, even after a temporary disable during action use.
+        if (Service.Configuration.ActionChanging
+            && !Service.Configuration.PerformanceMode)
             Service.ActionReplacer.getActionHook.Enable();
     }
 

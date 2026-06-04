@@ -43,7 +43,7 @@ internal sealed class StatusOverlay : Dalamud.Interface.Windowing.Window
                 Service.ActionReplacer.UpdateFilteredCombos();
             });
 
-        var held = IsBurstHeld(out _);
+        var held = ActionResolution.IsBurstHeld();
         if (held is null)
         {
             DrawSymbol("-", ImGuiColors.DalamudGrey, "##burstNA", null);
@@ -73,19 +73,6 @@ internal sealed class StatusOverlay : Dalamud.Interface.Windowing.Window
             onClick?.Invoke();
         }
         ImGui.PopStyleColor(4);
-    }
-
-    private static bool? IsBurstHeld(out string jobLabel)
-    {
-        jobLabel = "—";
-        if (Player.Object == null) return null;
-
-        jobLabel = Player.Job.ToString();
-        if (!WrathCombo.BurstPresetMap.TryGetValue(Player.Job, out var presets)
-            || presets.Length == 0)
-            return null;
-
-        return !PresetStorage.IsEnabled(presets[0]);
     }
 
     private static void ToggleBurstForCurrentJob(bool currentlyHeld)

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/affectionate-johnson-sJ0GR
+      - claude/keen-sagan-OCJeZ
     paths-ignore:
       - 'pluginmaster.json'
       - 'README.md'
@@ -52,6 +53,16 @@ jobs:
           git commit -m "build log run ${GITHUB_RUN_NUMBER}"
           git push -f -u origin ci-logs
 
+      - name: Read plugin version
+        id: ver
+        run: |
+          v=$(grep -oPm1 '(?<=<Version>)[^<]+' WrathCombo/WrathCombo.csproj)
+          if [ -z "$v" ]; then
+            echo "Could not read <Version> from WrathCombo.csproj"; exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Plugin version: $v"
+
       - name: Locate packaged zip
         id: pkg
         run: |
@@ -60,13 +71,13 @@ jobs:
             echo "Could not find DalamudPackager output (latest.zip)"; exit 1
           fi
           echo "Found: $zip"
-          cp "$zip" QoLTweaks.zip
-          echo "zip=QoLTweaks.zip" >> "$GITHUB_OUTPUT"
+          cp "$zip" MyTweak.zip
+          echo "zip=MyTweak.zip" >> "$GITHUB_OUTPUT"
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: QoLTweaks build ${{ github.run_number }}
+          tag_name: mytweak-v${{ steps.ver.outputs.version }}
+          name: MyTweak v${{ steps.ver.outputs.version }}
           make_latest: true
           files: ${{ steps.pkg.outputs.zip }}
