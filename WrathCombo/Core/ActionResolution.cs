@@ -1,6 +1,7 @@
 using ECommons.GameHelpers;
 using ECommons.Throttlers;
 using WrathCombo.API.Enum;
+using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Data;
 using WrathCombo.Extensions;
 using WrathCombo.Services;
@@ -58,8 +59,17 @@ internal static class ActionResolution
         resolved = 0;
         if (Player.Object is null) return false;
 
-        // FilteredCombos is already restricted to the current job + PvP status
-        // and ordered by preset priority.
+        // Keep the filtered set in sync with the current job / PvP state. The icon
+        // hook normally rebuilds it, but that hook is disabled in Performance Mode,
+        // so without this the tracker would keep resolving the PREVIOUS job's
+        // combos after a job change (showing another job's actions).
+        if (ActionReplacer.FilteredCombos is null
+            || ActionReplacer.FilteredForJob != Player.Job
+            || ActionReplacer.FilteredForPvP != CustomComboFunctions.InPvP())
+            Service.ActionReplacer?.UpdateFilteredCombos();
+
+        // FilteredCombos is now restricted to the current job + PvP status and
+        // ordered by preset priority.
         var combos = ActionReplacer.FilteredCombos;
         if (combos is null) return false;
 

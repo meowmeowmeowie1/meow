@@ -3,7 +3,6 @@
 using System;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -72,46 +71,34 @@ internal static unsafe class ActionPressMirroring
         _pulseHook!.Original(ab, slotIndex, a3, a4);
     }
 
-    private static uint GameAdjusted(RaptureHotbarModule.HotbarSlotType type, uint id) =>
-        type == RaptureHotbarModule.HotbarSlotType.Action
-            ? ActionManager.Instance()->GetAdjustedActionId(id)
-            : id;
-
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
         var hotbarModule = RaptureHotbarModule.Instance();
         var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
-        var type = pressedSlot->CommandType;
 
-        // In Performance Mode the icon hook is disabled, so hotbar icons show the
-        // BASE action (no combo or dance-step swap). Mirror the button actually
-        // pressed by matching raw CommandId — otherwise the pulse jumps to
-        // whichever slot holds the resolved action (e.g. a separate Reverse
-        // Cascade or dance-step button), landing on the wrong slot.
-        if (type == RaptureHotbarModule.HotbarSlotType.Action &&
-            Service.Configuration.PerformanceMode)
-            return TryPulse(hotbarModule, type, a3, a4,
-                byCommandId: true, pressedSlot->CommandId);
-
-        // Otherwise the icon hook makes hotbar icons reflect the resolved combo,
-        // so pulse the lowest visible copy that shows that resolved action.
-        var pressedResolved = GameAdjusted(type, pressedSlot->CommandId);
-        return TryPulse(hotbarModule, type, a3, a4,
-            byCommandId: false, pressedResolved);
+        // Mirror the button the user actually pressed by matching its raw
+        // CommandId. We deliberately do NOT match by the resolved/adjusted action:
+        // doing so jumps the pulse to whichever slot happens to hold the resolved
+        // action (a separate Reverse Cascade button, or the Standard Step button
+        // when a dance step resolves onto Cascade/Fountain), landing the highlight
+        // on a slot the user never touched. CommandId is stable across combos,
+        // procs, and dance-step swaps in BOTH Performance and normal mode, so the
+        // pulse always lands on a visible copy of the pressed button.
+        return TryPulse(hotbarModule, pressedSlot->CommandType, a3, a4,
+            pressedSlot->CommandId);
     }
 
-    // Pulse the lowest-numbered VISIBLE bar slot that matches — by raw CommandId
-    // (byCommandId: true) or by game-adjusted action id. We DO NOT skip the
-    // pressed slot; if it's the lowest match we pulse it and suppress the game's
-    // default pulse, so there's exactly one highlight per press. Non-visible bars
-    // (collapsed, off-screen, hidden by HUD layout) are skipped so the pulse
-    // never lands somewhere the user can't see. Returns true when a pulse is
-    // issued.
+    // Pulse the lowest-numbered VISIBLE bar slot that holds the same button
+    // (matched by CommandType + raw CommandId). We DO NOT skip the pressed slot;
+    // if it's the lowest match we pulse it and suppress the game's default pulse,
+    // so there's exactly one highlight per press. Non-visible bars (collapsed,
+    // off-screen, hidden by HUD layout) are skipped so the pulse never lands
+    // somewhere the user can't see. Returns true when a pulse is issued.
     private static bool TryPulse(
         RaptureHotbarModule* hotbarModule,
         RaptureHotbarModule.HotbarSlotType type,
-        ulong a3, int a4, bool byCommandId, uint target)
+        ulong a3, int a4, uint target)
     {
         foreach (var barName in AllActionBars)
         {
@@ -131,10 +118,7 @@ internal static unsafe class ActionPressMirroring
                 if (barSlot->CommandType != type)
                     continue;
 
-                var match = byCommandId
-                    ? barSlot->CommandId == target
-                    : GameAdjusted(type, barSlot->CommandId) == target;
-                if (match)
+                if (barSlot->CommandId == target)
                 {
                     _pulseHook!.Original(bar, i, a3, a4);
                     return true;
