@@ -3,7 +3,6 @@
 using System;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -97,38 +96,6 @@ internal static unsafe class ActionPressMirroring
         return resolved;
     }
 
-    // Dance-step actions: Standard Step (15997), Technical Step (15998),
-    // and the four dance steps shared by both finishers (15999-16002:
-    // Emboite, Entrechat, Jete, Pirouette). Checked as both the raw
-    // CommandId (button's base action) and the resolved id (after
-    // GameAdjusted + WrathCombo combos).
-    private static readonly uint[] DanceStepActions =
-    [
-        15997, 15998, 15999, 16000, 16001, 16002,
-    ];
-
-    // Status effect IDs for the player-side "currently dancing" buffs.
-    // While either is active the mirror short-circuits entirely — pulse
-    // stays on the pressed button, regardless of what the resolved action
-    // looks like (WrathCombo's ActionReplacer can rewrite the resolved id
-    // back to Cascade or the ST follow-up, so checking action ids alone
-    // misses cases mid-dance).
-    private const uint StandardStepStatus = 1818;
-    private const uint TechnicalStepStatus = 1819;
-
-    private static bool IsDancing()
-    {
-        var player = Player.Object;
-        if (player == null) return false;
-        foreach (var status in player.StatusList)
-        {
-            if (status.StatusId == StandardStepStatus
-                || status.StatusId == TechnicalStepStatus)
-                return true;
-        }
-        return false;
-    }
-
     // Find the lowest-numbered VISIBLE bar that holds a copy of the
     // resolved action. We DO NOT skip the pressed slot — if the pressed bar
     // is itself the lowest match, we pulse it manually and suppress the
@@ -148,12 +115,6 @@ internal static unsafe class ActionPressMirroring
 
         var pressedResolved = ResolveActionId(type, pressedSlot->CommandId);
 
-        if (IsDancing()) return false;
-        if (type == RaptureHotbarModule.HotbarSlotType.Action
-            && (Array.IndexOf(DanceStepActions, pressedSlot->CommandId) >= 0
-                || Array.IndexOf(DanceStepActions, pressedResolved) >= 0))
-            return false;
-
         foreach (var barName in AllActionBars)
         {
             nint barPtr = Svc.GameGui.GetAddonByName(barName, 1);
@@ -172,7 +133,7 @@ internal static unsafe class ActionPressMirroring
                 if (barSlot->CommandType != type)
                     continue;
 
-                if (GameAdjusted(type, barSlot->CommandId) == pressedResolved)
+                if (ResolveActionId(type, barSlot->CommandId) == pressedResolved)
                 {
                     _pulseHook!.Original(bar, i, a3, a4);
                     return true;

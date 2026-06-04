@@ -6,7 +6,7 @@
   "Punchline": "Job rotation toggles + KBM press mirror.",
   "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle.",
   "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
-  "Changelog": "v1.0.5.5: add Next Action Tracker — a movable window showing the current job's ST + AoE next action and burst armed/held state (/mytweak tracker); excludes itself from screen capture when detached. v1.0.5.4: Performance Mode now fully disables the hotbar icon-swap hook so icons stay native (real perf gain); combos still resolve on button press. v1.0.5.3: add /tweak slash for silent master toggle, silence all burst hold/resume chat echoes.",
+  "Changelog": "v1.0.5.6: action-press mirror no longer suppresses Dancer steps — presses now pulse their host slots (Cascade/Reverse Cascade/Fountain/Fountain Fall); mirror matching also works under Performance Mode. v1.0.5.5: add Next Action Tracker — a movable window showing the current job's ST + AoE next action and burst armed/held state (/mytweak tracker); excludes itself from screen capture when detached. v1.0.5.4: Performance Mode now fully disables the hotbar icon-swap hook so icons stay native (real perf gain); combos still resolve on button press.",
   "Tags": [
     "qol",
     "combos",
