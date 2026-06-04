@@ -1,3 +1,4 @@
+using ECommons.ExcelServices;
 using ECommons.GameHelpers;
 using ECommons.Throttlers;
 using WrathCombo.API.Enum;
@@ -68,18 +69,26 @@ internal static class ActionResolution
             || ActionReplacer.FilteredForPvP != CustomComboFunctions.InPvP())
             Service.ActionReplacer?.UpdateFilteredCombos();
 
-        // FilteredCombos is now restricted to the current job + PvP status and
-        // ordered by preset priority.
+        // FilteredCombos is scoped to the current job + PvP status, but only by
+        // ROLE: because every preset's JobInfo.Role is derived from its job,
+        // FilteredCombos also contains the OTHER jobs that share the player's role
+        // (e.g. Bard and Machinist while on Dancer). That's harmless for the icon
+        // hook — those combos never match the player's presses — but the tracker
+        // picks the first enabled combo, so we must restrict to the player's own
+        // job or it shows another job's skill.
         var combos = ActionReplacer.FilteredCombos;
         if (combos is null) return false;
 
+        var job = Player.Job.GetUpgradedJob();
+
         // The base action this target type starts from (the first enabled combo
-        // that declares one, e.g. Cascade for ST).
+        // for THIS job that declares one, e.g. Cascade for ST).
         uint baseAction = 0;
         foreach (var combo in combos)
         {
             var data = combo.Preset.Attributes();
             if (data is null) continue;
+            if (data.JobInfo?.Job != job) continue;
             if (data.TargetType != target) continue;
             if (data.ReplaceSkill is not { ActionIDs.Count: > 0 }) continue;
             if (!PresetStorage.IsEnabled(combo.Preset)) continue;
@@ -97,6 +106,7 @@ internal static class ActionResolution
         resolved = baseAction;
         foreach (var combo in combos)
         {
+            if (combo.Preset.Attributes()?.JobInfo?.Job != job) continue;
             try
             {
                 if (combo.TryInvoke(baseAction, out var r) && r != 0)
