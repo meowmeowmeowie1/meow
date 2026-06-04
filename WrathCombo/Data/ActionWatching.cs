@@ -429,12 +429,18 @@ public static class ActionWatching
                 if (Service.Configuration.PerformanceMode &&
                     global::WrathCombo.Core.ActionReplacer.FilteredCombos is not null)
                 {
+                    var baseAction = actionId;
                     foreach (var combo in global::WrathCombo.Core.ActionReplacer.FilteredCombos)
                         if (combo.TryInvoke(actionId, out var resolved))
                         {
                             actionId = resolved;
                             break;
                         }
+
+                    // Record what this slot's base action actually fired, so the
+                    // action-press mirror can pulse the right button without
+                    // re-resolving (and racing) the rotation at pulse time.
+                    Service.ActionReplacer.PerfModeResolvedFor[baseAction] = actionId;
                 }
 
                 var disablingReplacingTemp = mode == ActionManager.UseActionMode.Queue;

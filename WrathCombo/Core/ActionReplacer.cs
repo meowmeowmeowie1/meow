@@ -38,6 +38,16 @@ internal sealed class ActionReplacer : IDisposable
     public readonly Dictionary<uint, uint> LastActionInvokeFor = [];
 
     /// <summary>
+    ///     In Performance Mode the hotbar icons aren't swapped, so when an action is
+    ///     actually used we record what its slot's base action resolved to (base
+    ///     action ID -> resolved action ID). The action-press mirror reads this to
+    ///     pulse the button the rotation actually fired, instead of re-resolving the
+    ///     combo at pulse time (which races the rotation's state and drifts).
+    ///     Populated by <c>ActionWatching.UseActionDetour</c>.
+    /// </summary>
+    public readonly Dictionary<uint, uint> PerfModeResolvedFor = [];
+
+    /// <summary>
     ///     Critical for the hook, do not remove or modify.
     /// </summary>
     // ReSharper disable once FieldCanBeMadeReadOnly.Local
