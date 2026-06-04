@@ -6,7 +6,7 @@
   "Punchline": "Job rotation toggles + KBM press mirror.",
   "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle.",
   "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
-  "Changelog": "v1.0.5.9: remove the old on-screen status overlay (the clickable O/O master + burst symbols) — burst state now lives in the Next Action Tracker; master/burst still toggle via /mytweak disable|enable and /mytweak burst. v1.0.5.8: Dancer dance-step presses mirror under Performance Mode. v1.0.5.7: hotfix reverting the 1.0.5.6 change that broke action pulses. v1.0.5.5: add Next Action Tracker window (/mytweak tracker).",
+  "Changelog": "v1.0.5.10: fix mirror landing on the wrong slot under Performance Mode — with the icon hook off, hotbar icons show the base action, so the mirror now pulses copies of the button you actually pressed (by CommandId) instead of jumping to whatever slot holds the resolved action (e.g. a separate Reverse Cascade or dance-step button). v1.0.5.9: remove the old on-screen status overlay. v1.0.5.8: Dancer dance-step presses mirror under Performance Mode. v1.0.5.5: add Next Action Tracker window (/mytweak tracker).",
   "Tags": [
     "qol",
     "combos",
