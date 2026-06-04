@@ -7,6 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using WrathCombo.Core;
 using WrathCombo.Services;
 
 #endregion
@@ -84,6 +85,36 @@ internal static unsafe class ActionPressMirroring
             ? ActionManager.Instance()->GetAdjustedActionId(id)
             : id;
 
+    // Resolve an action through the current job's combos, the same pure call the
+    // icon hook uses to display combos every frame (TryInvoke self-filters by job
+    // and has no side effects). The pulse fires as the button is pressed — BEFORE
+    // ActionWatching.UseActionDetour resolves the real cast — so resolving here
+    // gives the action that is about to be cast. Returns the resolved action, or
+    // the input unchanged if no combo applies.
+    private static uint ResolveThroughCombos(uint actionId)
+    {
+        ActionReplacer.EnsureFilteredCombosCurrent();
+
+        var combos = ActionReplacer.FilteredCombos;
+        if (combos is null)
+            return actionId;
+
+        foreach (var combo in combos)
+        {
+            try
+            {
+                if (combo.TryInvoke(actionId, out var r) && r != 0)
+                    return r;
+            }
+            catch
+            {
+                // Ignore a misbehaving combo and keep checking the rest.
+            }
+        }
+
+        return actionId;
+    }
+
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
@@ -94,23 +125,20 @@ internal static unsafe class ActionPressMirroring
 
         // What action should light up? By default it's the pressed button's own
         // adjusted action. But in Performance Mode the icon hook is off, so the
-        // hotbar shows base icons and the pressed GCD doesn't reveal what Wrath
-        // actually cast. Use the resolution that ActionWatching.UseActionDetour
-        // recorded for this slot's base action AT THE MOMENT OF THE REAL CAST, so
-        // the pulse follows the action the rotation truly fired (next combo step,
-        // proc, dance step, Saber Dance, ...) onto whatever button holds it. We do
-        // NOT re-resolve the combo here: doing that evaluates the rotation against
-        // the state at pulse time, which has already advanced past the action that
-        // was just used, so the highlight drifts onto the wrong button. In normal
-        // mode the icon hook already swaps the pressed button to the resolved
-        // action, so its own adjusted action is already correct.
+        // hotbar shows base icons and the pressed GCD doesn't reveal what Wrath is
+        // about to cast. Resolve the press through the combos so the pulse follows
+        // the action the rotation will actually fire (next combo step, proc, dance
+        // step, Saber Dance, ...) onto whatever button holds it. In normal mode the
+        // icon hook already swaps the pressed button to the resolved action, so its
+        // own adjusted action is already correct.
         var target = GameAdjusted(type, commandId);
         if (type == RaptureHotbarModule.HotbarSlotType.Action &&
-            Service.Configuration.PerformanceMode &&
-            Service.ActionReplacer is { } replacer &&
-            replacer.PerfModeResolvedFor.TryGetValue(commandId, out var resolved) &&
-            resolved != 0)
-            target = resolved;
+            Service.Configuration.PerformanceMode)
+        {
+            var resolved = ResolveThroughCombos(commandId);
+            if (resolved != 0)
+                target = resolved;
+        }
 
         // Pass 1: pulse the lowest visible slot whose adjusted action matches the
         // target action.

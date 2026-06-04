@@ -64,10 +64,7 @@ internal static class ActionResolution
         // hook normally rebuilds it, but that hook is disabled in Performance Mode,
         // so without this the tracker would keep resolving the PREVIOUS job's
         // combos after a job change (showing another job's actions).
-        if (ActionReplacer.FilteredCombos is null
-            || ActionReplacer.FilteredForJob != Player.Job
-            || ActionReplacer.FilteredForPvP != CustomComboFunctions.InPvP())
-            Service.ActionReplacer?.UpdateFilteredCombos();
+        ActionReplacer.EnsureFilteredCombosCurrent();
 
         // FilteredCombos is scoped to the current job + PvP status, but only by
         // ROLE: because every preset's JobInfo.Role is derived from its job,
