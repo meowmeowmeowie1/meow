@@ -247,6 +247,16 @@ internal sealed class ActionReplacer : IDisposable
 
     public static IEnumerable<CustomCombo>? FilteredCombos;
 
+    /// <summary>
+    ///     The job and PvP state <see cref="FilteredCombos" /> was last built for,
+    ///     so consumers (e.g. the Next Action tracker) can detect a stale set and
+    ///     rebuild it. Needed because the icon hook that normally refreshes the set
+    ///     is disabled in Performance Mode.
+    /// </summary>
+    public static Job? FilteredForJob { get; private set; }
+
+    public static bool FilteredForPvP { get; private set; }
+
     public void UpdateFilteredCombos()
     {
         var playerJob = Player.Job;
@@ -265,6 +275,9 @@ internal sealed class ActionReplacer : IDisposable
                 role.MatchesPlayerJob())
                 || presetData.JobInfo.Job == upgradedJob;
         });
+
+        FilteredForJob = playerJob;
+        FilteredForPvP = CustomComboFunctions.InPvP();
 
         var filteredCombos = FilteredCombos as CustomCombo[] ?? FilteredCombos.ToArray();
 
