@@ -133,7 +133,7 @@ internal static unsafe class ActionPressMirroring
                 if (barSlot->CommandType != type)
                     continue;
 
-                if (ResolveActionId(type, barSlot->CommandId) == pressedResolved)
+                if (GameAdjusted(type, barSlot->CommandId) == pressedResolved)
                 {
                     _pulseHook!.Original(bar, i, a3, a4);
                     return true;
