@@ -7,6 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using WrathCombo.Core;
 using WrathCombo.Services;
 
 #endregion
@@ -84,20 +85,68 @@ internal static unsafe class ActionPressMirroring
             ? ActionManager.Instance()->GetAdjustedActionId(id)
             : id;
 
+    // The Dancer step actions (Emboite/Entrechat/Jete/Pirouette). Standard Step
+    // (15997) and Technical Step (15998) both natively adjust to one of these
+    // while a dance is in progress.
+    private static bool IsDanceStep(uint id) =>
+        id is 15999 or 16000 or 16001 or 16002;
+
+    // Resolve an action through the current job's combos the same way a button
+    // press does in Performance Mode (the icon hook is off, so we ask the combos
+    // directly). Returns the action the press would actually perform — e.g. the
+    // current dance step when Wrath is dancing for the player.
+    private static uint ResolveThroughCombos(uint actionId)
+    {
+        var combos = ActionReplacer.FilteredCombos;
+        if (combos is null)
+            return actionId;
+
+        foreach (var combo in combos)
+        {
+            try
+            {
+                if (combo.TryInvoke(actionId, out var r) && r != 0)
+                    return r;
+            }
+            catch
+            {
+                // Ignore a misbehaving combo and keep checking the rest.
+            }
+        }
+
+        return actionId;
+    }
+
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
         var hotbarModule = RaptureHotbarModule.Instance();
         var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
         var type = pressedSlot->CommandType;
+        var commandId = pressedSlot->CommandId;
+
+        // Performance Mode + "Wrath does the steps": the icon hook is off, so the
+        // pressed GCD button still shows its base icon. Resolve the press through
+        // the combos; if it becomes a dance step, pulse the button that natively
+        // shows that step (the Standard/Technical Step slot), so the highlight
+        // follows the dance instead of staying on the GCD you pressed. We do this
+        // ONLY for dance steps, so normal combo/proc resolutions never drag the
+        // pulse onto a different slot.
+        if (type == RaptureHotbarModule.HotbarSlotType.Action &&
+            Service.Configuration.PerformanceMode)
+        {
+            var danced = ResolveThroughCombos(commandId);
+            if (IsDanceStep(danced) &&
+                TryPulse(hotbarModule, type, a3, a4, byCommandId: false, danced))
+                return true;
+        }
 
         // Pass 1: pulse the lowest visible slot whose ADJUSTED action matches the
-        // pressed slot's adjusted action. This is what makes each Dancer dance
-        // step light up its own button: the step button's native adjustment is the
-        // current step, so the highlight follows the dance. It does NOT chase
-        // combo/proc resolutions, so a Cascade press never jumps to a separate
-        // Fountain/Reverse Cascade slot.
-        var pressedResolved = GameAdjusted(type, pressedSlot->CommandId);
+        // pressed slot's adjusted action. In normal mode the icon hook makes this
+        // the button currently displaying the resolved action; in Performance Mode
+        // it's the native adjustment. It does NOT chase combo/proc resolutions, so
+        // a Cascade press never jumps to a separate Fountain/Reverse Cascade slot.
+        var pressedResolved = GameAdjusted(type, commandId);
         if (TryPulse(hotbarModule, type, a3, a4,
                 byCommandId: false, pressedResolved))
             return true;
@@ -105,7 +154,7 @@ internal static unsafe class ActionPressMirroring
         // Pass 2 (fallback): if nothing matched by adjusted action, pulse the
         // lowest visible copy of the same raw button, so a press always mirrors.
         return TryPulse(hotbarModule, type, a3, a4,
-            byCommandId: true, pressedSlot->CommandId);
+            byCommandId: true, commandId);
     }
 
     // Pulse the lowest-numbered VISIBLE bar slot that matches — by raw CommandId
