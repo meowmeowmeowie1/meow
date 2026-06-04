@@ -85,16 +85,10 @@ internal static unsafe class ActionPressMirroring
             ? ActionManager.Instance()->GetAdjustedActionId(id)
             : id;
 
-    // The Dancer step actions (Emboite/Entrechat/Jete/Pirouette). Standard Step
-    // (15997) and Technical Step (15998) both natively adjust to one of these
-    // while a dance is in progress.
-    private static bool IsDanceStep(uint id) =>
-        id is 15999 or 16000 or 16001 or 16002;
-
     // Resolve an action through the current job's combos the same way a button
     // press does in Performance Mode (the icon hook is off, so we ask the combos
-    // directly). Returns the action the press would actually perform — e.g. the
-    // current dance step when Wrath is dancing for the player.
+    // directly). Returns the action the press would ACTUALLY perform right now —
+    // the next combo step, an upgrade, a proc, the current dance step, etc.
     private static uint ResolveThroughCombos(uint actionId)
     {
         var combos = ActionReplacer.FilteredCombos;
@@ -125,34 +119,33 @@ internal static unsafe class ActionPressMirroring
         var type = pressedSlot->CommandType;
         var commandId = pressedSlot->CommandId;
 
-        // Performance Mode + "Wrath does the steps": the icon hook is off, so the
-        // pressed GCD button still shows its base icon. Resolve the press through
-        // the combos; if it becomes a dance step, pulse the button that natively
-        // shows that step (the Standard/Technical Step slot), so the highlight
-        // follows the dance instead of staying on the GCD you pressed. We do this
-        // ONLY for dance steps, so normal combo/proc resolutions never drag the
-        // pulse onto a different slot.
+        // What action should light up? By default it's the pressed button's own
+        // adjusted action. But in Performance Mode the icon hook is off, so the
+        // hotbar shows base icons and the pressed GCD doesn't reveal what Wrath is
+        // about to cast. Resolve the press through the combos so the pulse follows
+        // the REAL action — the next combo step, a proc, a dance step, Saber
+        // Dance, ... — onto whatever button holds it, instead of always lighting
+        // the key you pressed (e.g. Cascade pulsing when the rotation is not
+        // Cascade). In normal mode the icon hook already swaps the pressed button
+        // to the resolved action, so its own adjusted action is already correct.
+        var target = GameAdjusted(type, commandId);
         if (type == RaptureHotbarModule.HotbarSlotType.Action &&
             Service.Configuration.PerformanceMode)
         {
-            var danced = ResolveThroughCombos(commandId);
-            if (IsDanceStep(danced) &&
-                TryPulse(hotbarModule, type, a3, a4, byCommandId: false, danced))
-                return true;
+            var resolved = ResolveThroughCombos(commandId);
+            if (resolved != 0)
+                target = resolved;
         }
 
-        // Pass 1: pulse the lowest visible slot whose ADJUSTED action matches the
-        // pressed slot's adjusted action. In normal mode the icon hook makes this
-        // the button currently displaying the resolved action; in Performance Mode
-        // it's the native adjustment. It does NOT chase combo/proc resolutions, so
-        // a Cascade press never jumps to a separate Fountain/Reverse Cascade slot.
-        var pressedResolved = GameAdjusted(type, commandId);
+        // Pass 1: pulse the lowest visible slot whose adjusted action matches the
+        // target action.
         if (TryPulse(hotbarModule, type, a3, a4,
-                byCommandId: false, pressedResolved))
+                byCommandId: false, target))
             return true;
 
-        // Pass 2 (fallback): if nothing matched by adjusted action, pulse the
-        // lowest visible copy of the same raw button, so a press always mirrors.
+        // Pass 2 (fallback): the resolved action isn't on any visible bar, so pulse
+        // the lowest visible copy of the raw button the user pressed — a press
+        // always mirrors somewhere visible.
         return TryPulse(hotbarModule, type, a3, a4,
             byCommandId: true, commandId);
     }
