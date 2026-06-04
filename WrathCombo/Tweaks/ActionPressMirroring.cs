@@ -3,6 +3,7 @@
 using System;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -71,34 +72,52 @@ internal static unsafe class ActionPressMirroring
         _pulseHook!.Original(ab, slotIndex, a3, a4);
     }
 
+    // The game's NATIVE adjustment for an action slot. In Performance Mode our
+    // icon-swap hook is disabled, so this returns the game's own adjustment — for
+    // a Dancer mid-dance that's the CURRENT dance step (Emboite/Entrechat/…), and
+    // for upgrade tiers the upgraded action. Crucially it does NOT apply Wrath's
+    // combo resolution, so it never reports a proc/combo-step (Reverse Cascade,
+    // Fountain) that the user didn't visibly press. In normal mode the hook is on,
+    // so this matches whatever icon the hotbar is actually displaying.
+    private static uint GameAdjusted(RaptureHotbarModule.HotbarSlotType type, uint id) =>
+        type == RaptureHotbarModule.HotbarSlotType.Action
+            ? ActionManager.Instance()->GetAdjustedActionId(id)
+            : id;
+
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
         var hotbarModule = RaptureHotbarModule.Instance();
         var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
+        var type = pressedSlot->CommandType;
 
-        // Mirror the button the user actually pressed by matching its raw
-        // CommandId. We deliberately do NOT match by the resolved/adjusted action:
-        // doing so jumps the pulse to whichever slot happens to hold the resolved
-        // action (a separate Reverse Cascade button, or the Standard Step button
-        // when a dance step resolves onto Cascade/Fountain), landing the highlight
-        // on a slot the user never touched. CommandId is stable across combos,
-        // procs, and dance-step swaps in BOTH Performance and normal mode, so the
-        // pulse always lands on a visible copy of the pressed button.
-        return TryPulse(hotbarModule, pressedSlot->CommandType, a3, a4,
-            pressedSlot->CommandId);
+        // Pass 1: pulse the lowest visible slot whose ADJUSTED action matches the
+        // pressed slot's adjusted action. This is what makes each Dancer dance
+        // step light up its own button: the step button's native adjustment is the
+        // current step, so the highlight follows the dance. It does NOT chase
+        // combo/proc resolutions, so a Cascade press never jumps to a separate
+        // Fountain/Reverse Cascade slot.
+        var pressedResolved = GameAdjusted(type, pressedSlot->CommandId);
+        if (TryPulse(hotbarModule, type, a3, a4,
+                byCommandId: false, pressedResolved))
+            return true;
+
+        // Pass 2 (fallback): if nothing matched by adjusted action, pulse the
+        // lowest visible copy of the same raw button, so a press always mirrors.
+        return TryPulse(hotbarModule, type, a3, a4,
+            byCommandId: true, pressedSlot->CommandId);
     }
 
-    // Pulse the lowest-numbered VISIBLE bar slot that holds the same button
-    // (matched by CommandType + raw CommandId). We DO NOT skip the pressed slot;
-    // if it's the lowest match we pulse it and suppress the game's default pulse,
-    // so there's exactly one highlight per press. Non-visible bars (collapsed,
-    // off-screen, hidden by HUD layout) are skipped so the pulse never lands
-    // somewhere the user can't see. Returns true when a pulse is issued.
+    // Pulse the lowest-numbered VISIBLE bar slot that matches — by raw CommandId
+    // (byCommandId: true) or by the game's native adjusted action. We DO NOT skip
+    // the pressed slot; if it's the lowest match we pulse it and suppress the
+    // game's default pulse, so there's exactly one highlight per press. Non-visible
+    // bars (collapsed, off-screen, hidden by HUD layout) are skipped so the pulse
+    // never lands somewhere the user can't see. Returns true when a pulse is issued.
     private static bool TryPulse(
         RaptureHotbarModule* hotbarModule,
         RaptureHotbarModule.HotbarSlotType type,
-        ulong a3, int a4, uint target)
+        ulong a3, int a4, bool byCommandId, uint target)
     {
         foreach (var barName in AllActionBars)
         {
@@ -118,7 +137,10 @@ internal static unsafe class ActionPressMirroring
                 if (barSlot->CommandType != type)
                     continue;
 
-                if (barSlot->CommandId == target)
+                var match = byCommandId
+                    ? barSlot->CommandId == target
+                    : GameAdjusted(type, barSlot->CommandId) == target;
+                if (match)
                 {
                     _pulseHook!.Original(bar, i, a3, a4);
                     return true;
