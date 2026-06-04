@@ -105,9 +105,7 @@ internal static class ActionResolution
     ///     <c>null</c> = no player, or no burst presets defined for the job.
     /// </summary>
     /// <remarks>
-    ///     Shared read used by both <see cref="Window.StatusOverlay" /> and
-    ///     <see cref="Window.NextActionTracker" /> so the burst-map logic isn't
-    ///     duplicated.
+    ///     Read by <see cref="Window.NextActionTracker" /> to show burst state.
     /// </remarks>
     internal static bool? IsBurstHeld()
     {
