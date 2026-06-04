@@ -20,11 +20,27 @@ public partial class Configuration
             Save();
         }
 
-        // Checks if action replacing is not in line with the setting
-        if (ActionChanging && !Service.ActionReplacer.getActionHook.IsEnabled)
-            Service.ActionReplacer.getActionHook.Enable();
-        if (!ActionChanging && Service.ActionReplacer.getActionHook.IsEnabled)
-            Service.ActionReplacer.getActionHook.Disable();
+        // Bring the icon-swap hook in line with the current settings.
+        Service.ActionReplacer.ApplyActionChangingHookState();
+    }
+
+    internal void SetPerformanceMode(bool? newValue = null)
+    {
+        if (newValue is not null && newValue != PerformanceMode)
+        {
+            PerformanceMode = newValue.Value;
+            Save();
+        }
+
+        // The icon-swap hook is about to be turned off; make sure the combo list
+        // exists so presses can still be resolved by the UseAction hook.
+        if (PerformanceMode &&
+            ActionReplacer.FilteredCombos is null &&
+            ECommons.GameHelpers.Player.Available)
+            Service.ActionReplacer.UpdateFilteredCombos();
+
+        // Disable (or re-enable) the icon-swap hook to match Performance Mode.
+        Service.ActionReplacer.ApplyActionChangingHookState();
     }
 
     #region Saving

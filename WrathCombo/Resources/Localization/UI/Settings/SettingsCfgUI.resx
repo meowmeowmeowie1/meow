@@ -467,6 +467,12 @@ This ensures that the target used to check HP% threshold logic for healing actio
   <data name="PerformanceMode_helpMark" xml:space="preserve">
     <value>This mode will disable actions being changed on your hotbar, but will still continue to work in the background as you press your buttons.</value>
   </data>
+  <data name="PerformanceMode_recommendedValue" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="PerformanceMode_defaultValue" xml:space="preserve">
+    <value>Off</value>
+  </data>
   <data name="DuplicateActionPresses_Name" xml:space="preserve">
     <value>Duplicate Action Presses Between Hotbars</value>
   </data>
