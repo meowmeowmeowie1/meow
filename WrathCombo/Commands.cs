@@ -112,9 +112,6 @@ public partial class WrathCombo
             case "on":
                 HandleMasterToggle(argumentParts); break;
 
-            case "overlay":
-                HandleOverlayToggle(argumentParts); break;
-
             case "tracker":
                 HandleNextTrackerToggle(argumentParts); break;
 
@@ -742,28 +739,6 @@ public partial class WrathCombo
         DuoLog.Warning("Please do not play Classes with other people, " +
                        "it is objectively worse in every way, and you will lack " +
                        "a significant amount of functionality anyway.");
-    }
-
-    /// <summary>
-    ///     Handles the burst control command, toggling, holding, or resuming all burst presets for the current job.
-    /// </summary>
-    /// <param name="argument">
-    ///     The subcommand: <c>hold</c>, <c>resume</c>, or blank to toggle based on current state.
-    /// </param>
-    private void HandleOverlayToggle(string[] argument)
-    {
-        var sub = argument.Length > 1 ? argument[1] : "";
-        var hide = sub switch
-        {
-            "hide" or "off" => true,
-            "show" or "on" => false,
-            _ => !Service.Configuration.StatusOverlayHidden,
-        };
-
-        Service.Configuration.StatusOverlayHidden = hide;
-        Service.Configuration.Save();
-
-        DuoLog.Information($"Status overlay {(hide ? "HIDDEN" : "VISIBLE")}");
     }
 
     /// <summary>

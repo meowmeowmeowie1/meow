@@ -96,25 +96,46 @@ internal static unsafe class ActionPressMirroring
         return resolved;
     }
 
-    // Find the lowest-numbered VISIBLE bar that holds a copy of the
-    // resolved action. We DO NOT skip the pressed slot — if the pressed bar
-    // is itself the lowest match, we pulse it manually and suppress the
-    // game's default pulse so there's exactly one highlight per press.
-    //
-    // Non-visible bars (collapsed, off-screen, hidden by HUD layout) are
-    // skipped so the pulse never lands somewhere the user can't see.
-    //
-    // Returns true if a pulse was issued, suppressing the default game
-    // pulse on the pressed button.
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
         var hotbarModule = RaptureHotbarModule.Instance();
         var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
         var type = pressedSlot->CommandType;
+        var pressedCommandId = pressedSlot->CommandId;
 
-        var pressedResolved = ResolveActionId(type, pressedSlot->CommandId);
+        var pressedResolved = ResolveActionId(type, pressedCommandId);
 
+        // Pass 1: pulse the lowest visible copy whose game-adjusted action
+        // matches the pressed action's resolved id. This is the normal path and
+        // the only one that hits while the icon hook is active.
+        if (TryPulse(hotbarModule, type, a3, a4, byCommandId: false, pressedResolved))
+            return true;
+
+        // Pass 2 (fallback): under Performance Mode the icon hook is disabled, so
+        // GameAdjusted returns the un-combo'd native id and a combo'd or
+        // dance-step press never matches above. Pulse the lowest visible copy of
+        // the *same button* instead, so every press still mirrors — including
+        // Dancer steps, which live on the Cascade/Fountain buttons.
+        if (type == RaptureHotbarModule.HotbarSlotType.Action &&
+            TryPulse(hotbarModule, type, a3, a4, byCommandId: true, pressedCommandId))
+            return true;
+
+        return false;
+    }
+
+    // Pulse the lowest-numbered VISIBLE bar slot that matches — by raw CommandId
+    // (byCommandId: true) or by game-adjusted action id. We DO NOT skip the
+    // pressed slot; if it's the lowest match we pulse it and suppress the game's
+    // default pulse, so there's exactly one highlight per press. Non-visible bars
+    // (collapsed, off-screen, hidden by HUD layout) are skipped so the pulse
+    // never lands somewhere the user can't see. Returns true when a pulse is
+    // issued.
+    private static bool TryPulse(
+        RaptureHotbarModule* hotbarModule,
+        RaptureHotbarModule.HotbarSlotType type,
+        ulong a3, int a4, bool byCommandId, uint target)
+    {
         foreach (var barName in AllActionBars)
         {
             nint barPtr = Svc.GameGui.GetAddonByName(barName, 1);
@@ -133,7 +154,10 @@ internal static unsafe class ActionPressMirroring
                 if (barSlot->CommandType != type)
                     continue;
 
-                if (ResolveActionId(type, barSlot->CommandId) == pressedResolved)
+                var match = byCommandId
+                    ? barSlot->CommandId == target
+                    : GameAdjusted(type, barSlot->CommandId) == target;
+                if (match)
                 {
                     _pulseHook!.Original(bar, i, a3, a4);
                     return true;
