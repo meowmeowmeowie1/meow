@@ -77,51 +77,28 @@ internal static unsafe class ActionPressMirroring
             ? ActionManager.Instance()->GetAdjustedActionId(id)
             : id;
 
-    private static uint ResolveActionId(RaptureHotbarModule.HotbarSlotType type, uint id)
-    {
-        var resolved = GameAdjusted(type, id);
-
-        if (type == RaptureHotbarModule.HotbarSlotType.Action &&
-            Service.Configuration.PerformanceMode &&
-            global::WrathCombo.Core.ActionReplacer.FilteredCombos is { } combos)
-        {
-            foreach (var combo in combos)
-                if (combo.TryInvoke(resolved, out var comboResolved))
-                {
-                    resolved = comboResolved;
-                    break;
-                }
-        }
-
-        return resolved;
-    }
-
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
         var hotbarModule = RaptureHotbarModule.Instance();
         var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
         var type = pressedSlot->CommandType;
-        var pressedCommandId = pressedSlot->CommandId;
 
-        var pressedResolved = ResolveActionId(type, pressedCommandId);
-
-        // Pass 1: pulse the lowest visible copy whose game-adjusted action
-        // matches the pressed action's resolved id. This is the normal path and
-        // the only one that hits while the icon hook is active.
-        if (TryPulse(hotbarModule, type, a3, a4, byCommandId: false, pressedResolved))
-            return true;
-
-        // Pass 2 (fallback): under Performance Mode the icon hook is disabled, so
-        // GameAdjusted returns the un-combo'd native id and a combo'd or
-        // dance-step press never matches above. Pulse the lowest visible copy of
-        // the *same button* instead, so every press still mirrors — including
-        // Dancer steps, which live on the Cascade/Fountain buttons.
+        // In Performance Mode the icon hook is disabled, so hotbar icons show the
+        // BASE action (no combo or dance-step swap). Mirror the button actually
+        // pressed by matching raw CommandId — otherwise the pulse jumps to
+        // whichever slot holds the resolved action (e.g. a separate Reverse
+        // Cascade or dance-step button), landing on the wrong slot.
         if (type == RaptureHotbarModule.HotbarSlotType.Action &&
-            TryPulse(hotbarModule, type, a3, a4, byCommandId: true, pressedCommandId))
-            return true;
+            Service.Configuration.PerformanceMode)
+            return TryPulse(hotbarModule, type, a3, a4,
+                byCommandId: true, pressedSlot->CommandId);
 
-        return false;
+        // Otherwise the icon hook makes hotbar icons reflect the resolved combo,
+        // so pulse the lowest visible copy that shows that resolved action.
+        var pressedResolved = GameAdjusted(type, pressedSlot->CommandId);
+        return TryPulse(hotbarModule, type, a3, a4,
+            byCommandId: false, pressedResolved);
     }
 
     // Pulse the lowest-numbered VISIBLE bar slot that matches — by raw CommandId

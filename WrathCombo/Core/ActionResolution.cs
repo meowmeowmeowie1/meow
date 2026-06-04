@@ -48,11 +48,10 @@ internal static class ActionResolution
     }
 
     /// <summary>
-    ///     Finds the enabled combo for the current job whose
-    ///     <see cref="ComboTargetTypeKeys" /> matches <paramref name="target" />,
-    ///     resolves its base action through that combo, and returns the action
-    ///     it would produce right now. Falls back to the base action when the
-    ///     combo doesn't change it.
+    ///     Finds the base action for the current job's combo of the given
+    ///     <see cref="ComboTargetTypeKeys" /> (e.g. Cascade for ST, Windmill for
+    ///     AoE), then resolves it through the full combo chain the same way a
+    ///     button press does, and returns the action it would produce right now.
     /// </summary>
     private static bool Resolve(ComboTargetTypeKeys target, out uint resolved)
     {
@@ -60,11 +59,13 @@ internal static class ActionResolution
         if (Player.Object is null) return false;
 
         // FilteredCombos is already restricted to the current job + PvP status
-        // and ordered by preset priority, so the first enabled match is the
-        // job's active rotation combo.
+        // and ordered by preset priority.
         var combos = ActionReplacer.FilteredCombos;
         if (combos is null) return false;
 
+        // The base action this target type starts from (the first enabled combo
+        // that declares one, e.g. Cascade for ST).
+        uint baseAction = 0;
         foreach (var combo in combos)
         {
             var data = combo.Preset.Attributes();
@@ -73,22 +74,34 @@ internal static class ActionResolution
             if (data.ReplaceSkill is not { ActionIDs.Count: > 0 }) continue;
             if (!PresetStorage.IsEnabled(combo.Preset)) continue;
 
-            var baseAction = data.ReplaceSkill.ActionIDs[0];
+            baseAction = data.ReplaceSkill.ActionIDs[0];
+            break;
+        }
+        if (baseAction == 0) return false;
+
+        // Resolve it through the WHOLE combo chain exactly like a real press
+        // (see ActionWatching.UseActionDetour's Performance-Mode block): the
+        // first combo that actually changes the action wins. Invoking only the
+        // single target-typed combo (as before) missed procs/combo-steps handled
+        // by other presets, leaving the tracker stuck on the base action.
+        resolved = baseAction;
+        foreach (var combo in combos)
+        {
             try
             {
-                resolved = combo.TryInvoke(baseAction, out var r) && r != 0
-                    ? r
-                    : baseAction;
+                if (combo.TryInvoke(baseAction, out var r) && r != 0)
+                {
+                    resolved = r;
+                    break;
+                }
             }
             catch
             {
-                resolved = baseAction;
+                // Ignore a misbehaving combo and keep checking the rest.
             }
-
-            return true;
         }
 
-        return false;
+        return true;
     }
 
     internal static string ActionName(uint id) =>
