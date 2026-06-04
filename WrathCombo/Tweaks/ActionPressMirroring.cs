@@ -7,7 +7,6 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using WrathCombo.Core;
 using WrathCombo.Services;
 
 #endregion
@@ -85,35 +84,13 @@ internal static unsafe class ActionPressMirroring
             ? ActionManager.Instance()->GetAdjustedActionId(id)
             : id;
 
-    // Resolve an action through the current job's combos, the same pure call the
-    // icon hook uses to display combos every frame (TryInvoke self-filters by job
-    // and has no side effects). The pulse fires as the button is pressed — BEFORE
-    // ActionWatching.UseActionDetour resolves the real cast — so resolving here
-    // gives the action that is about to be cast. Returns the resolved action, or
-    // the input unchanged if no combo applies.
-    private static uint ResolveThroughCombos(uint actionId)
-    {
-        ActionReplacer.EnsureFilteredCombosCurrent();
-
-        var combos = ActionReplacer.FilteredCombos;
-        if (combos is null)
-            return actionId;
-
-        foreach (var combo in combos)
-        {
-            try
-            {
-                if (combo.TryInvoke(actionId, out var r) && r != 0)
-                    return r;
-            }
-            catch
-            {
-                // Ignore a misbehaving combo and keep checking the rest.
-            }
-        }
-
-        return actionId;
-    }
+    // The animation parameters from the most recent native pulse, reused when we
+    // emit a cast-time pulse (which has no pulse of its own to copy them from).
+    private static ulong _lastA3;
+    private static int _lastA4;
+    // The raw action of the last Performance-Mode press we suppressed, used as the
+    // fallback target when the cast-time resolved action isn't on a visible bar.
+    private static uint _lastPressedCommandId;
 
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
@@ -123,34 +100,66 @@ internal static unsafe class ActionPressMirroring
         var type = pressedSlot->CommandType;
         var commandId = pressedSlot->CommandId;
 
-        // What action should light up? By default it's the pressed button's own
-        // adjusted action. But in Performance Mode the icon hook is off, so the
-        // hotbar shows base icons and the pressed GCD doesn't reveal what Wrath is
-        // about to cast. Resolve the press through the combos so the pulse follows
-        // the action the rotation will actually fire (next combo step, proc, dance
-        // step, Saber Dance, ...) onto whatever button holds it. In normal mode the
-        // icon hook already swaps the pressed button to the resolved action, so its
-        // own adjusted action is already correct.
-        var target = GameAdjusted(type, commandId);
+        // Performance Mode: the action that actually fires is only known when the
+        // cast is committed. Combos can resolve differently at press time than at
+        // GCD roll — while queueing during animation lock the press-time state is
+        // mid-GCD and resolves to the BASE action, even though the real cast at the
+        // end of the GCD resolves correctly. Re-resolving here therefore drifts the
+        // highlight onto the base button the longer you play. So we DON'T pulse at
+        // press time: suppress the game's press flash and let
+        // ActionWatching.SendActionDetour drive the highlight via PulseResolved when
+        // the action is actually sent (with the final, correct resolution).
         if (type == RaptureHotbarModule.HotbarSlotType.Action &&
             Service.Configuration.PerformanceMode)
         {
-            var resolved = ResolveThroughCombos(commandId);
-            if (resolved != 0)
-                target = resolved;
+            _lastA3 = a3;
+            _lastA4 = a4;
+            _lastPressedCommandId = commandId;
+            return true;
         }
 
-        // Pass 1: pulse the lowest visible slot whose adjusted action matches the
-        // target action.
-        if (TryPulse(hotbarModule, type, a3, a4,
-                byCommandId: false, target))
+        // Normal mode (icon hook on) or a non-action slot: the pressed button
+        // already shows the resolved icon, so mirror immediately — match the lowest
+        // visible slot by adjusted action, with a raw-CommandId fallback.
+        var target = GameAdjusted(type, commandId);
+        if (TryPulse(hotbarModule, type, a3, a4, byCommandId: false, target))
             return true;
 
-        // Pass 2 (fallback): the resolved action isn't on any visible bar, so pulse
-        // the lowest visible copy of the raw button the user pressed — a press
-        // always mirrors somewhere visible.
-        return TryPulse(hotbarModule, type, a3, a4,
-            byCommandId: true, commandId);
+        return TryPulse(hotbarModule, type, a3, a4, byCommandId: true, commandId);
+    }
+
+    /// <summary>
+    ///     Pulse the button that holds the action that was actually cast. Called
+    ///     from <c>ActionWatching.SendActionDetour</c> at the moment the action is
+    ///     sent in Performance Mode, so the highlight reflects the final resolved
+    ///     action (not the press-time guess). Falls back to the pressed button when
+    ///     the cast action isn't on a visible bar.
+    /// </summary>
+    internal static void PulseResolved(uint resolvedActionId)
+    {
+        if (!Service.Configuration.DuplicateActionPresses
+            || Service.Configuration.MasterDisabled
+            || !Service.Configuration.PerformanceMode
+            || _pulseHook is null)
+            return;
+
+        try
+        {
+            var hotbarModule = RaptureHotbarModule.Instance();
+            const RaptureHotbarModule.HotbarSlotType action =
+                RaptureHotbarModule.HotbarSlotType.Action;
+
+            if (TryPulse(hotbarModule, action, _lastA3, _lastA4,
+                    byCommandId: false, resolvedActionId))
+                return;
+
+            TryPulse(hotbarModule, action, _lastA3, _lastA4,
+                byCommandId: true, _lastPressedCommandId);
+        }
+        catch (Exception ex)
+        {
+            Svc.Log.Error(ex, "[MyTweak] ActionPressMirroring.PulseResolved failed");
+        }
     }
 
     // Pulse the lowest-numbered VISIBLE bar slot that matches — by raw CommandId

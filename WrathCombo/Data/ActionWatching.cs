@@ -309,6 +309,16 @@ public static class ActionWatching
             {
                 OnActionSend?.Invoke();
 
+                // Performance Mode: mirror the press onto the button that holds the
+                // action actually being sent (the final resolved action), now that
+                // the rotation has committed to it. Resolving at press time is
+                // unreliable while queueing during animation lock, so the highlight
+                // is driven from here, the true cast.
+                if (Service.Configuration.PerformanceMode
+                    && Service.Configuration.DuplicateActionPresses
+                    && !Service.Configuration.MasterDisabled)
+                    WrathCombo.Tweaks.ActionPressMirroring.PulseResolved(actionId);
+
                 if (!InCombat())
                 {
                     CombatActions.Clear();
