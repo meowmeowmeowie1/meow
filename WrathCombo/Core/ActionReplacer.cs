@@ -38,16 +38,6 @@ internal sealed class ActionReplacer : IDisposable
     public readonly Dictionary<uint, uint> LastActionInvokeFor = [];
 
     /// <summary>
-    ///     In Performance Mode the hotbar icons aren't swapped, so when an action is
-    ///     actually used we record what its slot's base action resolved to (base
-    ///     action ID -> resolved action ID). The action-press mirror reads this to
-    ///     pulse the button the rotation actually fired, instead of re-resolving the
-    ///     combo at pulse time (which races the rotation's state and drifts).
-    ///     Populated by <c>ActionWatching.UseActionDetour</c>.
-    /// </summary>
-    public readonly Dictionary<uint, uint> PerfModeResolvedFor = [];
-
-    /// <summary>
     ///     Critical for the hook, do not remove or modify.
     /// </summary>
     // ReSharper disable once FieldCanBeMadeReadOnly.Local
@@ -266,6 +256,21 @@ internal sealed class ActionReplacer : IDisposable
     public static Job? FilteredForJob { get; private set; }
 
     public static bool FilteredForPvP { get; private set; }
+
+    /// <summary>
+    ///     Rebuild <see cref="FilteredCombos" /> if it is stale for the current job /
+    ///     PvP state. The icon hook normally keeps it fresh, but it is disabled in
+    ///     Performance Mode, so consumers that resolve combos themselves (the Next
+    ///     Action tracker and the action-press mirror) must call this first or they
+    ///     resolve through the PREVIOUS job's set after a job/zone change.
+    /// </summary>
+    public static void EnsureFilteredCombosCurrent()
+    {
+        if (FilteredCombos is null
+            || FilteredForJob != Player.Job
+            || FilteredForPvP != CustomComboFunctions.InPvP())
+            Service.ActionReplacer?.UpdateFilteredCombos();
+    }
 
     public void UpdateFilteredCombos()
     {
