@@ -44,12 +44,19 @@ Setup
        python3 spotify_organizer.py                 # dry run, shows the plan
        python3 spotify_organizer.py --apply         # create the new playlists
        python3 spotify_organizer.py --apply --delete-old   # also remove old ones
+       python3 spotify_organizer.py --export        # write CSVs to import elsewhere
+
+Note: new ("development mode") Spotify apps are also blocked from CREATING
+playlists (POST returns 403). If --apply hits that wall, use --export to write
+one CSV per bucket and import them with a free tool like Soundiiz or
+TuneMyMusic, which are allowed to create playlists.
 
 The first run opens a browser so you can log in and approve. A token is
 cached in .spotify_cache so later runs don't prompt again.
 """
 
 import argparse
+import csv
 import json
 import os
 import sys
@@ -444,6 +451,53 @@ def fetch_audio_features(sp, track_uris):
     return features
 
 
+def _safe_filename(name):
+    for ch in '\\/:*?"<>|':
+        name = name.replace(ch, "-")
+    return name.strip()
+
+
+def export_buckets(tracks, groups, out_dir, min_tracks):
+    """Write one CSV per bucket (Title, Artist, Spotify URL) for import tools."""
+    os.makedirs(out_dir, exist_ok=True)
+    written = 0
+    for prefix, buckets in groups:
+        for name in sorted(buckets):
+            uris = buckets[name]
+            if len(uris) < min_tracks:
+                continue
+            path = os.path.join(out_dir, _safe_filename(f"{prefix}{name}") + ".csv")
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                w = csv.writer(f)
+                w.writerow(["Title", "Artist", "Album", "Spotify URL"])
+                for uri in uris:
+                    rec = tracks.get(uri, {})
+                    tid = uri.split(":")[-1]
+                    w.writerow([rec.get("title", ""), rec.get("artist", ""), "",
+                                f"https://open.spotify.com/track/{tid}"])
+            written += 1
+            print(f"  wrote {path}  ({len(uris)} tracks)")
+    readme = os.path.join(out_dir, "HOW_TO_IMPORT.txt")
+    with open(readme, "w", encoding="utf-8") as f:
+        f.write(
+            "How to turn these CSV files into Spotify playlists\n"
+            "==================================================\n\n"
+            "Spotify blocks new personal apps from creating playlists, so use a\n"
+            "free import service instead (each CSV becomes one playlist):\n\n"
+            "Option A - Soundiiz (https://soundiiz.com):\n"
+            "  1. Sign up (free) and connect your Spotify account.\n"
+            "  2. Tools -> Import -> Upload a file -> pick one CSV.\n"
+            "  3. Map columns: Title, Artist (Spotify URL helps it match exactly).\n"
+            "  4. Choose Spotify as the destination. Repeat per file.\n"
+            "     (Free tier imports one playlist at a time.)\n\n"
+            "Option B - TuneMyMusic (https://tunemymusic.com):\n"
+            "  1. 'Let's Start' -> Load from a file -> select a CSV.\n"
+            "  2. Destination: Spotify -> sign in -> transfer.\n\n"
+            "The 'Spotify URL' column makes matching exact, so you won't get wrong\n"
+            "versions of songs.\n")
+    print(f"\nWrote {written} playlist files to '{out_dir}/'. See HOW_TO_IMPORT.txt.")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Reorganize Spotify playlists by genre and mood.")
     ap.add_argument("--apply", action="store_true", help="Actually create the new playlists.")
@@ -451,6 +505,9 @@ def main():
                     help="After creating, delete (unfollow) your old playlists. Requires --apply.")
     ap.add_argument("--decades", action="store_true",
                     help="Also create Era/decade playlists (reliable even when genres are blocked).")
+    ap.add_argument("--export", action="store_true",
+                    help="Write each bucket to a CSV file (for import via Soundiiz/TuneMyMusic) "
+                         "instead of creating playlists. Use when Spotify blocks playlist writes.")
     ap.add_argument("--public", action="store_true", help="Make new playlists public (default: private).")
     ap.add_argument("--min-tracks", type=int, default=3,
                     help="Skip creating a bucket playlist with fewer than this many tracks (default 3).")
@@ -583,10 +640,22 @@ def main():
             print("NOTE: Last.fm matched few of your tracks. The ERA grouping (--decades)\n"
                   "      is still reliable.\n")
 
+    # Build the list of bucket groups we'll act on.
+    groups = [(GENRE_PREFIX, genre_buckets), (MOOD_PREFIX, mood_buckets)]
+    if args.decades:
+        groups.append((DECADE_PREFIX, decade_buckets))
+
+    # Export mode: write CSVs for an import tool instead of calling the API.
+    if args.export:
+        print("\nExporting buckets to CSV files...")
+        export_buckets(tracks, groups, "spotify_export", args.min_tracks)
+        return
+
     if not args.apply:
         print("DRY RUN -- nothing was changed.")
         print("  Re-run with --apply           to create Genre + Mood playlists")
         print("  Re-run with --apply --decades to also create Era playlists")
+        print("  Re-run with --export          to write CSV files for Soundiiz/TuneMyMusic")
         return
 
     # Create playlists.
@@ -604,14 +673,23 @@ def main():
                 sp.playlist_add_items(pl["id"], batch)
             print(f"  created '{prefix}{name}' with {len(uris)} tracks")
 
-    print("Creating genre playlists...")
-    create_bucket_playlists(GENRE_PREFIX, genre_buckets)
-    print("Creating mood playlists...")
-    create_bucket_playlists(MOOD_PREFIX, mood_buckets)
-    if args.decades:
-        print("Creating era/decade playlists...")
-        create_bucket_playlists(DECADE_PREFIX, decade_buckets)
-    print("\nDone creating playlists.\n")
+    try:
+        print("Creating genre playlists...")
+        create_bucket_playlists(GENRE_PREFIX, genre_buckets)
+        print("Creating mood playlists...")
+        create_bucket_playlists(MOOD_PREFIX, mood_buckets)
+        if args.decades:
+            print("Creating era/decade playlists...")
+            create_bucket_playlists(DECADE_PREFIX, decade_buckets)
+        print("\nDone creating playlists.\n")
+    except spotipy.SpotifyException as e:
+        if e.http_status == 403:
+            print("\n403 Forbidden: Spotify is blocking playlist creation for this app.")
+            print("This is the development-mode write restriction -- not fixable from here.")
+            print("Run the same command with --export instead of --apply to get CSV files")
+            print("you can import via Soundiiz or TuneMyMusic. Nothing was changed.\n")
+            return
+        raise
 
     # Optionally delete old playlists -- backed up + double confirmed.
     if args.delete_old:
