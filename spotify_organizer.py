@@ -33,6 +33,13 @@ Setup
        export SPOTIPY_CLIENT_ID=xxxxxxxx
        export SPOTIPY_CLIENT_SECRET=xxxxxxxx
        export SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
+
+   Genre + mood (recommended): brand-new Spotify apps are blocked from the
+   genre/audio-features endpoints, so this script gets genre + mood tags from
+   Last.fm instead. Get a free key at https://www.last.fm/api/account/create
+   and set:
+       export LASTFM_API_KEY=xxxxxxxx
+   Without it, the script falls back to Spotify's (often empty) genre data.
 4. Run:
        python3 spotify_organizer.py                 # dry run, shows the plan
        python3 spotify_organizer.py --apply         # create the new playlists
@@ -49,6 +56,11 @@ import sys
 import time
 from collections import defaultdict
 from datetime import datetime
+
+try:
+    import requests  # bundled as a dependency of spotipy
+except ImportError:
+    requests = None
 
 try:
     import spotipy
@@ -95,6 +107,12 @@ def decade_bucket(year):
 # We map any genre string containing a keyword to a broad bucket. First match
 # in this ordered list wins.
 GENRE_BUCKETS = [
+    # Specific / tag-driven buckets first so they win over broad ones.
+    ("K-Pop", ["k-pop", "kpop", "korean"]),
+    ("Anime / Soundtrack", ["anime", "soundtrack", "score", "vocaloid", "video game", "ost"]),
+    ("J-Pop / J-Rock", ["j-pop", "jpop", "j-rock", "jrock", "city pop"]),
+    ("Arabic / Middle Eastern", ["arabic", "arab", "khaleeji", "egyptian", "lebanese", "middle east", "tarab"]),
+    ("Lo-Fi / Chillhop", ["lo-fi", "lofi", "chillhop", "lo fi"]),
     ("Hip-Hop / Rap", ["hip hop", "hip-hop", "rap", "drill", "trap", "grime"]),
     ("Electronic", ["house", "techno", "edm", "electro", "dubstep", "trance",
                     "dnb", "drum and bass", "garage", "synthwave", "ambient",
@@ -133,8 +151,39 @@ def mood_from_features(feat):
         return "Chill / Mellow"
     return "Sad / Melancholy"
 
+# Mood detection from descriptive tags (e.g. Last.fm). First match wins.
+MOOD_TAGS = [
+    ("Chill / Mellow", ["chill", "chillout", "mellow", "relax", "calm", "smooth",
+                        "lo-fi", "lofi", "lounge", "ambient", "dreamy", "soft"]),
+    ("Sad / Melancholy", ["sad", "melancholy", "melancholic", "emotional", "heartbreak",
+                          "depressing", "moody", "somber", "lonely", "bittersweet"]),
+    ("Happy / Upbeat", ["happy", "upbeat", "feel good", "feelgood", "cheerful",
+                        "sunny", "uplifting", "joy", "fun"]),
+    ("Energetic / Hype", ["energetic", "hype", "epic", "powerful", "anthem",
+                         "workout", "driving", "banger", "high energy"]),
+    ("Party / Danceable", ["party", "dance", "club", "groovy", "funky", "summer"]),
+    ("Intense / Aggressive", ["aggressive", "angry", "intense", "heavy", "dark", "brutal"]),
+    ("Romantic", ["romantic", "love", "sensual", "sexy", "slow jam"]),
+    ("Focus / Calm", ["instrumental", "study", "focus", "background", "meditation", "peaceful"]),
+]
+
+
+def mood_from_tags(tags):
+    """Pick a mood bucket from a list of descriptive tag strings, or None."""
+    joined = " ".join(tags).lower()
+    for bucket, keywords in MOOD_TAGS:
+        for kw in keywords:
+            if kw in joined:
+                return bucket
+    return None
+
 # Fallback when audio-features is unavailable: infer a coarse mood from genre.
 GENRE_TO_MOOD = {
+    "K-Pop": "Happy / Upbeat",
+    "J-Pop / J-Rock": "Happy / Upbeat",
+    "Anime / Soundtrack": "Energetic / Hype",
+    "Arabic / Middle Eastern": "Chill / Mellow",
+    "Lo-Fi / Chillhop": "Chill / Mellow",
     "Hip-Hop / Rap": "Energetic / Hype",
     "Electronic": "Party / Danceable",
     "R&B / Soul": "Chill / Mellow",
@@ -186,35 +235,46 @@ def fetch_owned_playlists(sp, me_id):
     return playlists
 
 
+def track_record(t):
+    """Build our per-track record (uri, artist ids, year, names) from a track."""
+    artists = t.get("artists") or []
+    return {
+        "uri": t["uri"],
+        "artists": [a["id"] for a in artists if a.get("id")],
+        "year": parse_year(t),
+        "artist": (artists[0].get("name") if artists else "") or "",
+        "title": t.get("name") or "",
+    }
+
+
 def fetch_playlist_tracks(sp, playlist_id):
-    """Yield (track_uri, primary_artist_ids, year) for every real track."""
-    fields = "items(track(uri,is_local,type,artists(id),album(release_date))),next"
+    """Yield a track record for every real track in a playlist."""
+    fields = ("items(track(uri,is_local,type,name,artists(id,name),"
+              "album(release_date))),next")
     results = sp.playlist_items(playlist_id, fields=fields, additional_types=["track"], limit=100)
     while results:
         for item in results["items"]:
             t = item.get("track")
             if not t or t.get("is_local") or t.get("type") != "track" or not t.get("uri"):
                 continue
-            artist_ids = [a["id"] for a in t.get("artists", []) if a.get("id")]
-            yield t["uri"], artist_ids, parse_year(t)
+            yield track_record(t)
         results = sp.next(results) if results.get("next") else None
 
 
 def fetch_liked_tracks(sp):
-    """Yield (track_uri, primary_artist_ids, year) for every Liked Song."""
+    """Yield a track record for every Liked Song."""
     results = sp.current_user_saved_tracks(limit=50)
     while results:
         for item in results["items"]:
             t = item.get("track")
             if not t or t.get("is_local") or not t.get("uri"):
                 continue
-            artist_ids = [a["id"] for a in t.get("artists", []) if a.get("id")]
-            yield t["uri"], artist_ids, parse_year(t)
+            yield track_record(t)
         results = sp.next(results) if results.get("next") else None
 
 
 def fetch_most_played(sp):
-    """Yield (track_uri, primary_artist_ids, year) for top + recently-played."""
+    """Yield a track record for top + recently-played tracks."""
     seen = set()
 
     def emit(track):
@@ -223,8 +283,7 @@ def fetch_most_played(sp):
         if track["uri"] in seen:
             return
         seen.add(track["uri"])
-        artist_ids = [a["id"] for a in track.get("artists", []) if a.get("id")]
-        return track["uri"], artist_ids, parse_year(track)
+        return track_record(track)
 
     for term in ("short_term", "medium_term", "long_term"):
         results = sp.current_user_top_tracks(limit=50, time_range=term)
@@ -284,6 +343,87 @@ def fetch_top_artist_genres(sp):
     return genres
 
 
+# --- Last.fm: genre + mood tags by name (bypasses Spotify's catalog block) ---
+LASTFM_URL = "https://ws.audioscrobbler.com/2.0/"
+LASTFM_CACHE = ".lastfm_cache.json"
+
+
+def _lastfm_call(api_key, method, params):
+    """One Last.fm API call. Returns parsed JSON dict, or {} on any failure."""
+    q = {"method": method, "api_key": api_key, "format": "json",
+         "autocorrect": "1", **params}
+    try:
+        r = requests.get(LASTFM_URL, params=q, timeout=20)
+        if r.status_code == 200:
+            return r.json()
+    except Exception:
+        pass
+    return {}
+
+
+def _tags_from_response(data):
+    """Pull tag-name strings out of a Last.fm toptags response."""
+    tags = (data.get("toptags") or {}).get("tag") or []
+    if isinstance(tags, dict):
+        tags = [tags]
+    return [t.get("name", "").lower() for t in tags if t.get("name")]
+
+
+def fetch_lastfm_tags(api_key, records):
+    """Return {uri: [tags]} for every track, using Last.fm track/artist tags.
+
+    Tries track-level tags first (best for mood), falls back to artist-level.
+    Results are cached on disk so re-runs don't re-hit the API.
+    """
+    if requests is None:
+        sys.exit("The 'requests' library is needed for Last.fm. Run: pip install requests")
+
+    try:
+        with open(LASTFM_CACHE) as f:
+            cache = json.load(f)
+    except (OSError, ValueError):
+        cache = {}
+
+    out = {}
+    artist_cache = {}
+    total = len(records)
+    new_calls = 0
+    for i, rec in enumerate(records, 1):
+        artist, title = rec["artist"], rec["title"]
+        key = f"{artist}\t{title}".lower()
+        if key in cache:
+            out[rec["uri"]] = cache[key]
+            continue
+        if not artist:
+            out[rec["uri"]] = cache[key] = []
+            continue
+
+        tags = []
+        if title:
+            tags = _tags_from_response(
+                _lastfm_call(api_key, "track.getTopTags", {"artist": artist, "track": title}))
+            new_calls += 1
+        if not tags:  # fall back to the artist's tags
+            akey = artist.lower()
+            if akey not in artist_cache:
+                artist_cache[akey] = _tags_from_response(
+                    _lastfm_call(api_key, "artist.getTopTags", {"artist": artist}))
+                new_calls += 1
+            tags = artist_cache[akey]
+
+        tags = tags[:12]
+        out[rec["uri"]] = cache[key] = tags
+        if new_calls and new_calls % 25 == 0:
+            print(f"    ...tagged {i}/{total} tracks")
+            with open(LASTFM_CACHE, "w") as f:  # checkpoint progress
+                json.dump(cache, f)
+        time.sleep(0.18)  # stay polite (~5 req/s)
+
+    with open(LASTFM_CACHE, "w") as f:
+        json.dump(cache, f)
+    return out
+
+
 def fetch_audio_features(sp, track_uris):
     """Return {track_uri: features}. Empty dict if the endpoint is unavailable."""
     track_ids = [u.split(":")[-1] for u in track_uris]
@@ -328,18 +468,14 @@ def main():
     playlists = fetch_owned_playlists(sp, me_id)
     print(f"  Found {len(playlists)} playlists you own.\n")
 
-    # Collect unique tracks, artist ids, and release year per track.
-    track_artists = {}        # uri -> [artist_ids]
-    track_year = {}           # uri -> year or None
+    # Collect unique track records (uri -> {artists, year, artist, title}).
+    tracks = {}
     all_artist_ids = set()
 
-    def add(uri, artist_ids, year):
-        if uri not in track_artists:
-            track_artists[uri] = artist_ids
-            track_year[uri] = year
-            all_artist_ids.update(artist_ids)
-            return True
-        return False
+    def add(rec):
+        if rec["uri"] not in tracks:
+            tracks[rec["uri"]] = rec
+            all_artist_ids.update(rec["artists"])
 
     for pl in playlists:
         name = pl.get("name") or "(untitled)"
@@ -347,68 +483,84 @@ def main():
             continue  # don't re-ingest playlists we made on a previous run
         total = (pl.get("tracks") or {}).get("total", "?")
         print(f"  - {name} ({total} tracks)")
-        for uri, artist_ids, year in fetch_playlist_tracks(sp, pl["id"]):
-            add(uri, artist_ids, year)
-    in_playlists = len(track_artists)
+        for rec in fetch_playlist_tracks(sp, pl["id"]):
+            add(rec)
+    in_playlists = len(tracks)
 
     print("\nReading your Liked Songs...")
-    for uri, artist_ids, year in fetch_liked_tracks(sp):
-        add(uri, artist_ids, year)
-    print(f"  Library now at {len(track_artists)} unique tracks "
-          f"(+{len(track_artists) - in_playlists} new from Liked Songs).")
-    after_liked = len(track_artists)
+    for rec in fetch_liked_tracks(sp):
+        add(rec)
+    print(f"  Library now at {len(tracks)} unique tracks "
+          f"(+{len(tracks) - in_playlists} new from Liked Songs).")
+    after_liked = len(tracks)
 
     print("Reading your most-played tracks (not already counted)...")
-    for uri, artist_ids, year in fetch_most_played(sp):
-        add(uri, artist_ids, year)
-    print(f"  +{len(track_artists) - after_liked} heavily-played tracks that "
+    for rec in fetch_most_played(sp):
+        add(rec)
+    print(f"  +{len(tracks) - after_liked} heavily-played tracks that "
           "weren't in any playlist or your Liked Songs.")
 
-    print(f"\nCollected {len(track_artists)} unique tracks "
+    records = list(tracks.values())
+    print(f"\nCollected {len(records)} unique tracks "
           f"from {len(all_artist_ids)} artists.\n")
-
-    if not track_artists:
+    if not records:
         sys.exit("No tracks found to organize.")
 
-    # --- Genre lookup: catalog endpoint first, then your own top artists ----
-    print("Looking up artist genres...")
-    artist_genres = fetch_artist_genres(sp, all_artist_ids)
-    missing = [a for a in all_artist_ids if a not in artist_genres]
-    if missing:
-        print("  Supplementing from your top artists...")
-        for aid, g in fetch_top_artist_genres(sp).items():
-            artist_genres.setdefault(aid, g)
-    genre_coverage = sum(1 for a in all_artist_ids if artist_genres.get(a)) / max(len(all_artist_ids), 1)
-
-    print("Looking up audio features (for mood)...")
-    audio_features = fetch_audio_features(sp, list(track_artists.keys()))
-    use_features = bool(audio_features)
+    # --- Genre + mood source -------------------------------------------------
+    # Prefer Last.fm (works around Spotify's catalog block for new apps).
+    lastfm_key = os.environ.get("LASTFM_API_KEY")
+    track_tags = {}
+    artist_genres = {}
+    audio_features = {}
+    use_features = False
+    if lastfm_key:
+        print("Fetching genre + mood tags from Last.fm (cached after first run)...")
+        track_tags = fetch_lastfm_tags(lastfm_key, records)
+        coverage = sum(1 for r in records if track_tags.get(r["uri"])) / len(records)
+        source = "Last.fm"
+    else:
+        print("Looking up artist genres (Spotify)...")
+        artist_genres = fetch_artist_genres(sp, all_artist_ids)
+        if [a for a in all_artist_ids if a not in artist_genres]:
+            print("  Supplementing from your top artists...")
+            for aid, g in fetch_top_artist_genres(sp).items():
+                artist_genres.setdefault(aid, g)
+        coverage = sum(1 for a in all_artist_ids if artist_genres.get(a)) / max(len(all_artist_ids), 1)
+        print("Looking up audio features (for mood)...")
+        audio_features = fetch_audio_features(sp, list(tracks.keys()))
+        use_features = bool(audio_features)
+        source = "Spotify"
 
     # --- Capability report --------------------------------------------------
-    print("\n=== What your app is allowed to do ===")
-    print(f"  Genre tags:     {'available' if genre_coverage > 0 else 'BLOCKED'} "
-          f"({genre_coverage*100:.0f}% of artists tagged)")
-    print(f"  Audio features: {'available' if use_features else 'BLOCKED (mood inferred from genre)'}")
-    print(f"  Release years:  {sum(1 for y in track_year.values() if y)}/{len(track_year)} tracks dated\n")
+    print("\n=== Genre/mood data ===")
+    print(f"  Source:        {source}")
+    print(f"  Tag coverage:  {coverage*100:.0f}% of tracks classified")
+    if source == "Spotify":
+        print(f"  Audio features: {'available' if use_features else 'BLOCKED (mood from genre)'}")
+    print(f"  Release years:  {sum(1 for r in records if r['year'])}/{len(records)} tracks dated\n")
 
     # --- Bucketize ----------------------------------------------------------
     genre_buckets = defaultdict(list)
     mood_buckets = defaultdict(list)
     decade_buckets = defaultdict(list)
-    for uri, artist_ids in track_artists.items():
-        genres = []
-        for aid in artist_ids:
-            genres.extend(artist_genres.get(aid, []))
-        gbucket = bucket_for_genres(genres)
-        genre_buckets[gbucket].append(uri)
-
-        if use_features:
-            mbucket = mood_from_features(audio_features.get(uri)) or GENRE_TO_MOOD.get(gbucket, "Mixed")
+    for rec in records:
+        uri = rec["uri"]
+        if lastfm_key:
+            tags = track_tags.get(uri, [])
+            gbucket = bucket_for_genres(tags)
+            mbucket = mood_from_tags(tags) or GENRE_TO_MOOD.get(gbucket, "Mixed")
         else:
-            mbucket = GENRE_TO_MOOD.get(gbucket, "Mixed")
+            genres = []
+            for aid in rec["artists"]:
+                genres.extend(artist_genres.get(aid, []))
+            gbucket = bucket_for_genres(genres)
+            if use_features:
+                mbucket = mood_from_features(audio_features.get(uri)) or GENRE_TO_MOOD.get(gbucket, "Mixed")
+            else:
+                mbucket = GENRE_TO_MOOD.get(gbucket, "Mixed")
+        genre_buckets[gbucket].append(uri)
         mood_buckets[mbucket].append(uri)
-
-        decade_buckets[decade_bucket(track_year.get(uri))].append(uri)
+        decade_buckets[decade_bucket(rec["year"])].append(uri)
 
     # Show the plan.
     def show(title, buckets):
@@ -422,11 +574,14 @@ def main():
 
     # If genre data is mostly missing, genre & mood collapse into one bucket --
     # warn and point the user at the reliable era grouping.
-    weak_genre = genre_coverage < 0.25
-    if weak_genre:
-        print("NOTE: genre tags are mostly unavailable for your app, so the Genre/Mood\n"
-              "      split above is weak. The ERA grouping is reliable -- add --decades\n"
-              "      to create those, or see the chat for how to lift the genre block.\n")
+    if coverage < 0.25:
+        if not lastfm_key:
+            print("NOTE: Spotify gave almost no genre/mood data (normal for a new app).\n"
+                  "      Set LASTFM_API_KEY to get real genre + mood, or use --decades\n"
+                  "      for the reliable Era grouping.\n")
+        else:
+            print("NOTE: Last.fm matched few of your tracks. The ERA grouping (--decades)\n"
+                  "      is still reliable.\n")
 
     if not args.apply:
         print("DRY RUN -- nothing was changed.")
