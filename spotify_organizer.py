@@ -160,7 +160,7 @@ def fetch_owned_playlists(sp, me_id):
     results = sp.current_user_playlists(limit=50)
     while results:
         for pl in results["items"]:
-            if pl and pl["owner"]["id"] == me_id:
+            if pl and pl.get("owner", {}).get("id") == me_id and pl.get("id"):
                 playlists.append(pl)
         results = sp.next(results) if results.get("next") else None
     return playlists
@@ -278,9 +278,11 @@ def main():
     track_artists = {}        # uri -> [artist_ids]
     all_artist_ids = set()
     for pl in playlists:
-        if pl["name"].startswith(GENRE_PREFIX) or pl["name"].startswith(MOOD_PREFIX):
+        name = pl.get("name") or "(untitled)"
+        if name.startswith(GENRE_PREFIX) or name.startswith(MOOD_PREFIX):
             continue  # don't re-ingest playlists we made on a previous run
-        print(f"  - {pl['name']} ({pl['tracks']['total']} tracks)")
+        total = (pl.get("tracks") or {}).get("total", "?")
+        print(f"  - {name} ({total} tracks)")
         for uri, artist_ids in fetch_playlist_tracks(sp, pl["id"]):
             if uri not in track_artists:
                 track_artists[uri] = artist_ids
@@ -371,9 +373,10 @@ def main():
     # Optionally delete old playlists -- backed up + double confirmed.
     if args.delete_old:
         backup = f"playlists_backup_{datetime.now():%Y%m%d_%H%M%S}.json"
-        old = [{"name": p["name"], "id": p["id"], "tracks": p["tracks"]["total"]}
+        old = [{"name": p.get("name") or "(untitled)", "id": p["id"],
+                "tracks": (p.get("tracks") or {}).get("total", "?")}
                for p in playlists
-               if not (p["name"].startswith(GENRE_PREFIX) or p["name"].startswith(MOOD_PREFIX))]
+               if not (p.get("name") or "").startswith((GENRE_PREFIX, MOOD_PREFIX))]
         with open(backup, "w") as f:
             json.dump(old, f, indent=2)
         print(f"Backed up {len(old)} old playlists to {backup}")
