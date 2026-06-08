@@ -3,11 +3,11 @@
     "Author": "meowmeowmeowie1",
     "Name": "MyTweak",
     "InternalName": "MyTweak",
-    "AssemblyVersion": "1.0.5.21",
-    "TestingAssemblyVersion": "1.0.5.21",
+    "AssemblyVersion": "1.0.5.22",
+    "TestingAssemblyVersion": "1.0.5.22",
     "Punchline": "Job rotation toggles + KBM press mirror.",
     "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a movable Next Action tracker window (/mytweak tracker) showing the Single-Target and AoE actions your combos would produce right now, plus Burst ARMED/HELD for the current job. /mytweak burst hold uses per-job preset codes.",
-    "Changelog": "v1.0.5.21: the pulse flashes on EVERY press again (responsive, like vanilla) instead of only once at GCD roll. It resolves the rotation best-effort so it follows the cast action when it can; while tight-queueing it may briefly flash the base button, which is the accepted trade for an instant flash per press. (Upstream 1.0.4.8 combo updates from 1.0.5.20 are included.)",
+    "Changelog": "v1.0.5.22: performance fix - the press mirror was resolving your whole rotation every time the game flashed a hotbar slot (which can be many times a second), causing in-game lag. It now caches that lookup and only re-resolves ~10x/sec; the flash still fires on every press. (Flash-on-every-press from 1.0.5.21 and the upstream 1.0.4.8 combos are included.)",
     "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
@@ -20,9 +20,9 @@
       "pve",
       "pvp"
     ],
-    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.21/MyTweak.zip",
-    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.21/MyTweak.zip",
-    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.21/MyTweak.zip",
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.22/MyTweak.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.22/MyTweak.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.22/MyTweak.zip",
     "DownloadCount": 0
   }
 ]

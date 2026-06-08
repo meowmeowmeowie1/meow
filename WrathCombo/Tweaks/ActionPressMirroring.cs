@@ -1,8 +1,10 @@
 #region
 
 using System;
+using System.Collections.Generic;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -85,6 +87,26 @@ internal static unsafe class ActionPressMirroring
             ? ActionManager.Instance()->GetAdjustedActionId(id)
             : id;
 
+    // Last resolved action per pressed button, refreshed on a throttle. Resolving
+    // walks the whole combo set, and the game can fire PulseActionBarSlot many
+    // times a second (per animation frame, and per visible copy of a slot), so
+    // resolving on every pulse bogged the game down. Cache the result per button
+    // and only re-resolve ~10x/sec — the flash still fires on every pulse, only the
+    // (which-button) lookup is throttled, which is plenty to track the rotation.
+    private static readonly Dictionary<uint, uint> _resolveCache = new();
+
+    private static uint ResolveThroughCombosThrottled(uint commandId)
+    {
+        if (EzThrottler.Throttle("MyTweakMirrorResolve" + commandId, 100)
+            || !_resolveCache.TryGetValue(commandId, out var resolved))
+        {
+            resolved = ResolveThroughCombos(commandId);
+            _resolveCache[commandId] = resolved;
+        }
+
+        return resolved;
+    }
+
     // Resolve an action through the current job's combos — the same pure call the
     // icon hook uses to display combos every frame (TryInvoke self-filters by job
     // and has no side effects). Returns the action the press would fire right now,
@@ -133,7 +155,7 @@ internal static unsafe class ActionPressMirroring
         if (type == RaptureHotbarModule.HotbarSlotType.Action &&
             Service.Configuration.PerformanceMode)
         {
-            var resolved = ResolveThroughCombos(commandId);
+            var resolved = ResolveThroughCombosThrottled(commandId);
             if (resolved != 0)
                 target = resolved;
         }
