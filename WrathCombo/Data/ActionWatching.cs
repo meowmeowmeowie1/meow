@@ -317,7 +317,7 @@ public static class ActionWatching
                 if (Service.Configuration.PerformanceMode
                     && Service.Configuration.DuplicateActionPresses
                     && !Service.Configuration.MasterDisabled)
-                    WrathCombo.Tweaks.ActionPressMirroring.PulseResolved(actionId);
+                    global::WrathCombo.Tweaks.ActionPressMirroring.PulseResolved(actionId);
 
                 if (!InCombat())
                 {
