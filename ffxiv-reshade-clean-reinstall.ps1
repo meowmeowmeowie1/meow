@@ -1,6 +1,6 @@
 <#
 ================================================================================
-  FFXIV ReShade — Clean Reinstall Helper
+  FFXIV ReShade - Clean Reinstall Helper
   Target setup: ReShade (add-on) + Alive NEXT + version-matched iMMERSE / METEOR
                 + your Patreon iMMERSE Pro on top
 --------------------------------------------------------------------------------
@@ -9,21 +9,20 @@
     2. Backs up EVERYTHING reshade-related to a timestamped folder.
     3. Fully DELETES the shader graveyard (reshade-shaders / reshade-presets)
        so nothing old gets merged back in.
-    4. Optionally pulls FREE iMMERSE + METEOR straight from Marty's GitHub
-       (latest release) so versions match instead of inheriting GPosingway's pin.
+    4. Optionally pulls FREE iMMERSE + METEOR from Marty's GitHub (latest release)
+       so versions match instead of inheriting GPosingway's pin.
     5. Sets RESHADE_DEPTH_INPUT_IS_REVERSED = 1 in ReShade.ini (Dawntrail fix).
 
-  What it CANNOT do (manual — the script tells you exactly when):
+  What it CANNOT do (manual - the script tells you exactly when):
     - Run the ReShade installer GUI (pick d3d11/DXGI + Add-on support).
     - Download paid iMMERSE Pro from your Patreon.
     - Download Alive NEXT from Nexus (login-walled).
 
-  USAGE (open PowerShell, then):
-    cd to the folder with this file, then:
-      ./ffxiv-reshade-clean-reinstall.ps1                # interactive, safe
+  USAGE (PowerShell, in the folder with this file):
+      ./ffxiv-reshade-clean-reinstall.ps1                 # interactive, safe
       ./ffxiv-reshade-clean-reinstall.ps1 -GamePath "D:\FFXIV\game"
       ./ffxiv-reshade-clean-reinstall.ps1 -SkipMartyDownload   # back up + wipe only
-      ./ffxiv-reshade-clean-reinstall.ps1 -WhatIf         # dry run, deletes nothing
+      ./ffxiv-reshade-clean-reinstall.ps1 -WhatIf          # dry run, deletes nothing
 
   If you get an execution-policy error, run this once in the same window:
       Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
@@ -135,7 +134,6 @@ $reshadeItems = @(
     'ReShade_net.log',
     'ReShade.json',
     'ReShade64.json',
-    'ReShade.addon64',      # any loose add-ons (REST etc.)
     'GShade.ini',
     'gshade-shaders',
     'gshade-presets'
@@ -154,7 +152,7 @@ foreach ($item in $reshadeItems) {
         }
     }
 }
-# Also grab any *.addon / *.addon64 files dropped loose in \game\
+# Also grab any loose add-on files dropped in \game\
 Get-ChildItem -Path $game -Filter '*.addon*' -File -ErrorAction SilentlyContinue | ForEach-Object {
     $foundAny = $true
     if ($PSCmdlet.ShouldProcess($_.FullName, "Copy to backup")) {
@@ -162,15 +160,16 @@ Get-ChildItem -Path $game -Filter '*.addon*' -File -ErrorAction SilentlyContinue
         Write-Ok "backed up: $($_.Name)"
     }
 }
-if (-not $foundAny) { Write-Warn2 "No existing ReShade files found — fresh box, nothing to back up." }
-else { Write-Ok "Backup complete. Keep this until the new install is confirmed working." }
+if (-not $foundAny) {
+    Write-Warn2 "No existing ReShade files found - fresh box, nothing to back up."
+} else {
+    Write-Ok "Backup complete. Keep this until the new install is confirmed working."
+}
 
 # -----------------------------------------------------------------------------
-# 3. Delete the graveyard (clean slate — NEVER merge old shaders)
+# 3. Delete the graveyard (clean slate - NEVER merge old shaders)
 # -----------------------------------------------------------------------------
 Write-Step "Removing old shaders/presets (clean slate)"
-# Delete the folders that cause the duplicate-attribute / not-initialized clashes.
-# Keep the dll + ini for now ONLY if you plan to reuse the injector; default = wipe folders.
 $wipeFolders = @('reshade-shaders','reshade-presets','gshade-shaders','gshade-presets')
 foreach ($f in $wipeFolders) {
     $target = Join-Path $game $f
@@ -181,11 +180,11 @@ foreach ($f in $wipeFolders) {
         }
     }
 }
-Write-Warn2 "Left the ReShade .dll/.ini in place. The installer (next step) will refresh them."
-Write-Warn2 "If you want a 100% bare reinstall, also delete dxgi.dll/d3d11.dll + ReShade.ini from your backup'd copies."
+Write-Warn2 "Left the ReShade .dll/.ini in place. The installer (next step) refreshes them."
+Write-Warn2 "For a 100% bare reinstall, also delete dxgi.dll/d3d11.dll + ReShade.ini by hand."
 
 # -----------------------------------------------------------------------------
-# 4. (Optional) Pull FREE iMMERSE + METEOR from Marty's GitHub — latest, matched
+# 4. (Optional) Pull FREE iMMERSE + METEOR from Marty's GitHub - latest, matched
 # -----------------------------------------------------------------------------
 function Get-LatestGithubZip {
     param([string]$Repo, [string]$OutDir)
@@ -197,7 +196,7 @@ function Get-LatestGithubZip {
         Write-Warn2 "Couldn't reach GitHub API for $Repo ($($_.Exception.Message)). Download manually."
         return $null
     }
-    # Prefer a zipball of the tagged release; fall back to first .zip asset.
+    # Prefer a zip asset; fall back to the source zipball of the tagged release.
     $asset = $rel.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1
     $url   = if ($asset) { $asset.browser_download_url } else { $rel.zipball_url }
     $name  = if ($asset) { $asset.name } else { "$($Repo.Split('/')[-1])_$($rel.tag_name).zip" }
@@ -212,7 +211,7 @@ if (-not $SkipMartyDownload) {
     $dl = Join-Path $BackupPath '_downloads'
     $null = New-Item -ItemType Directory -Force -Path $dl
     if ($PSCmdlet.ShouldProcess('GitHub', 'Download iMMERSE + METEOR')) {
-        # NOTE: confirm these repo slugs match Marty's current public repos before trusting blindly.
+        # NOTE: confirm these repo slugs match Marty's current public repos first.
         $repos = @('martymcmodding/iMMERSE', 'martymcmodding/METEOR')
         foreach ($r in $repos) {
             $zip = Get-LatestGithubZip -Repo $r -OutDir $dl
@@ -220,7 +219,7 @@ if (-not $SkipMartyDownload) {
         }
         Write-Warn2 "These are the FREE base shaders. Extract their Shaders\ + Textures\ into"
         Write-Warn2 "  $game\reshade-shaders\  AFTER ReShade + Alive NEXT are installed."
-        Write-Warn2 "If a repo slug 404'd, grab the green 'Code > Download ZIP' from Marty's GitHub by hand."
+        Write-Warn2 "If a repo slug 404'd, use the green 'Code > Download ZIP' on Marty's GitHub."
     }
 } else {
     Write-Warn2 "Skipping Marty downloads (-SkipMartyDownload)."
@@ -232,7 +231,7 @@ if (-not $SkipMartyDownload) {
 function Set-DepthReversed {
     param([string]$IniPath)
     if (-not (Test-Path $IniPath)) {
-        Write-Warn2 "ReShade.ini not present yet — apply the depth fix AFTER running the installer (see guide)."
+        Write-Warn2 "ReShade.ini not present yet - apply the depth fix AFTER the installer (see guide)."
         return
     }
     $lines = Get-Content $IniPath
@@ -241,8 +240,7 @@ function Set-DepthReversed {
         $lines = $lines -replace "($key)\s*=\s*\d", "`$1=1"
         Write-Ok "set $key=1"
     } else {
-        # Add it under [GENERAL] PreprocessorDefinitions if we can find that section.
-        Write-Warn2 "$key not found in ini — add it in-game: Settings > Edit global preprocessor definitions > $key = 1"
+        Write-Warn2 "$key not in ini - set it in-game: Settings > Edit global preprocessor definitions > $key = 1"
     }
     Set-Content -Path $IniPath -Value $lines -Encoding UTF8
 }
@@ -258,14 +256,14 @@ if ($PSCmdlet.ShouldProcess((Join-Path $game 'ReShade.ini'), "Set depth reversed
 Write-Step "Automated steps done. Now the manual ones (in ORDER):"
 Write-Todo "1. Run the ReShade setup .exe -> pick ffxiv_dx11.exe -> DirectX 10/11/12 ->"
 Write-Todo "   TICK 'Install ReShade with full add-on support'. Use ReShade 6.7.3 or newer."
-Write-Todo "2. Install the REST add-on (ReshadeEffectShaderToggler) and enable it in the Add-ons tab."
+Write-Todo "2. Install the REST add-on (ReshadeEffectShaderToggler), enable it in the Add-ons tab."
 Write-Todo "3. Install Alive NEXT: extract Alive_NEXT_WIP_xx.zip into  $game  (overwrite). Use the"
 Write-Todo "   experimental/RTGI build since you own iMMERSE Pro. It needs iMMERSE 2506+."
 Write-Todo "4. Drop FREE iMMERSE + METEOR (from $BackupPath\_downloads) into reshade-shaders\."
-Write-Todo "5. Drop your FRESH Patreon iMMERSE Pro on top LAST so Pro == base version (re-download it,"
-Write-Todo "   do NOT reuse the stale copy that threw 'duplicate attribute' errors)."
-Write-Todo "6. In-game: confirm RESHADE_DEPTH_INPUT_IS_REVERSED = 1, and put Launchpad/XIV_ImmPad at the"
-Write-Todo "   TOP of the shader/technique list. Then enable Alive NEXT preset."
+Write-Todo "5. Drop your FRESH Patreon iMMERSE Pro on top LAST so Pro == base version. Re-download it;"
+Write-Todo "   do NOT reuse the stale copy that threw 'duplicate attribute' errors."
+Write-Todo "6. In-game: confirm RESHADE_DEPTH_INPUT_IS_REVERSED = 1, put Launchpad/XIV_ImmPad at the"
+Write-Todo "   TOP of the technique list, then enable the Alive NEXT preset."
 
 Write-Host "`nBackup kept at: $BackupPath" -ForegroundColor Green
-Write-Host "Done. Don't merge anything from the backup back into reshade-shaders — that's what broke it.`n" -ForegroundColor Green
+Write-Host "Done. Do NOT merge anything from the backup back into reshade-shaders - that's what broke it.`n" -ForegroundColor Green
