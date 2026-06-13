@@ -1,0 +1,33 @@
+  Determining projects to restore...
+  Restored /home/runner/work/meow/meow/ECommons/ECommons/ECommons.csproj (in 684 ms).
+  Restored /home/runner/work/meow/meow/WrathCombo.API/WrathCombo.API.csproj (in 666 ms).
+  Restored /home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj (in 693 ms).
+  WrathCombo.API -> /home/runner/work/meow/meow/WrathCombo.API/bin/Release/WrathCombo.API.dll
+  Successfully created package '/home/runner/work/meow/meow/WrathCombo.API/nuget/WrathCombo.API.0.5.5.nupkg'.
+  Successfully created package '/home/runner/work/meow/meow/WrathCombo.API/nuget/WrathCombo.API.0.5.5.snupkg'.
+  ECommons -> /home/runner/work/meow/meow/ECommons/ECommons/bin/Release/ECommons.dll
+  The package ECommons.3.2.0.19 is missing a readme. Go to https://aka.ms/nuget/authoring-best-practices/readme to learn why package readmes are important.
+  Successfully created package '/home/runner/work/meow/meow/ECommons/ECommons/bin/Release/ECommons.3.2.0.19.nupkg'.
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(84,21): warning CS8618: Non-nullable property 'Name' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(85,21): warning CS8618: Non-nullable property 'HelpMark' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(86,21): warning CS8618: Non-nullable property 'RecommendedValue' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(87,21): warning CS8618: Non-nullable property 'DefaultValue' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Window/Functions/UserConfig.cs(52,22): warning CS0219: The variable 'inputChanged' is assigned but its value is never used [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Commands.cs(756,35): error CS0117: 'WrathCombo' does not contain a definition for 'Window' [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Services/IPC/Helper.cs(82,32): warning CS0219: The variable 'lower' is assigned but its value is never used [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Window/Functions/Setting.cs(21,12): warning CS8618: Non-nullable field 'CategoryName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+
+Build FAILED.
+
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(84,21): warning CS8618: Non-nullable property 'Name' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(85,21): warning CS8618: Non-nullable property 'HelpMark' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(86,21): warning CS8618: Non-nullable property 'RecommendedValue' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Attributes/SettingAttributes.cs(87,21): warning CS8618: Non-nullable property 'DefaultValue' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Window/Functions/UserConfig.cs(52,22): warning CS0219: The variable 'inputChanged' is assigned but its value is never used [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Services/IPC/Helper.cs(82,32): warning CS0219: The variable 'lower' is assigned but its value is never used [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Window/Functions/Setting.cs(21,12): warning CS8618: Non-nullable field 'CategoryName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+/home/runner/work/meow/meow/WrathCombo/Commands.cs(756,35): error CS0117: 'WrathCombo' does not contain a definition for 'Window' [/home/runner/work/meow/meow/WrathCombo/WrathCombo.csproj]
+    7 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:19.87
