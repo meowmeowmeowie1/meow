@@ -758,8 +758,6 @@ public partial class WrathCombo
 
         Service.Configuration.NextActionTrackerHidden = hide;
         Service.Configuration.Save();
-
-        DuoLog.Information($"Next-action tracker {(hide ? "HIDDEN" : "VISIBLE")}");
     }
 
     private void HandleMasterToggle(string[] argument)
