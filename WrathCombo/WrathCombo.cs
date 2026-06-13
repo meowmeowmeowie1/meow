@@ -188,6 +188,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
         }
 
         NextActionTracker = new NextActionTracker { IsOpen = true };
+        TrackerWebServer.Start();
         ws = new();
         ws.AddWindow(ConfigWindow);
         ws.AddWindow(_majorChangesWindow);
@@ -419,6 +420,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
         Service.ComboCache.Dispose();
         ActionWatching.Dispose();
         ActionPressMirroring.Dispose();
+        TrackerWebServer.Stop();
         CustomComboFunctions.TimerDispose();
         IPC.Dispose();
         MoveHook.Dispose();
