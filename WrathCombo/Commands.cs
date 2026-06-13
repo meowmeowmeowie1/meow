@@ -73,6 +73,7 @@ public partial class WrathCombo
             $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
             $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
+            $"{Command} tracker reset → Un-hide and re-center it if you lost it.\n" +
             $"{Command} debug → Dumps a debug log onto your desktop.\n" +
             $"{OldCommand} → Short alias, still works!");
         EzCmd.Add(OldCommand, OnCommand);
@@ -749,6 +750,19 @@ public partial class WrathCombo
     private void HandleNextTrackerToggle(string[] argument)
     {
         var sub = argument.Length > 1 ? argument[1] : "";
+
+        // Recovery: un-hide AND snap to the centre of the screen, in case it was
+        // hidden or dragged off-screen and can't be found.
+        if (sub is "reset" or "center" or "centre" or "find")
+        {
+            Service.Configuration.NextActionTrackerHidden = false;
+            Service.Configuration.Save();
+            NextActionTracker?.Recenter();
+            DuoLog.Information(
+                "Next-action tracker reset to the centre of your screen.");
+            return;
+        }
+
         var hide = sub switch
         {
             "hide" or "off" => true,

@@ -25,11 +25,11 @@ namespace WrathCombo.Window;
 /// </remarks>
 internal sealed class NextActionTracker : Dalamud.Interface.Windowing.Window
 {
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetWindowDisplayAffinity(nint hWnd, uint dwAffinity);
+    // Set by /mytweak tracker show to snap the window back to the centre of the
+    // screen on the next frame, so it can never be lost off-screen.
+    private bool _recenter;
 
-    private const uint WDA_EXCLUDEFROMCAPTURE = 0x11;
-    private static nint _affinityAppliedTo = nint.Zero;
+    public void Recenter() => _recenter = true;
 
     public NextActionTracker()
         : base("MyTweak — Next Action##NextActionTracker",
@@ -51,7 +51,13 @@ internal sealed class NextActionTracker : Dalamud.Interface.Windowing.Window
 
     public override void Draw()
     {
-        ApplyCaptureExclusionIfDetached();
+        if (_recenter)
+        {
+            _recenter = false;
+            var vp = ImGui.GetMainViewport();
+            ImGui.SetWindowPos(
+                vp.WorkPos + (vp.WorkSize - ImGui.GetWindowSize()) * 0.5f);
+        }
 
         ActionResolution.Refresh();
 
@@ -59,33 +65,6 @@ internal sealed class NextActionTracker : Dalamud.Interface.Windowing.Window
         DrawActionRow("AoE", ActionResolution.TryGetAoE(out var aoe), aoe);
         ImGui.Separator();
         DrawBurst();
-    }
-
-    // When this window has been dragged onto its own OS window (a non-main ImGui
-    // viewport), exclude that OS window from screen capture. Never applied to the
-    // main/in-game viewport (that would hide the whole game from capture).
-    private static unsafe void ApplyCaptureExclusionIfDetached()
-    {
-        try
-        {
-            var vp = ImGui.GetWindowViewport();
-            if (vp.ID == ImGui.GetMainViewport().ID)
-            {
-                _affinityAppliedTo = nint.Zero;
-                return;
-            }
-
-            var hwnd = (nint)vp.PlatformHandleRaw;
-            if (hwnd == nint.Zero || hwnd == _affinityAppliedTo)
-                return;
-
-            if (SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE))
-                _affinityAppliedTo = hwnd;
-        }
-        catch (Exception ex)
-        {
-            Svc.Log.Error(ex, "[MyTweak] tracker capture-exclusion failed");
-        }
     }
 
     private static void DrawActionRow(string label, bool has, uint actionId)
