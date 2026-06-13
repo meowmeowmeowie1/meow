@@ -73,7 +73,6 @@ public partial class WrathCombo
             $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
             $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
-            $"{Command} tracker url → Show the browser page URL (capture-safe).\n" +
             $"{Command} debug → Dumps a debug log onto your desktop.\n" +
             $"{OldCommand} → Short alias, still works!");
         EzCmd.Add(OldCommand, OnCommand);
@@ -750,16 +749,6 @@ public partial class WrathCombo
     private void HandleNextTrackerToggle(string[] argument)
     {
         var sub = argument.Length > 1 ? argument[1] : "";
-
-        if (sub is "url" or "web")
-        {
-            var port = global::WrathCombo.Window.TrackerWebServer.Port;
-            DuoLog.Information(port > 0
-                ? $"Tracker browser page: http://127.0.0.1:{port}"
-                : "Tracker browser page is not running.");
-            return;
-        }
-
         var hide = sub switch
         {
             "hide" or "off" => true,
