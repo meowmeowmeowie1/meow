@@ -34,6 +34,11 @@ internal static unsafe class ActionPressMirroring
         "_ActionDoubleCrossL", "_ActionDoubleCrossR", "_ActionBarEx",
     ];
 
+    // In-game "Hotbar 9" addon. Identified by NAME (not RaptureHotbarId) so we
+    // can't accidentally silence a different bar. Slots on this bar never pulse:
+    // not natively when pressed, and not as a mirror target for other bars.
+    private const string SilentBar = "_ActionBar08";
+
     internal static void Enable()
     {
         try
@@ -58,6 +63,12 @@ internal static unsafe class ActionPressMirroring
     private static void PulseActionBarSlotDetour(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
+        // Keep Hotbar 9 silent: swallow the pulse for any of its own slots so
+        // they never flash (mits, anti-knockback, food/pots, etc.). Matched by
+        // addon pointer so only that exact bar is affected.
+        if (Svc.GameGui.GetAddonByName(SilentBar, 1) == (nint)ab)
+            return;
+
         if (Service.Configuration.DuplicateActionPresses
             && !Service.Configuration.MasterDisabled)
         {
@@ -182,6 +193,9 @@ internal static unsafe class ActionPressMirroring
     {
         foreach (var barName in AllActionBars)
         {
+            if (barName == SilentBar) // Hotbar 9 never pulses.
+                continue;
+
             nint barPtr = Svc.GameGui.GetAddonByName(barName, 1);
             if (barPtr == nint.Zero)
                 continue;
