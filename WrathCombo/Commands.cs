@@ -753,7 +753,7 @@ public partial class WrathCombo
 
         if (sub is "url" or "web")
         {
-            var port = WrathCombo.Window.TrackerWebServer.Port;
+            var port = global::WrathCombo.Window.TrackerWebServer.Port;
             DuoLog.Information(port > 0
                 ? $"Tracker browser page: http://127.0.0.1:{port}"
                 : "Tracker browser page is not running.");
