@@ -34,6 +34,11 @@ internal static unsafe class ActionPressMirroring
         "_ActionDoubleCrossL", "_ActionDoubleCrossR", "_ActionBarEx",
     ];
 
+    // In-game "Hotbar 9" is the _ActionBar08 addon, which is RaptureHotbarId 8.
+    // Slots on this bar are kept silent: they never pulse — not natively when one
+    // of its own slots is pressed, and not as a mirror target for other bars.
+    private const uint SilentHotbarId = 8;
+
     internal static void Enable()
     {
         try
@@ -58,6 +63,11 @@ internal static unsafe class ActionPressMirroring
     private static void PulseActionBarSlotDetour(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
+        // Keep Hotbar 9 silent: swallow the pulse for any slot on that bar so it
+        // never flashes (e.g. items placed there).
+        if (ab->RaptureHotbarId == SilentHotbarId)
+            return;
+
         if (Service.Configuration.DuplicateActionPresses
             && !Service.Configuration.MasterDisabled)
         {
@@ -192,6 +202,9 @@ internal static unsafe class ActionPressMirroring
                 continue;
 
             var bar = (AddonActionBarBase*)barPtr;
+            if (bar->RaptureHotbarId == SilentHotbarId) // Hotbar 9 never pulses.
+                continue;
+
             for (var i = 0U; i < bar->SlotCount; i++)
             {
                 var barSlot = hotbarModule->GetSlotById(bar->RaptureHotbarId, i);
