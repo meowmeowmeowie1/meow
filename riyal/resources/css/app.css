@@ -1,0 +1,70 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views';
+
+/* Arabic + Latin webfonts (IBM Plex Sans Arabic + Inter) are loaded via
+   <link> tags in the layout head so the build doesn't depend on network. */
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-arabic: 'IBM Plex Sans Arabic', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --color-brand-50: #f0fdf4;
+    --color-brand-100: #dcfce7;
+    --color-brand-600: #16a34a;
+    --color-brand-700: #15803d;
+    --color-brand-800: #166534;
+}
+
+html[lang='ar'] body {
+    font-family: var(--font-arabic);
+    line-height: 1.9;
+}
+
+html[lang='en'] body {
+    font-family: var(--font-sans);
+}
+
+/* Article body styles (hand-rolled so we don't depend on the typography
+   plugin). Logical spacing keeps it correct under both RTL and LTR. */
+.article-body {
+    @apply text-[1.075rem] leading-loose text-gray-800;
+}
+.article-body > * + * {
+    @apply mt-5;
+}
+.article-body h2 {
+    @apply mt-10 mb-3 text-2xl font-bold text-gray-900;
+}
+.article-body h3 {
+    @apply mt-8 mb-2 text-xl font-semibold text-gray-900;
+}
+.article-body p {
+    @apply leading-loose;
+}
+.article-body a {
+    @apply text-brand-700 underline underline-offset-2 hover:text-brand-800;
+}
+.article-body ul {
+    @apply list-disc space-y-2 ps-6;
+}
+.article-body ol {
+    @apply list-decimal space-y-2 ps-6;
+}
+.article-body blockquote {
+    @apply border-s-4 border-brand-600 bg-brand-50 px-4 py-2 text-gray-700;
+}
+.article-body table {
+    @apply w-full border-collapse text-start text-sm;
+}
+.article-body th,
+.article-body td {
+    @apply border border-gray-200 px-3 py-2 text-start;
+}
+.article-body img {
+    @apply rounded-xl;
+}
+.article-body code {
+    @apply rounded bg-gray-100 px-1.5 py-0.5 text-sm;
+}
