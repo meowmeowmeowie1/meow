@@ -146,4 +146,32 @@ internal static class ActionResolution
 
         return !PresetStorage.IsEnabled(presets[0]);
     }
+
+    /// <summary>
+    ///     Toggle burst (hold ↔ resume) for the current job. Callable off the
+    ///     command path (e.g. the Stream Deck bridge); MUST run on the framework
+    ///     thread. <paramref name="state" /> is the resulting state ("ARMED" /
+    ///     "HELD"). Returns false if no burst presets exist for the current job.
+    /// </summary>
+    internal static bool ToggleBurst(out string state)
+    {
+        state = "—";
+        if (Player.Object == null)
+            return false;
+        if (!WrathCombo.BurstPresetMap.TryGetValue(Player.Job, out var presets)
+            || presets.Length == 0)
+            return false;
+
+        var enable = !PresetStorage.IsEnabled(presets[0]);
+        foreach (var preset in presets)
+        {
+            if (enable)
+                PresetStorage.EnablePreset(preset, ConfigChangeSource.Command);
+            else
+                PresetStorage.DisablePreset(preset, ConfigChangeSource.Command);
+        }
+
+        state = enable ? "ARMED" : "HELD";
+        return true;
+    }
 }
