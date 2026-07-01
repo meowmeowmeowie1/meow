@@ -170,6 +170,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
         ActionRetargeting = new ActionRetargeting();
         ActionWatching.Enable();
         ActionPressMirroring.Enable();
+        StreamDeckBridge.Start();
         IPC = Provider.Init();
         PingPluginIPC.Init();
         ConflictingPluginsChecks.Begin();
@@ -419,6 +420,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
         Service.ComboCache.Dispose();
         ActionWatching.Dispose();
         ActionPressMirroring.Dispose();
+        StreamDeckBridge.Stop();
         CustomComboFunctions.TimerDispose();
         IPC.Dispose();
         MoveHook.Dispose();
