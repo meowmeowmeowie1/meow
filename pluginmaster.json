@@ -3,11 +3,11 @@
     "Author": "meowmeowmeowie1",
     "Name": "MyTweak",
     "InternalName": "MyTweak",
-    "AssemblyVersion": "1.0.5.31",
-    "TestingAssemblyVersion": "1.0.5.31",
+    "AssemblyVersion": "1.0.5.32",
+    "TestingAssemblyVersion": "1.0.5.32",
     "Punchline": "Job rotation toggles + KBM press mirror.",
     "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a movable Next Action tracker window (/mytweak tracker) showing the Single-Target and AoE actions your combos would produce right now, plus Burst ARMED/HELD for the current job. /mytweak burst hold uses per-job preset codes.",
-    "Changelog": "v1.0.5.31: add a local (loopback) API for a companion Stream Deck plugin - serves the current job's next Single-Target/AoE action and burst state, plus a burst-toggle endpoint. The Stream Deck plugin that consumes it is coming next.",
+    "Changelog": "v1.0.5.32: fix build (ConfigChangeSource qualifier) and add the companion Stream Deck plugin. The plugin lives in the repo under streamdeck/ - install its folder into your Stream Deck Plugins directory to get Next ST / Next AoE / Burst keys (text v1; icons next). See streamdeck/README.md.",
     "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
@@ -20,9 +20,9 @@
       "pve",
       "pvp"
     ],
-    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.31/MyTweak.zip",
-    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.31/MyTweak.zip",
-    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.31/MyTweak.zip",
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.32/MyTweak.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.32/MyTweak.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.32/MyTweak.zip",
     "DownloadCount": 0
   }
 ]

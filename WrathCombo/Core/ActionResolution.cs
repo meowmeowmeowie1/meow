@@ -166,9 +166,9 @@ internal static class ActionResolution
         foreach (var preset in presets)
         {
             if (enable)
-                PresetStorage.EnablePreset(preset, ConfigChangeSource.Command);
+                PresetStorage.EnablePreset(preset, Configuration.ConfigChangeSource.Command);
             else
-                PresetStorage.DisablePreset(preset, ConfigChangeSource.Command);
+                PresetStorage.DisablePreset(preset, Configuration.ConfigChangeSource.Command);
         }
 
         state = enable ? "ARMED" : "HELD";

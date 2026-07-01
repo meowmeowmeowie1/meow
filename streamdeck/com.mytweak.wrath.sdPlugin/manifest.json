@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "MyTweak (Wrath) Next Action",
+  "Version": "1.0.0",
+  "Author": "meowmeowmeowie1",
+  "URL": "https://github.com/meowmeowmeowie1/meow",
+  "Description": "Shows your FFXIV next Single-Target / AoE action and burst state from the MyTweak plugin, and toggles burst. Talks to MyTweak's local API (127.0.0.1).",
+  "Category": "MyTweak",
+  "CategoryIcon": "imgs/plugin",
+  "Icon": "imgs/plugin",
+  "SDKVersion": 2,
+  "CodePath": "index.html",
+  "Software": { "MinimumVersion": "6.0" },
+  "OS": [ { "Platform": "windows", "MinimumVersion": "10" } ],
+  "Actions": [
+    {
+      "UUID": "com.mytweak.wrath.st",
+      "Name": "Next ST Action",
+      "Icon": "imgs/st",
+      "Tooltip": "Shows the next single-target action your rotation would use.",
+      "PropertyInspectorPath": "",
+      "SupportedInMultiActions": false,
+      "States": [ { "Image": "imgs/st", "TitleAlignment": "bottom", "FontSize": "12" } ]
+    },
+    {
+      "UUID": "com.mytweak.wrath.aoe",
+      "Name": "Next AoE Action",
+      "Icon": "imgs/aoe",
+      "Tooltip": "Shows the next AoE action your rotation would use.",
+      "SupportedInMultiActions": false,
+      "States": [ { "Image": "imgs/aoe", "TitleAlignment": "bottom", "FontSize": "12" } ]
+    },
+    {
+      "UUID": "com.mytweak.wrath.burst",
+      "Name": "Burst Toggle",
+      "Icon": "imgs/burst",
+      "Tooltip": "Shows ARMED / HELD and toggles burst hold/resume when pressed.",
+      "SupportedInMultiActions": false,
+      "States": [ { "Image": "imgs/burst", "TitleAlignment": "middle", "FontSize": "14" } ]
+    }
+  ]
+}
