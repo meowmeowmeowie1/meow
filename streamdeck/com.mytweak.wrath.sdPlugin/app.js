@@ -1,8 +1,7 @@
 // MyTweak (Wrath) Stream Deck plugin — classic HTML/JS SDK.
 // Polls MyTweak's local API (127.0.0.1) for the current job's next ST/AoE action
-// and burst state, shows them on the keys, and toggles burst on press.
-//
-// v1 is text-only (action names + ARMED/HELD as key titles). Icons come later.
+// and burst state, renders the real game action icons on the keys, and toggles
+// burst on press.
 
 const ST = "com.mytweak.wrath.st";
 const AOE = "com.mytweak.wrath.aoe";
@@ -10,7 +9,8 @@ const BURST = "com.mytweak.wrath.burst";
 
 let ws = null;
 let apiBase = null;                 // discovered MyTweak base URL, or null
-const contexts = {};                // context id -> action UUID (currently visible keys)
+const contexts = {};                // context id -> action UUID (visible keys)
+const shown = {};                   // context id -> {title, icon} last sent
 
 // ---- Stream Deck registration entrypoint (called by the Stream Deck app) ----
 function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo) {
@@ -24,8 +24,8 @@ function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo) 
   ws.onmessage = (e) => {
     let msg;
     try { msg = JSON.parse(e.data); } catch (_) { return; }
-    if (msg.event === "willAppear") contexts[msg.context] = msg.action;
-    else if (msg.event === "willDisappear") delete contexts[msg.context];
+    if (msg.event === "willAppear") { contexts[msg.context] = msg.action; delete shown[msg.context]; }
+    else if (msg.event === "willDisappear") { delete contexts[msg.context]; delete shown[msg.context]; }
     else if (msg.event === "keyDown") onKeyDown(msg);
   };
 }
@@ -36,14 +36,43 @@ function onKeyDown(msg) {
   }
 }
 
-// ---- Stream Deck helpers ----
-function setTitle(context, title) {
+// ---- Stream Deck helpers (deduped: only send on change) ----
+function show(context, title, icon) {
   if (!ws) return;
-  ws.send(JSON.stringify({
-    event: "setTitle",
-    context: context,
-    payload: { title: String(title), target: 0 }
-  }));
+  const prev = shown[context] || {};
+  if (prev.title !== title) {
+    ws.send(JSON.stringify({ event: "setTitle", context, payload: { title: String(title), target: 0 } }));
+  }
+  if (prev.icon !== icon) {
+    // icon is a data URL, or "" to restore the action's default image.
+    ws.send(JSON.stringify({ event: "setImage", context, payload: { image: icon || "", target: 0 } }));
+  }
+  shown[context] = { title, icon };
+}
+
+// ---- Icon cache: iconId -> Promise<dataURL|null> ----
+const iconCache = {};
+
+function iconDataUrl(id) {
+  if (!iconCache[id]) {
+    iconCache[id] = (async () => {
+      try {
+        const r = await fetch(apiBase + "/icon/" + id);
+        if (!r.ok) return null;
+        const blob = await r.blob();
+        return await new Promise((resolve) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(fr.result);
+          fr.onerror = () => resolve(null);
+          fr.readAsDataURL(blob);
+        });
+      } catch (_) {
+        delete iconCache[id]; // allow retry after transient failure
+        return null;
+      }
+    })();
+  }
+  return iconCache[id];
 }
 
 // ---- MyTweak API discovery + polling ----
@@ -57,9 +86,13 @@ async function findApi() {
   apiBase = null;
 }
 
-function actionTitle(a) {
-  if (!a || !a.has) return "—";
-  return a.name || "—";
+async function renderAction(ctx, a) {
+  if (!a || !a.has) { show(ctx, "—", ""); return; }
+  if (a.icon > 0) {
+    const url = await iconDataUrl(a.icon);
+    if (url) { show(ctx, "", url); return; }  // icon only, XIVDeck-style
+  }
+  show(ctx, a.name || "—", "");               // fallback: text
 }
 
 async function loop() {
@@ -71,12 +104,12 @@ async function loop() {
       const d = await r.json();
       for (const ctx in contexts) {
         const action = contexts[ctx];
-        if (action === ST) setTitle(ctx, actionTitle(d.st));
-        else if (action === AOE) setTitle(ctx, actionTitle(d.aoe));
-        else if (action === BURST) setTitle(ctx, "Burst\n" + (d.burst || "—"));
+        if (action === ST) await renderAction(ctx, d.st);
+        else if (action === AOE) await renderAction(ctx, d.aoe);
+        else if (action === BURST) show(ctx, "Burst\n" + (d.burst || "—"), "");
       }
     } else {
-      for (const ctx in contexts) setTitle(ctx, "FFXIV\noffline");
+      for (const ctx in contexts) show(ctx, "FFXIV\noffline", "");
     }
   } catch (_) {
     apiBase = null; // rediscover next tick
