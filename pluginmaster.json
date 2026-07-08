@@ -3,11 +3,11 @@
     "Author": "meowmeowmeowie1",
     "Name": "MyTweak",
     "InternalName": "MyTweak",
-    "AssemblyVersion": "1.0.5.32",
-    "TestingAssemblyVersion": "1.0.5.32",
+    "AssemblyVersion": "1.0.5.33",
+    "TestingAssemblyVersion": "1.0.5.33",
     "Punchline": "Job rotation toggles + KBM press mirror.",
     "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a movable Next Action tracker window (/mytweak tracker) showing the Single-Target and AoE actions your combos would produce right now, plus Burst ARMED/HELD for the current job. /mytweak burst hold uses per-job preset codes.",
-    "Changelog": "v1.0.5.32: fix build (ConfigChangeSource qualifier) and add the companion Stream Deck plugin. The plugin lives in the repo under streamdeck/ - install its folder into your Stream Deck Plugins directory to get Next ST / Next AoE / Burst keys (text v1; icons next). See streamdeck/README.md.",
+    "Changelog": "v1.0.5.33: Stream Deck bridge fix - drain HTTP request headers before responding (Chromium treated the old behavior as a failed request -> keys showed FFXIV offline) and answer CORS/Private-Network preflights.",
     "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
@@ -20,9 +20,9 @@
       "pve",
       "pvp"
     ],
-    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.32/MyTweak.zip",
-    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.32/MyTweak.zip",
-    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.32/MyTweak.zip",
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.33/MyTweak.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.33/MyTweak.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.5.33/MyTweak.zip",
     "DownloadCount": 0
   }
 ]
