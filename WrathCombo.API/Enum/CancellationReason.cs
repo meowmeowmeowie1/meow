@@ -23,7 +23,7 @@ public enum CancellationReason
     LeaseeReleased = 3,
 
     [Description(
-        "IPC Services have been disabled remotely. Please see the commit history for /res/ipc_status.txt. https://github.com/PunishXIV/WrathCombo/commits/main/res/ipc_status.txt")]
+        "IPC Services have been disabled remotely.")]
     AllServicesSuspended = 4,
 
     [Description(

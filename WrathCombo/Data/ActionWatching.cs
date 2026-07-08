@@ -424,29 +424,46 @@ public static class ActionWatching
         {
             if (actionType is ActionType.Action)
             {
+                // The pressed (hotbar) action id: Retargets are keyed by it, so it
+                // must be captured before Performance Mode resolves the combo below.
+                var pressed = actionId;
+
                 // Performance Mode: hotbar icons aren't swapped, so the incoming action
                 // is the original. Resolve the combo here before the rest of the detour.
-                if (Service.Configuration.PerformanceMode &&
-                    global::WrathCombo.Core.ActionReplacer.FilteredCombos is not null)
+                if (Service.Configuration.PerformanceMode)
                 {
-                    foreach (var combo in global::WrathCombo.Core.ActionReplacer.FilteredCombos)
-                        if (combo.TryInvoke(actionId, out var resolved))
-                        {
-                            actionId = resolved;
-                            break;
-                        }
+                    global::WrathCombo.Core.ActionReplacer.EnsureFilteredCombosCurrent();
+                    if (global::WrathCombo.Core.ActionReplacer.FilteredCombos is not null)
+                    {
+                        foreach (var combo in global::WrathCombo.Core.ActionReplacer.FilteredCombos)
+                            if (combo.TryInvoke(pressed, out var resolved))
+                            {
+                                // The icon hook normally records this mapping; with it
+                                // disabled, retargeting's consumption gate
+                                // (LastActionInvokeFor[pressed] == retarget.Action)
+                                // starves unless written here.
+                                Service.ActionReplacer.LastActionInvokeFor[pressed] = resolved;
+                                actionId = resolved;
+                                break;
+                            }
+
+                        // Self-retargeting features (Clemency, Oblation, the Raises, ...)
+                        // register their Retarget during Invoke() while TryInvoke still
+                        // returns false - record the identity mapping so the gate passes.
+                        if (actionId == pressed)
+                            Service.ActionReplacer.LastActionInvokeFor[pressed] = pressed;
+                    }
                 }
 
                 var disablingReplacingTemp = mode == ActionManager.UseActionMode.Queue;
                 if (disablingReplacingTemp) // This is so we can remove queue suppression
-                    Service.ActionReplacer.DisableActionReplacingIfRequired(); // It gets re-enabled at the end of sending. 
+                    Service.ActionReplacer.DisableActionReplacingIfRequired(); // It gets re-enabled at the end of sending.
 
-                var original = actionId; //Save the original action, do not modify
                 var originalTargetId = targetId; //Save the original target, do not modify
                 var changedTargetId = targetId; //This will get modified and used elsewhere
 
-                var changed = CheckForChangedTarget(original, ref changedTargetId,
-                    out var replacedWith); //Passes the original action to the retargeting framework, outputs a targetId and a replaced action
+                var changed = CheckForChangedTarget(pressed, ref changedTargetId,
+                    out var replacedWith); //Passes the pressed action to the retargeting framework (Retargets are keyed by it), outputs a targetId and a replaced action
 
                 // If retargeting kicks in, update target ID
                 if (changed)
@@ -487,7 +504,7 @@ public static class ActionWatching
                 if (areaTargeted && changed)
                 {
                     var location = Player.Position;
-                    replacedWith = Service.ActionReplacer.LastActionInvokeFor.TryGetValue(actionId, out var replacedGT) ? replacedGT : replacedWith;
+                    replacedWith = Service.ActionReplacer.LastActionInvokeFor.TryGetValue(pressed, out var replacedGT) ? replacedGT : replacedWith;
 
                     if (IsOverGround(targetObject) &&
                         Vector3.Distance(Player.Position, targetObject.Position) <= replacedWith.ActionRange()) // not GetTargetDistance or something, as hitboxes should not count here

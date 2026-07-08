@@ -1,18 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+    <!--
+        License notice (retain): this project is Copyright (C) Ethan Henderson
+        (zbee) and is licensed AGPL-3.0-only. The compiled library is
+        redistributed with the plugin under that license's terms.
+    -->
     <PropertyGroup>
         <!-- Package Metadata -->
         <PackageId>WrathCombo.API</PackageId>
         <PackageVersion>0.5.5</PackageVersion>
         <Authors>Ethan Henderson (zbee)</Authors>
-        <Company>Team Wrath</Company>
-        <Description>Everything you need to work with Wrath Combo's IPC</Description>
-        <PackageTags>wrathcombo;auto-rotation;api;ffxiv</PackageTags>
-        <PackageProjectUrl>https://github.com/PunishXIV/WrathCombo.API</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/PunishXIV/WrathCombo.API</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeSymbols>true</IncludeSymbols>
@@ -36,11 +34,6 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-
-    <!-- Include README; for the NuGet package -->
-    <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="/"/>
-    </ItemGroup>
 
     <!-- Dalamud Hooks -->
     <PropertyGroup>

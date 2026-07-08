@@ -362,17 +362,13 @@ public sealed partial class WrathCombo : IDalamudPlugin
     {
         try
         {
-            var basicMessage = $"Welcome to WrathCombo v{GetType().Assembly
-                .GetName().Version}!";
-            using var motd =
-                httpClient.GetAsync("https://raw.githubusercontent.com/meowmeowmeowie1/myrepo/claude/affectionate-johnson-sJ0GR/res/motd.txt").Result;
-            motd.EnsureSuccessStatusCode();
-            var data = motd.Content.ReadAsStringAsync().Result;
+            var basicMessage = $"MyTweak v{GetType().Assembly
+                .GetName().Version} loaded.";
             List<Payload> payloads =
             [
                 starterMotd,
                 EmphasisItalicPayload.ItalicsOn,
-                string.IsNullOrEmpty(data) ? new TextPayload(basicMessage) : new TextPayload(data.Trim()),
+                new TextPayload(basicMessage),
                 EmphasisItalicPayload.ItalicsOff
             ];
 
@@ -385,7 +381,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
         catch (Exception ex)
         {
-            Svc.Log.Error(ex, "Unable to retrieve MotD");
+            Svc.Log.Error(ex, "Unable to print MotD");
         }
     }
 

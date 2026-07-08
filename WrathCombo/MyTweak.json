@@ -3,17 +3,9 @@
   "Name": "MyTweak",
   "InternalName": "MyTweak",
   "DalamudApiLevel": 15,
-  "Punchline": "Job rotation toggles + KBM press mirror.",
-  "Description": "Job rotation toggles and a keyboard/mouse action-press mirror. Includes a master kill-switch (/mytweak disable) and a floating status overlay showing MyTweak ON/DISABLED and Burst ARMED/HELD for the current job. Click the overlay lines to toggle.",
-  "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
-  "Changelog": "v1.0.5.11: fix the Next Action tracker getting stuck — it now resolves the next action through the full combo chain (like a real button press) instead of only the first target-typed combo, so it updates live with procs/combo steps. v1.0.5.10: fix mirror landing on the wrong slot under Performance Mode (pulses the pressed button's copies). v1.0.5.9: remove the old on-screen status overlay. v1.0.5.8: Dancer dance-step presses mirror under Performance Mode.",
-  "Tags": [
-    "qol",
-    "combos",
-    "rotation",
-    "tweaks",
-    "utility",
-    "pve",
-    "pvp"
-  ]
+  "Punchline": "Personal utility plugin.",
+  "Description": "Personal utility plugin.",
+  "RepoUrl": "",
+  "Changelog": "",
+  "Tags": []
 }

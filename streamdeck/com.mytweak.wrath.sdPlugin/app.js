@@ -1,4 +1,4 @@
-// MyTweak (Wrath) Stream Deck plugin — classic HTML/JS SDK.
+// MyTweak Stream Deck plugin — classic HTML/JS SDK.
 // Polls MyTweak's local API (127.0.0.1) for the current job's next ST/AoE action
 // and burst state, renders the real game action icons on the keys, and toggles
 // burst on press.

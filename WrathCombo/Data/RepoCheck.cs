@@ -42,14 +42,7 @@ public static class RepoCheckFunctions
 
     public static bool IsFromPunishRepo()
     {
-        RepoCheck? repo = FetchCurrentRepo();
-        if (repo is null) return false;
-
-        if (repo.InstalledFromUrl is null) return false;
-
-        if (repo.InstalledFromUrl == "https://love.puni.sh/ment.json")
-            return true;
-        else
-            return false;
+        // This fork is never installed from that repo.
+        return false;
     }
 }

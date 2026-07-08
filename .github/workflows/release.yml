@@ -1,4 +1,4 @@
-name: Build & Release QoLTweaks
+name: build
 
 on:
   push:
@@ -17,10 +17,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (with submodules)
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -42,16 +40,13 @@ jobs:
           set -o pipefail
           dotnet build WrathCombo/WrathCombo.csproj -c Release -p:EnableWindowsTargeting=true 2>&1 | tee build.log
 
-      - name: Publish build log on failure
+      - name: Upload build log on failure
         if: failure()
-        run: |
-          git config user.name ci
-          git config user.email ci@ci
-          git checkout --orphan ci-logs
-          git reset
-          git add -f build.log
-          git commit -m "build log run ${GITHUB_RUN_NUMBER}"
-          git push -f -u origin ci-logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
 
       - name: Read plugin version
         id: ver
