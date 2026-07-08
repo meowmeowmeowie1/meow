@@ -1023,7 +1023,7 @@ internal class Debug : ConfigWindow, IDisposable
                 ImGui.Indent();
                 if (ImGui.Button("Register"))
                 {
-                    _wrathLease = P.IPC.RegisterForLease("WrathCombo", "WrathCombo", WrathIPCCallback);
+                    _wrathLease = P.IPC.RegisterForLease("MyTweak", "MyTweak", WrathIPCCallback);
                 }
                 ImGui.Unindent();
             }

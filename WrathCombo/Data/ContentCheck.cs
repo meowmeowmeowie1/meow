@@ -132,7 +132,7 @@ public class ContentCheck
             if (!EZ.Throttle("contentCheckInPOTD", TS.FromSeconds(5)))
                 return field;
 
-            // from: https://github.com/PunishXIV/PalacePal/blob/main/Pal.Common/ETerritoryType.cs
+            // Occult Crescent / field-op territory IDs
             field = Content.TerritoryID is >= 561 and <= 565 or >= 593 and <= 607;
             return field;
         }

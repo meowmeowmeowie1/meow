@@ -114,7 +114,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
     } = OpenWindow.PvE;
 
     /// <summary> Initializes a new instance of the <see cref="ConfigWindow"/> class. </summary>
-    public ConfigWindow() : base($"{P.Name} {P.GetType().Assembly.GetName().Version}###WrathCombo")
+    public ConfigWindow() : base($"{P.Name} {P.GetType().Assembly.GetName().Version}###MyTweakCfg")
     {
         RespectCloseHotkey = true;
 
@@ -186,7 +186,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
 
         using var alignText = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-        using var leftSide = (ImRaii.Child("###WrathLeftSide", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration));
+        using var leftSide = (ImRaii.Child("###CfgLeftSide", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration));
         if (!leftSide)
         {
             ImGui.Dummy(Vector2.Zero);
@@ -200,14 +200,14 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
             imagePath = Path.Combine(
                 Svc.PluginInterface.AssemblyLocation.Directory?.FullName!,
                 "images\\qoltweaks.png");
-            if (EzThrottler.Throttle("logTypeOfWrathIconUsed", 45000))
+            if (EzThrottler.Throttle("logTypeOfIconUsed", 45000))
                 PluginLog.Verbose("Using Local MyTweak Icon");
         }
         catch (Exception)
         {
             // Fallback to the remote icon if there are any issues
             imagePath = Svc.PluginInterface.Manifest.IconUrl ?? "";
-            if (EzThrottler.Throttle("logTypeOfWrathIconUsed", 45000))
+            if (EzThrottler.Throttle("logTypeOfIconUsed", 45000))
                 PluginLog.Verbose(
                     "Using Remote MyTweak Icon\n             " +
                     Svc.PluginInterface.AssemblyLocation.Directory?.FullName! +
@@ -215,7 +215,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
         }
 
         if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
-            ImGuiEx.LineCentered("###WrathLogo", () =>
+            ImGuiEx.LineCentered("###CfgLogo", () =>
                 ImGui.Image(logo.Handle, imageSize));
 
         ImGui.Spacing();
@@ -257,7 +257,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
         ImGui.TableSetupColumn("##RightColumn", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableNextColumn();
 
-        using var rightChild = ImRaii.Child("###WrathRightSide", Vector2.Zero, false);
+        using var rightChild = ImRaii.Child("###CfgRightSide", Vector2.Zero, false);
         if (!rightChild) return;
 
         if (OpenWindow == OpenWindow.None)
