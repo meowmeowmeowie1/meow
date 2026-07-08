@@ -50,25 +50,32 @@ function show(context, title, icon) {
   shown[context] = { title, icon };
 }
 
-// ---- Icon cache: iconId -> Promise<dataURL|null> ----
+// ---- Icon cache: iconId -> Promise<{url} | {err}> ----
+// On failure the short err code is rendered on the key so problems are
+// visible instead of silently falling back to text.
 const iconCache = {};
 
 function iconDataUrl(id) {
   if (!iconCache[id]) {
     iconCache[id] = (async () => {
+      let r;
       try {
-        const r = await fetch(apiBase + "/icon/" + id);
-        if (!r.ok) return null;
-        const blob = await r.blob();
-        return await new Promise((resolve) => {
-          const fr = new FileReader();
-          fr.onload = () => resolve(fr.result);
-          fr.onerror = () => resolve(null);
-          fr.readAsDataURL(blob);
-        });
+        r = await fetch(apiBase + "/icon/" + id);
       } catch (_) {
         delete iconCache[id]; // allow retry after transient failure
-        return null;
+        return { err: "net" };
+      }
+      if (!r.ok) return { err: "s" + r.status };
+      try {
+        // Manual base64 instead of FileReader: guarantees a clean
+        // "data:image/png;base64," prefix regardless of blob quirks.
+        const bytes = new Uint8Array(await r.arrayBuffer());
+        let bin = "";
+        for (let i = 0; i < bytes.length; i += 0x8000)
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        return { url: "data:image/png;base64," + btoa(bin) };
+      } catch (_) {
+        return { err: "dec" };
       }
     })();
   }
@@ -89,10 +96,12 @@ async function findApi() {
 async function renderAction(ctx, a) {
   if (!a || !a.has) { show(ctx, "—", ""); return; }
   if (a.icon > 0) {
-    const url = await iconDataUrl(a.icon);
-    if (url) { show(ctx, "", url); return; }  // icon only, XIVDeck-style
+    const res = await iconDataUrl(a.icon);
+    if (res.url) { show(ctx, "", res.url); return; } // icon only, XIVDeck-style
+    show(ctx, (a.name || "—") + "\n[" + res.err + "]", ""); // visible failure code
+    return;
   }
-  show(ctx, a.name || "—", "");               // fallback: text
+  show(ctx, (a.name || "—") + "\n[i0]", "");  // state reported icon id 0
 }
 
 async function loop() {
