@@ -175,19 +175,50 @@ internal static class StreamDeckBridge
 
         Volatile.Write(ref _lastPollTick, Environment.TickCount64);
 
-        // Read just the request line ("GET /path HTTP/1.1").
-        var sb = new StringBuilder(64);
+        // Read the full request head ("GET /path HTTP/1.1" + headers) up to the
+        // blank line. Draining it matters: closing the socket with unread data
+        // still buffered sends a TCP RST, and Chromium (the Stream Deck runtime)
+        // treats that as a failed request even after the response was sent.
+        var sb = new StringBuilder(512);
+        var read = 0;
         int b;
         while ((b = stream.ReadByte()) != -1)
         {
-            if (b == '\n') break;
-            if (b != '\r') sb.Append((char)b);
+            sb.Append((char)b);
+            if (++read >= 8192)
+                break;
+            if (read >= 4 &&
+                sb[read - 4] == '\r' && sb[read - 3] == '\n' &&
+                sb[read - 2] == '\r' && sb[read - 1] == '\n')
+                break;
         }
 
-        var path = "/";
-        var parts = sb.ToString().Split(' ');
-        if (parts.Length >= 2)
-            path = parts[1];
+        var head = sb.ToString();
+        var lineEnd = head.IndexOf('\r');
+        var requestLine = lineEnd > 0 ? head[..lineEnd] : head;
+        var parts = requestLine.Split(' ');
+        var method = parts.Length >= 1 ? parts[0] : "GET";
+        var path = parts.Length >= 2 ? parts[1] : "/";
+
+        // Shared CORS headers: the Stream Deck plugin fetches from a different
+        // origin, and newer Chromium also gates local-network requests behind a
+        // preflight (Private Network Access).
+        const string cors =
+            "Access-Control-Allow-Origin: *\r\n" +
+            "Access-Control-Allow-Methods: GET, OPTIONS\r\n" +
+            "Access-Control-Allow-Headers: *\r\n" +
+            "Access-Control-Allow-Private-Network: true\r\n";
+
+        if (method == "OPTIONS")
+        {
+            var preflight = Encoding.ASCII.GetBytes(
+                "HTTP/1.1 204 No Content\r\n" + cors +
+                "Content-Length: 0\r\n" +
+                "Connection: close\r\n\r\n");
+            stream.Write(preflight, 0, preflight.Length);
+            stream.Flush();
+            return;
+        }
 
         string body;
         if (path.StartsWith("/burst/toggle", StringComparison.Ordinal))
@@ -200,8 +231,7 @@ internal static class StreamDeckBridge
             "HTTP/1.1 200 OK\r\n" +
             "Content-Type: application/json; charset=utf-8\r\n" +
             $"Content-Length: {bytes.Length}\r\n" +
-            "Cache-Control: no-store\r\n" +
-            "Access-Control-Allow-Origin: *\r\n" +
+            "Cache-Control: no-store\r\n" + cors +
             "Connection: close\r\n\r\n");
 
         stream.Write(header, 0, header.Length);
