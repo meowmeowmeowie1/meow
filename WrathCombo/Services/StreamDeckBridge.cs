@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -6,6 +9,7 @@ using System.Threading;
 using Dalamud.Plugin.Services;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
+using Lumina.Data.Files;
 using WrathCombo.Core;
 
 namespace WrathCombo.Services;
@@ -220,24 +224,171 @@ internal static class StreamDeckBridge
             return;
         }
 
-        string body;
-        if (path.StartsWith("/burst/toggle", StringComparison.Ordinal))
-            body = ToggleBurstJson();
-        else
-            body = StateJson();
+        var status = "200 OK";
+        var contentType = "application/json; charset=utf-8";
+        var cache = "no-store";
+        byte[] bytes;
 
-        var bytes = Encoding.UTF8.GetBytes(body);
+        if (path.StartsWith("/icon/", StringComparison.Ordinal)
+            && ushort.TryParse(path.AsSpan("/icon/".Length), out var iconId))
+        {
+            var png = GetIconPng(iconId);
+            if (png != null)
+            {
+                bytes = png;
+                contentType = "image/png";
+                cache = "public, max-age=86400"; // game icons are immutable
+            }
+            else
+            {
+                status = "404 Not Found";
+                bytes = Encoding.UTF8.GetBytes("{\"error\":\"icon not found\"}");
+            }
+        }
+        else if (path.StartsWith("/burst/toggle", StringComparison.Ordinal))
+            bytes = Encoding.UTF8.GetBytes(ToggleBurstJson());
+        else
+            bytes = Encoding.UTF8.GetBytes(StateJson());
+
         var header = Encoding.ASCII.GetBytes(
-            "HTTP/1.1 200 OK\r\n" +
-            "Content-Type: application/json; charset=utf-8\r\n" +
+            $"HTTP/1.1 {status}\r\n" +
+            $"Content-Type: {contentType}\r\n" +
             $"Content-Length: {bytes.Length}\r\n" +
-            "Cache-Control: no-store\r\n" + cors +
+            $"Cache-Control: {cache}\r\n" + cors +
             "Connection: close\r\n\r\n");
 
         stream.Write(header, 0, header.Length);
         stream.Write(bytes, 0, bytes.Length);
         stream.Flush();
     }
+
+    #region Icon serving
+
+    private static readonly Dictionary<ushort, byte[]?> IconCache = new();
+
+    /// <summary>
+    ///     Load a game icon and encode it as a PNG. Reads the .tex via Lumina
+    ///     (thread-safe file reads) so no GPU round-trip is needed; results are
+    ///     cached for the session. Returns null if the icon doesn't exist.
+    /// </summary>
+    private static byte[]? GetIconPng(ushort iconId)
+    {
+        lock (IconCache)
+            if (IconCache.TryGetValue(iconId, out var hit))
+                return hit;
+
+        byte[]? png = null;
+        try
+        {
+            var group = iconId / 1000 * 1000;
+            var tex =
+                Svc.Data.GetFile<TexFile>(
+                    $"ui/icon/{group:D6}/{iconId:D6}_hr1.tex") ??
+                Svc.Data.GetFile<TexFile>(
+                    $"ui/icon/{group:D6}/{iconId:D6}.tex");
+            if (tex != null)
+                png = EncodePng(tex.Header.Width, tex.Header.Height,
+                    tex.ImageData);
+        }
+        catch
+        {
+            // Treat any decode failure as "no icon".
+        }
+
+        lock (IconCache)
+            IconCache[iconId] = png;
+        return png;
+    }
+
+    /// <summary>
+    ///     Minimal PNG encoder (8-bit RGBA, filter 0) — input is Lumina's BGRA.
+    /// </summary>
+    private static byte[] EncodePng(int width, int height, byte[] bgra)
+    {
+        var stride = 1 + width * 4;
+        var raw = new byte[height * stride];
+        for (var y = 0; y < height; y++)
+        {
+            var di = y * stride + 1; // filter byte 0 already zeroed
+            var si = y * width * 4;
+            for (var x = 0; x < width; x++, si += 4, di += 4)
+            {
+                raw[di] = bgra[si + 2];
+                raw[di + 1] = bgra[si + 1];
+                raw[di + 2] = bgra[si];
+                raw[di + 3] = bgra[si + 3];
+            }
+        }
+
+        using var ms = new MemoryStream();
+        ms.Write([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+
+        var ihdr = new byte[13];
+        WriteBe(ihdr, 0, width);
+        WriteBe(ihdr, 4, height);
+        ihdr[8] = 8;  // bit depth
+        ihdr[9] = 6;  // color type RGBA
+        WritePngChunk(ms, "IHDR", ihdr);
+
+        using (var zms = new MemoryStream())
+        {
+            using (var z = new ZLibStream(zms, CompressionLevel.Fastest, true))
+                z.Write(raw);
+            WritePngChunk(ms, "IDAT", zms.ToArray());
+        }
+
+        WritePngChunk(ms, "IEND", []);
+        return ms.ToArray();
+    }
+
+    private static void WriteBe(byte[] buf, int offset, int value)
+    {
+        buf[offset] = (byte)(value >> 24);
+        buf[offset + 1] = (byte)(value >> 16);
+        buf[offset + 2] = (byte)(value >> 8);
+        buf[offset + 3] = (byte)value;
+    }
+
+    private static void WritePngChunk(Stream s, string type, byte[] data)
+    {
+        var len = new byte[4];
+        WriteBe(len, 0, data.Length);
+        s.Write(len);
+
+        var typeBytes = Encoding.ASCII.GetBytes(type);
+        s.Write(typeBytes);
+        s.Write(data);
+
+        // PNG chunk CRC covers the type bytes then the data bytes, in order.
+        var crc = Crc32Update(uint.MaxValue, typeBytes);
+        crc = Crc32Update(crc, data);
+        var crcBytes = new byte[4];
+        WriteBe(crcBytes, 0, (int)~crc);
+        s.Write(crcBytes);
+    }
+
+    private static uint[]? _crcTable;
+
+    private static uint Crc32Update(uint state, byte[] data)
+    {
+        if (_crcTable == null)
+        {
+            _crcTable = new uint[256];
+            for (uint n = 0; n < 256; n++)
+            {
+                var c = n;
+                for (var k = 0; k < 8; k++)
+                    c = (c & 1) != 0 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
+                _crcTable[n] = c;
+            }
+        }
+
+        foreach (var b in data)
+            state = _crcTable[(state ^ b) & 0xFF] ^ (state >> 8);
+        return state;
+    }
+
+    #endregion
 
     private static string ToggleBurstJson()
     {
