@@ -6,6 +6,7 @@
 const ST = "com.mytweak.wrath.st";
 const AOE = "com.mytweak.wrath.aoe";
 const BURST = "com.mytweak.wrath.burst";
+const BURST1 = "com.mytweak.wrath.burst1";
 
 let ws = null;
 let apiBase = null;                 // discovered MyTweak base URL, or null
@@ -31,8 +32,11 @@ function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo) 
 }
 
 function onKeyDown(msg) {
-  if (msg.action === BURST && apiBase) {
+  if (!apiBase) return;
+  if (msg.action === BURST) {
     fetch(apiBase + "/burst/toggle", { cache: "no-store" }).catch(() => {});
+  } else if (msg.action === BURST1) {
+    fetch(apiBase + "/burst1/toggle", { cache: "no-store" }).catch(() => {});
   }
 }
 
@@ -116,6 +120,7 @@ async function loop() {
         if (action === ST) await renderAction(ctx, d.st);
         else if (action === AOE) await renderAction(ctx, d.aoe);
         else if (action === BURST) show(ctx, "Burst\n" + (d.burst || "—"), "");
+        else if (action === BURST1) show(ctx, "1min\n" + (d.burst1 || "—"), "");
       }
     } else {
       for (const ctx in contexts) show(ctx, "FFXIV\noffline", "");

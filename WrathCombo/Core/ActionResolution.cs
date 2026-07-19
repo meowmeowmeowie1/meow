@@ -137,10 +137,17 @@ internal static class ActionResolution
     /// <remarks>
     ///     Read by <see cref="Window.NextActionTracker" /> to show burst state.
     /// </remarks>
-    internal static bool? IsBurstHeld()
+    internal static bool? IsBurstHeld() => IsBurstHeld(WrathCombo.BurstPresetMap);
+
+    /// <summary>1-minute (odd-minute) subset — see Commands.Burst1PresetMap.</summary>
+    internal static bool? IsBurst1Held() => IsBurstHeld(WrathCombo.Burst1PresetMap);
+
+    /// <inheritdoc cref="IsBurstHeld()" />
+    internal static bool? IsBurstHeld(
+        System.Collections.Generic.Dictionary<ECommons.ExcelServices.Job, Preset[]> map)
     {
         if (Player.Object == null) return null;
-        if (!WrathCombo.BurstPresetMap.TryGetValue(Player.Job, out var presets)
+        if (!map.TryGetValue(Player.Job, out var presets)
             || presets.Length == 0)
             return null;
 
@@ -153,12 +160,22 @@ internal static class ActionResolution
     ///     thread. <paramref name="state" /> is the resulting state ("ARMED" /
     ///     "HELD"). Returns false if no burst presets exist for the current job.
     /// </summary>
-    internal static bool ToggleBurst(out string state)
+    internal static bool ToggleBurst(out string state) =>
+        ToggleBurst(WrathCombo.BurstPresetMap, out state);
+
+    /// <summary>1-minute (odd-minute) subset — see Commands.Burst1PresetMap.</summary>
+    internal static bool ToggleBurst1(out string state) =>
+        ToggleBurst(WrathCombo.Burst1PresetMap, out state);
+
+    /// <inheritdoc cref="ToggleBurst(out string)" />
+    internal static bool ToggleBurst(
+        System.Collections.Generic.Dictionary<ECommons.ExcelServices.Job, Preset[]> map,
+        out string state)
     {
         state = "—";
         if (Player.Object == null)
             return false;
-        if (!WrathCombo.BurstPresetMap.TryGetValue(Player.Job, out var presets)
+        if (!map.TryGetValue(Player.Job, out var presets)
             || presets.Length == 0)
             return false;
 
