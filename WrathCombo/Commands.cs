@@ -56,12 +56,12 @@ public partial class WrathCombo
         { Job.BRD, [(Preset)3017, (Preset)3032] },
         // 8102/8112 were stale ids from an old enum revision (they no longer
         // exist); today's equivalents: Hypercharge = 8105, Stabilizer FMF = 8111.
-        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8107, (Preset)8103, (Preset)8105, (Preset)8111] },
-        { Job.DNC, [(Preset)4018, (Preset)4045] },
+        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8107, (Preset)8103, (Preset)8105, (Preset)8111, (Preset)8301, (Preset)8303, (Preset)8304, (Preset)8307, (Preset)8308] },
+        { Job.DNC, [(Preset)4018, (Preset)4045, (Preset)4019, (Preset)4046] },
         { Job.BLM, [(Preset)2103, (Preset)2202, (Preset)2102, (Preset)2201] },
         { Job.SMN, [(Preset)17053, (Preset)17017, (Preset)17020, (Preset)17061] },
         { Job.RDM, [(Preset)13010, (Preset)13207, (Preset)13011, (Preset)13208] },
-        { Job.PCT, [(Preset)20021, (Preset)20054, (Preset)20027, (Preset)20060] },
+        { Job.PCT, [(Preset)20021, (Preset)20054, (Preset)20027, (Preset)20060, (Preset)20022, (Preset)20055, (Preset)20023, (Preset)20056] },
     };
 
     // The ~60s-cooldown ("odd minute") subset of BurstPresetMap, so the 1-minute
@@ -80,8 +80,8 @@ public partial class WrathCombo
         { Job.SAM, [(Preset)15018, (Preset)15114] },                               // Meikyo Shisui
         { Job.RPR, [(Preset)12009, (Preset)12108] },                               // Gluttony
         { Job.VPR, [(Preset)30011, (Preset)30110, (Preset)30112] },                // Reawaken
-        { Job.MCH, [(Preset)8103, (Preset)8107, (Preset)8105, (Preset)8303] },     // Reassemble + Queen + Hypercharge (ST/AoE)
-        { Job.PCT, [(Preset)20027, (Preset)20060] },                               // Hammer combo
+        { Job.MCH, [(Preset)8103, (Preset)8301, (Preset)8107, (Preset)8304, (Preset)8105, (Preset)8303] }, // Reassemble + Queen + Hypercharge (ST/AoE)
+        { Job.PCT, [(Preset)20027, (Preset)20060, (Preset)20023, (Preset)20056] }, // Hammer combo + Steel Muse
     };
 
     /// <summary>
