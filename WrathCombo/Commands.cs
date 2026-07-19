@@ -54,7 +54,9 @@ public partial class WrathCombo
         { Job.RPR, [(Preset)12009, (Preset)12108, (Preset)12006, (Preset)12105] },
         { Job.VPR, [(Preset)30005, (Preset)30011, (Preset)30104, (Preset)30110, (Preset)30112] },
         { Job.BRD, [(Preset)3017, (Preset)3032] },
-        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8107, (Preset)8103, (Preset)8102, (Preset)8112] },
+        // 8102/8112 were stale ids from an old enum revision (they no longer
+        // exist); today's equivalents: Hypercharge = 8105, Stabilizer FMF = 8111.
+        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8107, (Preset)8103, (Preset)8105, (Preset)8111] },
         { Job.DNC, [(Preset)4018, (Preset)4045] },
         { Job.BLM, [(Preset)2103, (Preset)2202, (Preset)2102, (Preset)2201] },
         { Job.SMN, [(Preset)17053, (Preset)17017, (Preset)17020, (Preset)17061] },
@@ -78,7 +80,7 @@ public partial class WrathCombo
         { Job.SAM, [(Preset)15018, (Preset)15114] },                               // Meikyo Shisui
         { Job.RPR, [(Preset)12009, (Preset)12108] },                               // Gluttony
         { Job.VPR, [(Preset)30011, (Preset)30110, (Preset)30112] },                // Reawaken
-        { Job.MCH, [(Preset)8103, (Preset)8107] },                                 // Reassemble + Automaton Queen
+        { Job.MCH, [(Preset)8103, (Preset)8107, (Preset)8105, (Preset)8303] },     // Reassemble + Queen + Hypercharge (ST/AoE)
         { Job.PCT, [(Preset)20027, (Preset)20060] },                               // Hammer combo
     };
 
