@@ -42,7 +42,7 @@ internal static class StreamDeckBridge
     public static int Port { get; private set; }
 
     private static readonly object _lock = new();
-    private static string _job = "—", _burst = "—";
+    private static string _job = "—", _burst = "—", _burst1 = "—";
     private static bool _stHas, _aoeHas;
     private static uint _stId, _aoeId;
     private static string _stName = "—", _aoeName = "—";
@@ -121,6 +121,7 @@ internal static class StreamDeckBridge
                     _stId = _aoeId = 0;
                     _stIcon = _aoeIcon = 0;
                     _burst = "—";
+                    _burst1 = "—";
                 }
                 return;
             }
@@ -131,6 +132,12 @@ internal static class StreamDeckBridge
             var stHas = ActionResolution.TryGetSingleTarget(out var st);
             var aoeHas = ActionResolution.TryGetAoE(out var aoe);
             var burst = ActionResolution.IsBurstHeld() switch
+            {
+                true => "HELD",
+                false => "ARMED",
+                _ => "—",
+            };
+            var burst1 = ActionResolution.IsBurst1Held() switch
             {
                 true => "HELD",
                 false => "ARMED",
@@ -149,6 +156,7 @@ internal static class StreamDeckBridge
                 _aoeName = aoeHas ? ActionResolution.ActionName(aoe) : "—";
                 _aoeIcon = aoeHas ? ActionResolution.ActionIcon(aoe) : (ushort)0;
                 _burst = burst;
+                _burst1 = burst1;
             }
         }
         catch
@@ -245,8 +253,10 @@ internal static class StreamDeckBridge
                 bytes = Encoding.UTF8.GetBytes("{\"error\":\"icon not found\"}");
             }
         }
+        else if (path.StartsWith("/burst1/toggle", StringComparison.Ordinal))
+            bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: true));
         else if (path.StartsWith("/burst/toggle", StringComparison.Ordinal))
-            bytes = Encoding.UTF8.GetBytes(ToggleBurstJson());
+            bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: false));
         else
             bytes = Encoding.UTF8.GetBytes(StateJson());
 
@@ -390,14 +400,17 @@ internal static class StreamDeckBridge
 
     #endregion
 
-    private static string ToggleBurstJson()
+    private static string ToggleBurstJson(bool oneMinute)
     {
         var state = "—";
         try
         {
             var t = Svc.Framework.RunOnFrameworkThread(() =>
             {
-                ActionResolution.ToggleBurst(out var s);
+                if (oneMinute)
+                    ActionResolution.ToggleBurst1(out var s);
+                else
+                    ActionResolution.ToggleBurst(out var s);
                 return s;
             });
             if (t.Wait(2000))
@@ -420,7 +433,8 @@ internal static class StreamDeckBridge
                    $"\"name\":\"{Esc(_stName)}\",\"icon\":{_stIcon}}}," +
                    $"\"aoe\":{{\"has\":{Bool(_aoeHas)},\"id\":{_aoeId}," +
                    $"\"name\":\"{Esc(_aoeName)}\",\"icon\":{_aoeIcon}}}," +
-                   $"\"burst\":\"{Esc(_burst)}\"" +
+                   $"\"burst\":\"{Esc(_burst)}\"," +
+                   $"\"burst1\":\"{Esc(_burst1)}\"" +
                    "}";
     }
 

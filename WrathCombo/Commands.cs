@@ -62,6 +62,26 @@ public partial class WrathCombo
         { Job.PCT, [(Preset)20021, (Preset)20054, (Preset)20027, (Preset)20060] },
     };
 
+    // The ~60s-cooldown ("odd minute") subset of BurstPresetMap, so the 1-minute
+    // burst can be held on its own while the 2-minute pieces keep flowing.
+    // Jobs whose burst package is entirely 2-minute cooldowns are absent.
+    internal static readonly Dictionary<Job, Preset[]> Burst1PresetMap = new()
+    {
+        { Job.PLD, [(Preset)11003, (Preset)11016, (Preset)11010, (Preset)11019] }, // FoF + Requiescat (all 60s)
+        { Job.WAR, [(Preset)18003, (Preset)18019, (Preset)18007, (Preset)18018] }, // Inner Release + Infuriate (all 60s)
+        { Job.DRK, [(Preset)5015, (Preset)5054, (Preset)5018, (Preset)5057] },     // Delirium + Shadowbringer
+        { Job.GNB, [(Preset)7008, (Preset)7201] },                                 // No Mercy
+        { Job.SGE, [(Preset)14008, (Preset)14051] },                               // Psyche
+        { Job.DRG, [(Preset)6104, (Preset)6204, (Preset)6106, (Preset)6206] },     // Lance Charge + Life Surge
+        { Job.MNK, [(Preset)9011, (Preset)9032] },                                 // Riddle of Fire
+        { Job.NIN, [(Preset)10006, (Preset)10022] },                               // Trick Attack / Kunai's Bane
+        { Job.SAM, [(Preset)15018, (Preset)15114] },                               // Meikyo Shisui
+        { Job.RPR, [(Preset)12009, (Preset)12108] },                               // Gluttony
+        { Job.VPR, [(Preset)30011, (Preset)30110, (Preset)30112] },                // Reawaken
+        { Job.MCH, [(Preset)8103, (Preset)8107] },                                 // Reassemble + Automaton Queen
+        { Job.PCT, [(Preset)20027, (Preset)20060] },                               // Hammer combo
+    };
+
     /// <summary>
     ///     Registers the base commands for the plugin.<br />
     ///     Also displays the biggest commands in Dalamud.
@@ -72,6 +92,7 @@ public partial class WrathCombo
             "Open the MyTweak settings window.\n" +
             $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
+            $"{Command} burst1 hold | resume → Same, but only the ~60s (odd-minute) subset.\n" +
             $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
             $"{Command} tracker reset → Un-hide and re-center it if you lost it.\n" +
             $"{Command} debug → Dumps a debug log onto your desktop.\n" +
@@ -105,7 +126,10 @@ public partial class WrathCombo
         switch (argumentParts[0])
         {
             case "burst":
-                HandleBurstControl(argumentParts); break;
+                HandleBurstControl(argumentParts, BurstPresetMap, "burst"); break;
+
+            case "burst1":
+                HandleBurstControl(argumentParts, Burst1PresetMap, "1-minute burst"); break;
 
             case "disable":
             case "enable":
@@ -801,7 +825,8 @@ public partial class WrathCombo
         Service.ActionReplacer.UpdateFilteredCombos();
     }
 
-    private void HandleBurstControl(string[] argument)
+    private void HandleBurstControl(string[] argument,
+        Dictionary<Job, Preset[]> map, string label)
     {
         if (!PresetStorage.AllPresets.Any(p => p.Value.JobInfo?.Job == Player.Job && p.Value.ComboType == ComboType.Advanced && PresetStorage.IsEnabled(p.Key)))
         {
@@ -809,9 +834,9 @@ public partial class WrathCombo
             return;
         }
 
-        if (!BurstPresetMap.TryGetValue(Player.Job, out var presets))
+        if (!map.TryGetValue(Player.Job, out var presets))
         {
-            DuoLog.Error("No burst presets defined for your current job.");
+            DuoLog.Error($"No {label} presets defined for your current job.");
             return;
         }
 

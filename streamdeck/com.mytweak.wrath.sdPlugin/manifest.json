@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "MyTweak Next Action",
-  "Version": "1.1.1",
+  "Version": "1.2.0",
   "Author": "meowmeowmeowie1",
   "URL": "https://github.com/meowmeowmeowie1/meow",
   "Description": "Shows your FFXIV next Single-Target / AoE action and burst state from the MyTweak plugin, and toggles burst. Talks to MyTweak's local API (127.0.0.1).",
@@ -10,8 +10,15 @@
   "Icon": "imgs/plugin",
   "SDKVersion": 2,
   "CodePath": "index.html",
-  "Software": { "MinimumVersion": "6.0" },
-  "OS": [ { "Platform": "windows", "MinimumVersion": "10" } ],
+  "Software": {
+    "MinimumVersion": "6.0"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
   "Actions": [
     {
       "UUID": "com.mytweak.wrath.st",
@@ -20,7 +27,13 @@
       "Tooltip": "Shows the next single-target action your rotation would use.",
       "PropertyInspectorPath": "",
       "SupportedInMultiActions": false,
-      "States": [ { "Image": "imgs/st", "TitleAlignment": "bottom", "FontSize": "12" } ]
+      "States": [
+        {
+          "Image": "imgs/st",
+          "TitleAlignment": "bottom",
+          "FontSize": "12"
+        }
+      ]
     },
     {
       "UUID": "com.mytweak.wrath.aoe",
@@ -28,7 +41,13 @@
       "Icon": "imgs/aoe",
       "Tooltip": "Shows the next AoE action your rotation would use.",
       "SupportedInMultiActions": false,
-      "States": [ { "Image": "imgs/aoe", "TitleAlignment": "bottom", "FontSize": "12" } ]
+      "States": [
+        {
+          "Image": "imgs/aoe",
+          "TitleAlignment": "bottom",
+          "FontSize": "12"
+        }
+      ]
     },
     {
       "UUID": "com.mytweak.wrath.burst",
@@ -36,7 +55,27 @@
       "Icon": "imgs/burst",
       "Tooltip": "Shows ARMED / HELD and toggles burst hold/resume when pressed.",
       "SupportedInMultiActions": false,
-      "States": [ { "Image": "imgs/burst", "TitleAlignment": "middle", "FontSize": "14" } ]
+      "States": [
+        {
+          "Image": "imgs/burst",
+          "TitleAlignment": "middle",
+          "FontSize": "14"
+        }
+      ]
+    },
+    {
+      "UUID": "com.mytweak.wrath.burst1",
+      "Name": "Burst 1-Min Toggle",
+      "Icon": "imgs/burst1",
+      "Tooltip": "Shows ARMED / HELD for the ~60s (odd-minute) burst subset and toggles it when pressed.",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/burst1",
+          "TitleAlignment": "middle",
+          "FontSize": "14"
+        }
+      ]
     }
   ]
 }
