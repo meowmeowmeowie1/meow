@@ -407,10 +407,11 @@ internal static class StreamDeckBridge
         {
             var t = Svc.Framework.RunOnFrameworkThread(() =>
             {
+                string s;
                 if (oneMinute)
-                    ActionResolution.ToggleBurst1(out var s);
+                    ActionResolution.ToggleBurst1(out s);
                 else
-                    ActionResolution.ToggleBurst(out var s);
+                    ActionResolution.ToggleBurst(out s);
                 return s;
             });
             if (t.Wait(2000))
