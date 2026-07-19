@@ -180,6 +180,21 @@ internal static class ActionResolution
             return false;
 
         var enable = !PresetStorage.IsEnabled(presets[0]);
+
+        // Cross-group guard: while the FULL burst is held, toggling the 1-min
+        // subset must not silently re-arm it (the modern version of the old
+        // "second macro turns it back on" double-toggle bug). Resume the full
+        // burst first; that re-arms everything in one intentional action.
+        if (enable
+            && ReferenceEquals(map, WrathCombo.Burst1PresetMap)
+            && IsBurstHeld() == true)
+        {
+            ECommons.Logging.DuoLog.Warning(
+                "1-min burst NOT re-armed: the full burst is held. Resume it first.");
+            state = "HELD";
+            return true;
+        }
+
         foreach (var preset in presets)
         {
             if (enable)

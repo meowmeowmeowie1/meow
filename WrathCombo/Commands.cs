@@ -852,6 +852,18 @@ public partial class WrathCombo
             _ => !PresetStorage.IsEnabled(presets[0]),
         };
 
+        // Cross-group guard (bare toggle only): while the FULL burst is held, a
+        // burst1 toggle must not silently re-arm the 1-min subset. An explicit
+        // "burst1 resume" still works, as does resuming the full burst.
+        if (enable && sub == ""
+            && ReferenceEquals(map, Burst1PresetMap)
+            && Core.ActionResolution.IsBurstHeld() == true)
+        {
+            DuoLog.Warning(
+                "1-min burst NOT re-armed: the full burst is held. Resume it first.");
+            return;
+        }
+
         foreach (var preset in presets)
         {
             if (enable)
