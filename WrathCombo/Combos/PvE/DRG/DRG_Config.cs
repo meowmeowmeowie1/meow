@@ -1,4 +1,5 @@
 using Dalamud.Interface.Colors;
+using ECommons.ImGuiMethods;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Extensions;
 using WrathCombo.Resources.Localization.JobConfigs;
@@ -15,14 +16,20 @@ internal partial class DRG
             switch (preset)
             {
                 case Preset.DRG_ST_Opener:
-                    DrawHorizontalRadioButton(DRG_SelectedOpener,
-                        Generics.StandardOpener, Generics.UsesStandardOpener, 0);
-
-                    DrawHorizontalRadioButton(DRG_SelectedOpener,
-                        FormatAndCache(Generics.Action_Opener, PiercingTalon.ActionName()),
-                        FormatAndCache(Generics.Use_0_Opener, PiercingTalon.ActionName()), 1);
-               
                     DrawBossOnlyChoice(DRG_BalanceContent);
+                    DrawOpenerPotionChoice(DRG_Opener_Potion);
+                    ImGuiEx.TextUnderlined("Select Opener");
+                    ImGui.Spacing();
+                    DrawRadioButton(DRG_SelectedOpener,
+                        Generics.StandardOpener, Generics.UsesStandardOpener, 0, descriptionAsTooltip: true);
+
+                    DrawRadioButton(DRG_SelectedOpener,
+                        FormatAndCache(Generics.Action_Opener, PiercingTalon.ActionName()),
+                        FormatAndCache(Generics.Use_0_Opener, PiercingTalon.ActionName()), 1, descriptionAsTooltip: true);
+
+                    DrawRadioButton(DRG_SelectedOpener,
+                        DRG_Config.EarlyBuffOpener,
+                        FormatAndCache(DRG_Config.UseEarlyBuffOpener), 2, descriptionAsTooltip: true);
                     break;
 
                 case Preset.DRG_ST_BattleLitany:
@@ -33,11 +40,11 @@ internal partial class DRG
                     ImGui.TextColored(ImGuiColors.DalamudYellow,
                         Generics.EnemyTypeCheck);
 
-                    DrawHorizontalRadioButton(DRG_ST_BattleLitanyBossOption,
+                    DrawHorizontalRadioButton(DRG_ST_BattleLitanyHPBossOption,
                         Generics.NonBosses,
                         Generics.HPCheckNonBosses, 0);
 
-                    DrawHorizontalRadioButton(DRG_ST_BattleLitanyBossOption,
+                    DrawHorizontalRadioButton(DRG_ST_BattleLitanyHPBossOption,
                         Generics.AllEnemies,
                         Generics.HPCheckAllEnemies, 1);
                     ImGui.Unindent();
@@ -51,11 +58,11 @@ internal partial class DRG
                     ImGui.TextColored(ImGuiColors.DalamudYellow,
                         Generics.EnemyTypeCheck);
 
-                    DrawHorizontalRadioButton(DRG_ST_LanceChargeBossOption,
+                    DrawHorizontalRadioButton(DRG_ST_LanceChargeHPBossOption,
                         Generics.NonBosses,
                         Generics.HPCheckNonBosses, 0);
 
-                    DrawHorizontalRadioButton(DRG_ST_LanceChargeBossOption,
+                    DrawHorizontalRadioButton(DRG_ST_LanceChargeHPBossOption,
                         Generics.AllEnemies,
                         Generics.HPCheckAllEnemies, 1);
                     ImGui.Unindent();
@@ -78,13 +85,13 @@ internal partial class DRG
                     break;
 
                 case Preset.DRG_ST_Geirskogul:
-                    DrawSliderInt(0, 100, DRG_ST_GeirskogulBossOption,
+                    DrawSliderInt(0, 100, DRG_ST_GeirskogulBossHPOption,
                         Generics.BossOnlyHpPercent);
 
-                    DrawSliderInt(0, 100, DRG_ST_GeirskogulBossAddsOption,
+                    DrawSliderInt(0, 100, DRG_ST_GeirskogulBossAddsHPOption,
                         Generics.BossEncounterNonBossHpPercent);
 
-                    DrawSliderInt(0, 100, DRG_ST_GeirskogulTrashOption,
+                    DrawSliderInt(0, 100, DRG_ST_GeirskogulTrashHPOption,
                         Generics.NonBossHpPercent);
                     break;
 
@@ -96,11 +103,11 @@ internal partial class DRG
                     ImGui.TextColored(ImGuiColors.DalamudYellow,
                         Generics.EnemyTypeCheck);
 
-                    DrawHorizontalRadioButton(DRG_ST_DragonfireDiveBossOption,
+                    DrawHorizontalRadioButton(DRG_ST_DragonfireDiveHPBossOption,
                         Generics.NonBosses,
                         Generics.HPCheckNonBosses, 0);
 
-                    DrawHorizontalRadioButton(DRG_ST_DragonfireDiveBossOption,
+                    DrawHorizontalRadioButton(DRG_ST_DragonfireDiveHPBossOption,
                         Generics.AllEnemies,
                         Generics.HPCheckAllEnemies, 1);
                     ImGui.Unindent();
@@ -207,14 +214,14 @@ internal partial class DRG
             DRG_SelectedOpener = new("DRG_SelectedOpener"),
             DRG_BalanceContent = new("DRG_BalanceContent", 1),
             DRG_ST_BattleLitanyHPOption = new("DRG_ST_BattleLitanyHPOption", 25),
-            DRG_ST_BattleLitanyBossOption = new("DRG_ST_BattleLitanyBossOption"),
+            DRG_ST_BattleLitanyHPBossOption = new("DRG_ST_BattleLitanyHPBossOption"),
             DRG_ST_LanceChargeHPOption = new("DRG_ST_LanceChargeHPOption", 25),
-            DRG_ST_LanceChargeBossOption = new("DRG_ST_LanceChargeBossOption"),
-            DRG_ST_GeirskogulBossOption = new("DRG_ST_GeirskogulBossOption"),
-            DRG_ST_GeirskogulBossAddsOption = new("DRG_ST_GeirskogulBossAddsOption", 10),
-            DRG_ST_GeirskogulTrashOption = new("DRG_ST_GeirskogulTrashOption", 25),
+            DRG_ST_LanceChargeHPBossOption = new("DRG_ST_LanceChargeHPBossOption"),
+            DRG_ST_GeirskogulBossHPOption = new("DRG_ST_GeirskogulBossHPOption"),
+            DRG_ST_GeirskogulBossAddsHPOption = new("DRG_ST_GeirskogulBossAddsHPOption", 10),
+            DRG_ST_GeirskogulTrashHPOption = new("DRG_ST_GeirskogulTrashHPOption", 25),
             DRG_ST_DragonfireDiveHPOption = new("DRG_ST_DragonfireDiveHPOption", 25),
-            DRG_ST_DragonfireDiveBossOption = new("DRG_ST_DragonfireDiveBossOption"),
+            DRG_ST_DragonfireDiveHPBossOption = new("DRG_ST_DragonfireDiveHPBossOption"),
             DRG_ManualTN = new("DRG_ManualTN"),
             DRG_ST_SecondWindHPThreshold = new("DRG_ST_SecondWindHPThreshold", 40),
             DRG_ST_BloodbathHPThreshold = new("DRG_ST_BloodbathHPThreshold", 30),
@@ -226,6 +233,7 @@ internal partial class DRG
             DRG_AoE_BloodbathHPThreshold = new("DRG_AoE_BloodbathHPThreshold", 30);
 
         public static UserBool
+            DRG_Opener_Potion = new("DRG_Opener_Potion"),
             DRG_ST_DoubleMirage = new("DRG_ST_DoubleMirage"),
             DRG_ChaoticCombo = new("DRG_ChaoticCombo");
 

@@ -1,4 +1,6 @@
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
+using ECommons.ImGuiMethods;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Extensions;
 using WrathCombo.Resources.Localization.JobConfigs;
@@ -17,40 +19,46 @@ internal partial class MNK
                 #region ST
 
                 case Preset.MNK_STUseOpener:
-                    DrawHorizontalRadioButton(MNK_SelectedOpener,
-                        MNK_Config.DoubleLunarOpener,
-                        MNK_Config.DoubleLunarOpenerDesc, 0);
-
-                    DrawHorizontalRadioButton(MNK_SelectedOpener,
-                        MNK_Config.SolarLunarOpener,
-                        MNK_Config.SolarLunarOpenerDesc, 1);
-                    ImGui.NewLine();
-
-                    DrawHorizontalRadioButton(MNK_OpenerCountdown,
-                        Generics.OnlyWithCountdown,
-                        Generics.OnlyUseOpenerWhenCountdownActive, 0);
-
-                    DrawHorizontalRadioButton(MNK_OpenerCountdown,
-                        Generics.Always,
-                        Generics.UseAlways, 1);
-
                     DrawBossOnlyChoice(MNK_Balance_Content);
+                    DrawOpenerPotionChoice(MNK_Opener_Potion);
+                    ImGuiEx.TextUnderlined("Select Opener");
+                    ImGui.Spacing();
+                    DrawRadioButton(MNK_SelectedOpener,
+                        MNK_Config.DoubleLunarOpener,
+                        MNK_Config.DoubleLunarOpenerDesc, 0, descriptionAsTooltip: true);
+
+                    DrawRadioButton(MNK_SelectedOpener,
+                        MNK_Config.SolarLunarOpener,
+                        MNK_Config.SolarLunarOpenerDesc, 1, descriptionAsTooltip: true);
+
+                    DrawRadioButton(MNK_SelectedOpener,
+                        MNK_Config.BrotherhoodFirstOpener,
+                        MNK_Config.BrotherhoodFirstOpenerDesc, 2, descriptionAsTooltip: true);
+
+                    ImGuiEx.TextUnderlined("Countdown Settings");
+                    ImGui.Spacing();
+                    DrawRadioButton(MNK_OpenerCountdown,
+                        Generics.OnlyWithCountdown,
+                        Generics.OnlyUseOpenerWhenCountdownActive, 0, descriptionAsTooltip: true);
+                    DrawRadioButton(MNK_OpenerCountdown,
+                        Generics.Always,
+                        Generics.UseAlways, 1, descriptionAsTooltip: true);
                     break;
 
                 case Preset.MNK_STUseBrotherhood:
 
-                    DrawSliderInt(0, 50, MNK_ST_BHHPThreshold,
+                    DrawSliderInt(0, 50, MNK_ST_BHHPOption,
                         Generics.StopEnemyHpPercent);
 
                     ImGui.Indent();
                     ImGui.TextColored(ImGuiColors.DalamudYellow,
                         Generics.EnemyTypeCheck);
 
-                    DrawHorizontalRadioButton(MNK_ST_BHBossOption,
+                    DrawHorizontalRadioButton(MNK_ST_BHHPBossOption,
                         Generics.NonBosses,
                         Generics.HPCheckNonBosses, 0);
 
-                    DrawHorizontalRadioButton(MNK_ST_BHBossOption,
+                    DrawHorizontalRadioButton(MNK_ST_BHHPBossOption,
                         Generics.AllEnemies,
                         Generics.HPCheckAllEnemies, 1);
                     ImGui.Unindent();
@@ -58,18 +66,18 @@ internal partial class MNK
 
                 case Preset.MNK_STUseROF:
 
-                    DrawSliderInt(0, 50, MNK_ST_RoFHPThreshold,
+                    DrawSliderInt(0, 50, MNK_ST_RoFHPOption,
                         Generics.StopEnemyHpPercent);
 
                     ImGui.Indent();
                     ImGui.TextColored(ImGuiColors.DalamudYellow,
                         Generics.EnemyTypeCheck);
 
-                    DrawHorizontalRadioButton(MNK_ST_RoFBossOption,
+                    DrawHorizontalRadioButton(MNK_ST_RoFHPBossOption,
                         Generics.NonBosses,
                         Generics.HPCheckNonBosses, 0);
 
-                    DrawHorizontalRadioButton(MNK_ST_RoFBossOption,
+                    DrawHorizontalRadioButton(MNK_ST_RoFHPBossOption,
                         Generics.AllEnemies,
                         Generics.HPCheckAllEnemies, 1);
                     ImGui.Unindent();
@@ -77,18 +85,18 @@ internal partial class MNK
 
                 case Preset.MNK_STUseROW:
 
-                    DrawSliderInt(0, 50, MNK_ST_RoWHPThreshold,
+                    DrawSliderInt(0, 50, MNK_ST_RoWHPOption,
                         Generics.StopEnemyHpPercent);
 
                     ImGui.Indent();
                     ImGui.TextColored(ImGuiColors.DalamudYellow,
                         Generics.EnemyTypeCheck);
 
-                    DrawHorizontalRadioButton(MNK_ST_RoWBossOption,
+                    DrawHorizontalRadioButton(MNK_ST_RoWHPBossOption,
                         Generics.NonBosses,
                         Generics.HPCheckNonBosses, 0);
 
-                    DrawHorizontalRadioButton(MNK_ST_RoWBossOption,
+                    DrawHorizontalRadioButton(MNK_ST_RoWHPBossOption,
                         Generics.AllEnemies,
                         Generics.HPCheckAllEnemies, 1);
                     ImGui.Unindent();
@@ -195,12 +203,12 @@ internal partial class MNK
             MNK_SelectedOpener = new("MNK_SelectedOpener"),
             MNK_OpenerCountdown = new("MNK_OpenerCountdown"),
             MNK_Balance_Content = new("MNK_Balance_Content", 1),
-            MNK_ST_BHBossOption = new("MNK_ST_BHBossOption"),
-            MNK_ST_BHHPThreshold = new("MNK_ST_BHHPThreshold", 25),
-            MNK_ST_RoFBossOption = new("MNK_ST_RoFBossOption"),
-            MNK_ST_RoFHPThreshold = new("MNK_ST_RoFHPThreshold", 25),
-            MNK_ST_RoWBossOption = new("MNK_ST_RoWBossOption"),
-            MNK_ST_RoWHPThreshold = new("MNK_ST_RoWHPThreshold", 25),
+            MNK_ST_BHHPBossOption = new("MNK_ST_BHHPBossOption"),
+            MNK_ST_BHHPOption = new("MNK_ST_BHHPOption", 25),
+            MNK_ST_RoFHPBossOption = new("MNK_ST_RoFHPBossOption"),
+            MNK_ST_RoFHPOption = new("MNK_ST_RoFHPOption", 25),
+            MNK_ST_RoWHPBossOption = new("MNK_ST_RoWHPBossOption"),
+            MNK_ST_RoWHPOption = new("MNK_ST_RoWHPOption", 25),
             MNK_ManualTN = new("MNK_ManualTN"),
             MNK_ST_EarthsReplyHPThreshold = new("MNK_ST_EarthsReplyHPThreshold", 25),
             MNK_ST_SecondWindHPThreshold = new("MNK_ST_SecondWindHPThreshold", 40),
@@ -209,13 +217,14 @@ internal partial class MNK
             //AoE
             MNK_AoE_BuffsHPThreshold = new("MNK_AoE_BuffsHPThreshold", 25),
             MNK_AoE_PerfectBalanceHPThreshold = new("MNK_AoE_PerfectBalanceHPThreshold", 25),
-            MNK_AoE_SecondWindHPThreshold = new("MNK_AoE_SecondWindThreshold", 40),
-            MNK_AoE_BloodbathHPThreshold = new("MNK_AoE_BloodbathThreshold", 30),
+            MNK_AoE_SecondWindHPThreshold = new("MNK_AoE_SecondWindHPThreshold", 40),
+            MNK_AoE_BloodbathHPThreshold = new("MNK_AoE_BloodbathHPThreshold", 30),
 
             //Misc
             MNK_BH_RoF = new("MNK_BH_RoF");
 
         public static UserBool
+            MNK_Opener_Potion = new("MNK_Opener_Potion"),
             MNK_Thunderclap_FieldMouseover = new("MNK_Thunderclap_FieldMouseover"),
             MNK_BasicCombo_MasterfulBlitz = new("MNK_BasicCombo_MasterfulBlitz"),
             MNK_BasicCombo_Chakra = new("MNK_BasicCombo_Chakra"),

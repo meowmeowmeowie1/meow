@@ -445,6 +445,14 @@ public static class UserConfig
     /// <param name="itemWidth"></param>
     /// <param name="isConditionalChoice"></param>
     /// <param name="indentDescription"></param>
+    internal static void DrawOpenerPotionChoice(UserBool config)
+    {
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
+        {
+            DrawAdditionalBoolChoice(config, "Include Potion?", "Adds the strongest potion appropriate for your job to the opener.");
+        }
+    }
+
     public static void DrawAdditionalBoolChoice(string config, string checkBoxName, string checkboxDescription, float itemWidth = 150, bool isConditionalChoice = false, bool indentDescription = false)
     {
         bool output = Configuration.GetCustomBoolValue(config);

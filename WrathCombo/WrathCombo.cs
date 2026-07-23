@@ -28,6 +28,7 @@ using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Data;
 using WrathCombo.Data.Conflicts;
 using WrathCombo.Resources.Localization.UI.MainWindow;
+using WrathCombo.Native;
 using WrathCombo.Services;
 using WrathCombo.Services.ActionRequestIPC;
 using WrathCombo.Services.IPC;
@@ -55,12 +56,14 @@ public sealed partial class WrathCombo : IDalamudPlugin
         ConnectCallback = new HappyEyeballsCallback().ConnectCallback,
     };
     private readonly HttpClient httpClient = new(httpHandler) { Timeout = TimeSpan.FromSeconds(5) };
+    internal HttpClient HTTPClient => httpClient;
     public readonly IDtrBarEntry OpenerDtr;
     internal Provider IPC;
     internal Search IPCSearch = null!;
     internal UIHelper UIHelper = null!;
     internal ActionRetargeting ActionRetargeting = null!;
     internal MovementHook MoveHook;
+    internal CustomActionSetup CustomActions;
 
     internal static bool IsAprilFools => DateTime.UtcNow.Day == 1 && DateTime.UtcNow.Month == 4;
 
@@ -163,6 +166,8 @@ public sealed partial class WrathCombo : IDalamudPlugin
         Service.Address = new AddressResolver();
         Service.Address.Setup(Svc.SigScanner);
         MoveHook = new();
+        CustomActions = new();
+        OpCodeConfigHelper.UpdateOpCodes();
         PresetStorage.RemoveRedundantPresets();
 
         Service.ComboCache = new CustomComboCache();
@@ -420,6 +425,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
         CustomComboFunctions.TimerDispose();
         IPC.Dispose();
         MoveHook.Dispose();
+        CustomActions.Dispose();
 
         ConflictingPluginsChecks.Dispose();
         AllStaticIPCSubscriptions.Dispose();

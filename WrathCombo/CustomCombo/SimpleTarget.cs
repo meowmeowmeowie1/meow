@@ -314,18 +314,7 @@ internal static class SimpleTarget
             ? Svc.Targets.Target.TargetObject
             : null;
 
-    public static IGameObject? UIMouseOverTarget
-    {
-        get
-        {
-            if (!PronounService.PronounsReady) return null;
-            unsafe
-            {
-                return GameObjectExtensions.GetObjectFrom(
-                    PronounService.Module->UiMouseOverTarget);
-            }
-        }
-    }
+    public static IGameObject? UIMouseOverTarget => PronounService.UIMouseOverTarget;
 
     public static IGameObject? ModelMouseOverTarget =>
         Svc.Targets.MouseOverNameplateTarget ?? Svc.Targets.MouseOverTarget;
@@ -345,6 +334,36 @@ internal static class SimpleTarget
             .OfType<IBattleChara>()
             .Where(x => x.IsHostile() && x.IsTargetable && x.IsWithinRange() && x.IsInCombat() && x.IsNotInvincible())
             .OrderBy(x => GetTargetDistance(x))
+            .FirstOrDefault();
+    
+    public static IGameObject? NearestEnemyOver5YalmsAway  =>
+        Svc.Objects
+            .OfType<IBattleChara>()
+            .Where(x => x.IsHostile() && x.IsTargetable && x.IsWithinRange() && x.IsNotInvincible() && x.IsAtLeastFiveYalmsAway())
+            .OrderBy(x => GetTargetDistance(x))
+            .FirstOrDefault();
+    
+    public static IGameObject? NearestEnemyOver5YalmsAwayNotTargetingPlayer  =>
+        Svc.Objects
+            .OfType<IBattleChara>()
+            .Where(x => x.IsHostile() && x.IsTargetable && x.IsWithinRange() && x.IsNotInvincible() && x.IsAtLeastFiveYalmsAway() && 
+                        x.TargetObjectId != LocalPlayer?.GameObjectId)
+            .OrderBy(x => GetTargetDistance(x))
+            .FirstOrDefault();
+    
+    public static IGameObject? FurthestEnemyOver5YalmsAway  =>
+        Svc.Objects
+            .OfType<IBattleChara>()
+            .Where(x => x.IsHostile() && x.IsTargetable && x.IsWithinRange() && x.IsNotInvincible() && x.IsAtLeastFiveYalmsAway())
+            .OrderByDescending(x => GetTargetDistance(x))
+            .FirstOrDefault();
+    
+    public static IGameObject? FurthestEnemyOver5YalmsAwayNotTargetingPlayer  =>
+        Svc.Objects
+            .OfType<IBattleChara>()
+            .Where(x => x.IsHostile() && x.IsTargetable && x.IsWithinRange() && x.IsNotInvincible() && x.IsAtLeastFiveYalmsAway() && 
+                        x.TargetObjectId != LocalPlayer?.GameObjectId)
+            .OrderByDescending(x => GetTargetDistance(x))
             .FirstOrDefault();
 
     public static IGameObject? NearestEnemyToTarget
@@ -527,13 +546,13 @@ internal static class SimpleTarget
     #region Previous Targets
 
     public static IGameObject? LastHardTarget =>
-        PronounService.GetIGameObjectFromPronounID(1006);
+        PronounService.GetByPlaceHolder("<lt>");
 
     public static IGameObject? LastHostileHardTarget =>
-        PronounService.GetIGameObjectFromPronounID(1084);
+        PronounService.GetByPlaceHolder("<le>");
 
     public static IGameObject? MostRecentAttacker =>
-        PronounService.GetIGameObjectFromPronounID(1008);
+        PronounService.GetByPlaceHolder("<la>");
 
     #endregion
 
@@ -608,13 +627,12 @@ internal static class SimpleTarget
     /// <returns>
     ///     An <see cref="IGameObject" /> for the party member if found;
     /// </returns>
-    /// <remarks>IDs start at 44 and go to 51</remarks>
     public static IGameObject? GetPartyMemberInSlotSlot(int slot) =>
         slot switch
         {
             < 1 or > 8 => null,
             1 => Self,
-            _ => PronounService.GetIGameObjectFromPronounID(42 + slot),
+            _ => PronounService.GetByPlaceHolder($"<{slot}>"),
         };
 
     #endregion

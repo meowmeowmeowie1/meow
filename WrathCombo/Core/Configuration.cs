@@ -32,6 +32,20 @@ public partial class Configuration : IPluginConfiguration
     /// <summary> Gets or sets the configuration version. </summary>
     public int Version { get; set; } = 6;
 
+    /// <summary> Custom actions (item/potion proxies) settings. </summary>
+    public global::WrathCombo.Native.CustomActionSettings CustomActionSettings { get; set; } = new();
+
+    /// <summary> Cached game opcodes for packet parsing (regen ticks etc). </summary>
+    public OpCodeConfig OpCodes = new();
+
+    public List<FFXIVOPCodes> OpCodesBackup = [];
+
+    /// <summary> Pause length after a movement penalty, in seconds. </summary>
+    public float PenaltyPause = 1.5f;
+
+    /// <summary> Use experimental predicted-HP values for heal targeting. </summary>
+    public bool UseExperimentalHP = false;
+
     #region Settings
 
     #region UI Settings

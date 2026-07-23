@@ -1,4 +1,5 @@
 using Dalamud.Interface.Colors;
+using ECommons.ImGuiMethods;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Extensions;
 using WrathCombo.Resources.Localization.JobConfigs;
@@ -34,6 +35,7 @@ internal partial class NIN
             NIN_SimpleMudra_Choice = new("NIN_SimpleMudra_Choice", 1);
 
         internal static UserBool
+            NIN_Opener_Potion = new("NIN_Opener_Potion"),
             NIN_ST_AdvancedMode_Bhavacakra_Pooling = new("Ninki_BhavaPooling"),
             NIN_ST_AdvancedMode_TrueNorth = new("NIN_ST_AdvancedMode_TrueNorth"),
             NIN_ST_AdvancedMode_ShadeShiftRaidwide = new("NIN_ST_AdvancedMode_ShadeShiftRaidwide"),
@@ -44,7 +46,6 @@ internal partial class NIN
             NIN_AoE_AdvancedMode_Ninjitsus_Katon_Pooling = new("NIN_AoE_AdvancedMode_Ninjitsus_Katon_Pooling"),
             NIN_AoE_AdvancedMode_Ninjitsus_Katon_Uptime = new("NIN_AoE_AdvancedMode_Ninjitsus_Katon_Uptime"),
             NIN_AoE_AdvancedMode_TenChiJin_Auto = new("NIN_AoE_AdvancedMode_TenChiJin_Auto"),
-            NIN_AoE_AdvancedMode_TenChiJin_Doton = new("NIN_AoE_AdvancedMode_TenChiJin_Doton"),
             NIN_AoE_AdvancedMode_HellfrogMedium_Pooling = new("Ninki_HellfrogPooling"),
             NIN_AoE_AdvancedMode_ShadeShiftRaidwide = new("NIN_AoE_AdvancedMode_ShadeShiftRaidwide"),
             NIN_HideMug_TrickAfterMug = new("NIN_HideMug_TrickAfterMug"),
@@ -57,7 +58,8 @@ internal partial class NIN
             NIN_MudraProtection_Options = new("NIN_MudraProtection_Options");
 
         internal static UserFloat
-            NIN_AoE_AdvancedMode_Ninjitsus_Doton_TimeStill = new("NIN_AoE_AdvancedMode_Ninjitsus_Doton_TimeStill", 3f);
+            NIN_AoE_AdvancedMode_Ninjitsus_Doton_TimeStill = new("NIN_AoE_AdvancedMode_Ninjitsus_Doton_TimeStill", 3f),
+            NIN_AoE_AdvancedMode_TCJ_Doton_Timer = new("NIN_AoE_AdvancedMode_TCJ_Doton_Timer", 3f);
         #endregion
 
         internal static void Draw(Preset preset)
@@ -72,11 +74,14 @@ internal partial class NIN
                     break;
 
                 case Preset.NIN_ST_AdvancedMode_BalanceOpener:
-                    DrawRadioButton(NIN_Adv_Opener_Selection, $"Standard Opener - 4th GCD {KunaisBane.ActionName()}", "", 0);
-                    DrawRadioButton(NIN_Adv_Opener_Selection, $"Standard Opener - 3rd GCD {Dokumori.ActionName()}", "", 1);
-                    DrawRadioButton(NIN_Adv_Opener_Selection, $"Standard Opener - 3rd GCD {KunaisBane.ActionName()}", "", 2);
-
                     DrawBossOnlyChoice(NIN_Balance_Content);
+                    DrawOpenerPotionChoice(NIN_Opener_Potion);
+                    ImGuiEx.TextUnderlined("Select Opener");
+                    ImGui.Spacing();
+                    DrawRadioButton(NIN_Adv_Opener_Selection, $"Standard Opener - 4th GCD {KunaisBane.ActionName()}", "", 0, descriptionAsTooltip: true);
+                    DrawRadioButton(NIN_Adv_Opener_Selection, $"Standard Opener - 3rd GCD {Dokumori.ActionName()}", "", 1, descriptionAsTooltip: true);
+                    DrawRadioButton(NIN_Adv_Opener_Selection, $"Standard Opener - 3rd GCD {KunaisBane.ActionName()}", "", 2, descriptionAsTooltip: true);
+                    DrawRadioButton(NIN_Adv_Opener_Selection, $"Buff Rush", "", 3, descriptionAsTooltip: true);
                     break;
 
                 case Preset.NIN_ST_AdvancedMode_Mug:
@@ -192,10 +197,13 @@ internal partial class NIN
 
 
                 case Preset.NIN_AoE_AdvancedMode_TenChiJin:
-                    DrawAdditionalBoolChoice(NIN_AoE_AdvancedMode_TenChiJin_Auto, "Auto TCJ Option", "Will automatically Fuma Shuriken then Raiton then Suiton");
+                    DrawAdditionalBoolChoice(NIN_AoE_AdvancedMode_TenChiJin_Auto, "Auto TCJ Option", $"Will output TCJ actions in the following order\n" +
+                        $"{Doton.ActionName()} buff less than {NIN_AoE_AdvancedMode_TCJ_Doton_Timer.Value}s = [{FumaShuriken.ActionName()} -> {Katon.ActionName()} -> {Doton.ActionName()}]\n" +
+                        $"{Doton.ActionName()} buff more than {NIN_AoE_AdvancedMode_TCJ_Doton_Timer.Value}s = [{FumaShuriken.ActionName()} -> {Raiton.ActionName()} -> {Suiton.ActionName()}]");
+
                     if (NIN_AoE_AdvancedMode_TenChiJin_Auto)
                     {
-                        DrawAdditionalBoolChoice(NIN_AoE_AdvancedMode_TenChiJin_Doton, "Doton Option", "Adds Doton to Auto TCJ Option when no Doton is Down");
+                        DrawSliderFloat(1, 17, NIN_AoE_AdvancedMode_TCJ_Doton_Timer, "Doton Remaining Timer For Doton Path", decimals: 1);
                     }
                     break;
 

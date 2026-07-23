@@ -1,9 +1,11 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using System;
+using ECommons;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.Data;
 using WrathCombo.Extensions;
+using WrathCombo.Native;
 using static WrathCombo.Combos.PvE.WAR.Config;
 
 namespace WrathCombo.Combos.PvE;
@@ -17,9 +19,8 @@ internal partial class WAR
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID != HeavySwing)
-                return actionID;
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, HeavySwing)) return actionID;
+
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
             
@@ -48,9 +49,8 @@ internal partial class WAR
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID != Overpower)
-                return actionID;
-           
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Overpower)) return actionID;
+
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
             
@@ -82,9 +82,8 @@ internal partial class WAR
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not HeavySwing)
-                return actionID;
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, HeavySwing)) return actionID;
+
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
             
@@ -117,9 +116,8 @@ internal partial class WAR
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID != Overpower)
-                return actionID; //Our button
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Overpower)) return actionID;
+
             // Special Content
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
@@ -184,25 +182,53 @@ internal partial class WAR
         {
             if (action is not (InnerBeast or FellCleave))
                 return action;
-            if (IsEnabled(Preset.WAR_FC_InnerRelease) && ActionReady(OriginalHook(Berserk)) && CanWeave() && !HasWrathful && Minimal && GetTargetHPPercent() >= WAR_FC_IRStop && (HasSurgingTempest || !LevelChecked(StormsEye)))
-                return OriginalHook(Berserk);
-            if (IsEnabled(Preset.WAR_FC_Infuriate) && ActionReady(Infuriate) && CanWeave() && !HasNascentChaos && Minimal && !JustUsed(Infuriate) && !HasIR.Stacks && BeastGauge <= WAR_FC_Infuriate_Gauge && GetRemainingCharges(Infuriate) > WAR_FC_Infuriate_Charges)
-                return Infuriate;
-            if (IsEnabled(Preset.WAR_FC_Upheaval) && ActionReady(Upheaval) && CanWeave() && HasSurgingTempest && InMeleeRange() && Minimal)
-                return Upheaval;
-            if (IsEnabled(Preset.WAR_FC_PrimalWrath) && LevelChecked(PrimalWrath) && CanWeave() && HasWrathful && HasSurgingTempest && Minimal && GetTargetDistance() <= 4.99f)
-                return PrimalWrath;
-            if (IsEnabled(Preset.WAR_FC_Onslaught) && (!IsEnabled(Preset.WAR_FC_InnerRelease) || (IsEnabled(Preset.WAR_FC_InnerRelease) && IR.Cooldown > 40)) &&
-                ActionReady(Onslaught) && GetRemainingCharges(Onslaught) > WAR_FC_Onslaught_Charges && GetTargetDistance() <= WAR_FC_Onslaught_Distance && 
-                WAR_FC_Onslaught_Movement == 0 && !IsMoving() && TimeStoodStill > TimeSpan.FromSeconds(WAR_FC_Onslaught_TimeStill) && CanWeave() && HasSurgingTempest)
-                return Onslaught;
-            if (IsEnabled(Preset.WAR_FC_PrimalRend) && HasStatusEffect(Buffs.PrimalRendReady) && HasSurgingTempest &&
-                GetTargetDistance() <= WAR_FC_PrimalRend_Distance && 
-                WAR_FC_PrimalRend_Movement == 1 || (WAR_FC_PrimalRend_Movement == 0 && !IsMoving() && TimeStoodStill > TimeSpan.FromSeconds(WAR_FC_PrimalRend_TimeStill) && 
-                (WAR_FC_PrimalRend_EarlyLate == 0 || (WAR_FC_PrimalRend_EarlyLate == 1 && (GetStatusEffectRemainingTime(Buffs.PrimalRendReady) <= 15 || (!HasIR.Stacks && !HasBF.Stacks && !HasWrathful))))))
-                return PrimalRend;
-            if (IsEnabled(Preset.WAR_FC_PrimalRuination) && LevelChecked(PrimalRuination) && HasSurgingTempest && Minimal && HasStatusEffect(Buffs.PrimalRuinationReady))
-                return PrimalRuination;
+
+            if (InCombat() && HasBattleTarget())
+            {
+                if (IsEnabled(Preset.WAR_FC_InnerRelease) && ActionReady(OriginalHook(Berserk)) && 
+                    CanWeave() && !HasWrathful &&
+                    GetTargetHPPercent() >= WAR_FC_IRStop && HasSurgingTempest)
+                    return OriginalHook(Berserk);
+            
+                if (IsEnabled(Preset.WAR_FC_Infuriate) && ActionReady(Infuriate) && 
+                    CanWeave() && !HasNascentChaos &&  !JustUsed(Infuriate) && !HasIR.Stacks && 
+                    BeastGauge <= WAR_FC_Infuriate_Gauge && 
+                    GetRemainingCharges(Infuriate) > WAR_FC_Infuriate_Charges)
+                    return Infuriate;
+                
+                if (IsEnabled(Preset.WAR_FC_Upheaval) && ActionReady(Upheaval) && 
+                    CanWeave() && HasSurgingTempest && InMeleeRange())
+                    return Upheaval;
+            
+                if (IsEnabled(Preset.WAR_FC_PrimalWrath) && LevelChecked(PrimalWrath) && 
+                    CanWeave() && HasWrathful && HasSurgingTempest &&
+                    GetTargetDistance() <= 4.99f)
+                    return PrimalWrath;
+            
+                if (IsEnabled(Preset.WAR_FC_Onslaught) && ActionReady(Onslaught) && 
+                    CanWeave() && HasSurgingTempest &&
+                    (!IsEnabled(Preset.WAR_FC_InnerRelease) || IsEnabled(Preset.WAR_FC_InnerRelease) && IR.Cooldown > 40) &&
+                    GetRemainingCharges(Onslaught) > WAR_FC_Onslaught_Charges && 
+                    GetTargetDistance() <= WAR_FC_Onslaught_Distance && 
+                    WAR_FC_Onslaught_Movement == 0 && !IsMoving() && TimeStoodStill > TimeSpan.FromSeconds(WAR_FC_Onslaught_TimeStill))
+                    return Onslaught;
+            
+                if (IsEnabled(Preset.WAR_FC_PrimalRend) && HasStatusEffect(Buffs.PrimalRendReady) && 
+                    HasSurgingTempest &&
+                    GetTargetDistance() <= WAR_FC_PrimalRend_Distance && 
+                    (WAR_FC_PrimalRend_Movement == 1 || 
+                     WAR_FC_PrimalRend_Movement == 0 && !IsMoving() && TimeStoodStill > TimeSpan.FromSeconds(WAR_FC_PrimalRend_TimeStill)) && 
+                    (WAR_FC_PrimalRend_EarlyLate == 0 || 
+                     WAR_FC_PrimalRend_EarlyLate == 1 && (GetStatusEffectRemainingTime(Buffs.PrimalRendReady) <= 15 || !HasIR.Stacks && !HasBF.Stacks && !HasWrathful)))
+                    return PrimalRend;
+            
+                if (IsEnabled(Preset.WAR_FC_PrimalRuination) && HasStatusEffect(Buffs.PrimalRuinationReady) &&
+                    HasSurgingTempest)
+                    return PrimalRuination;
+            }
+            
+            
+            
             return action;
         }
     }
@@ -378,6 +404,42 @@ internal partial class WAR
         protected internal override Preset Preset => Preset.WAR_RetargetHolmgang;
 
         protected override uint Invoke(uint actionID) => actionID != Holmgang ? actionID : actionID.Retarget(SimpleTarget.Self);
+    }
+    #endregion
+    
+    #region Tomahawk Retargeting
+    internal class WAR_RetargetTomahawk : CustomCombo
+    {
+        protected internal override Preset Preset => Preset.WAR_RetargetTomahawk;
+
+        protected override uint Invoke(uint actionID)
+        {
+            if (actionID is not Tomahawk)
+                return actionID;
+            
+            IGameObject? target =
+                //Mouseover Retarget
+                (WAR_RetargetTomahawk_FieldMO 
+                    ? SimpleTarget.Stack.MouseOver.IfHostile().IfWithinRange(Tomahawk.ActionRange())
+                    : null) ??
+    
+                (WAR_RetargetTomahawk_SmartTargeting == 0 && WAR_RetargetTomahawk_RangeBasedTargeting
+                    ? WAR_RetargetTomahawk_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.FurthestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(Tomahawk.ActionRange())
+                        : SimpleTarget.FurthestEnemyOver5YalmsAway.IfWithinRange(Tomahawk.ActionRange())
+                    : null) ??
+
+                (WAR_RetargetTomahawk_SmartTargeting == 1 && WAR_RetargetTomahawk_RangeBasedTargeting
+                    ? WAR_RetargetTomahawk_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.NearestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(Tomahawk.ActionRange())
+                        : SimpleTarget.NearestEnemyOver5YalmsAway.IfWithinRange(Tomahawk.ActionRange())
+                    : null);
+                    
+            
+            return target != null
+                ? actionID.Retarget(target)
+                : actionID;
+        }
     }
     #endregion
 

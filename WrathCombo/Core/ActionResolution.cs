@@ -121,13 +121,43 @@ internal static class ActionResolution
         return true;
     }
 
-    internal static string ActionName(uint id) =>
-        ActionWatching.ActionSheet.TryGetValue(id, out var a)
+    internal static string ActionName(uint id)
+    {
+        if (TryGetCustomAction(id, out var ca))
+            return ca.Name;
+        return ActionWatching.ActionSheet.TryGetValue(id, out var a)
             ? a.Name.ToString()
             : id.ToString();
+    }
 
-    internal static ushort ActionIcon(uint id) =>
-        ActionWatching.ActionSheet.TryGetValue(id, out var a) ? a.Icon : (ushort)0;
+    internal static ushort ActionIcon(uint id)
+    {
+        if (TryGetCustomAction(id, out var ca))
+            return ca.IconId <= ushort.MaxValue ? (ushort)ca.IconId : (ushort)0;
+        return ActionWatching.ActionSheet.TryGetValue(id, out var a)
+            ? a.Icon
+            : (ushort)0;
+    }
+
+    /// <summary>
+    ///     Custom actions (item/potion proxies) live above the native id space;
+    ///     resolve their display name/icon from the manager so the tracker and
+    ///     Stream Deck show the real item instead of a raw id.
+    /// </summary>
+    private static bool TryGetCustomAction(
+        uint id, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Native.CustomAction? action)
+    {
+        action = null;
+        if (id < Combos.PvE.All.SingleTargetDPS || WrathCombo.P?.CustomActions?.Manager?.Actions is not { } actions)
+            return false;
+        foreach (var a in actions)
+            if (a.Id == id)
+            {
+                action = a;
+                return true;
+            }
+        return false;
+    }
 
     /// <summary>
     ///     Whether burst presets for the current job are currently HELD

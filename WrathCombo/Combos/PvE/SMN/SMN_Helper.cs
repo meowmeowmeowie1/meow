@@ -1,11 +1,14 @@
-﻿using Dalamud.Game.ClientState.JobGauge.Enums;
+using Dalamud.Game.ClientState.JobGauge.Enums;
 using Dalamud.Game.ClientState.JobGauge.Types;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Gauge;
 using System;
 using System.Collections.Generic;
+using WrathCombo.Combos.PvE.ALL;
+using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
+using WrathCombo.Extensions;
 using static WrathCombo.Combos.PvE.SMN.Config;
 using static WrathCombo.CustomComboNS.Functions.CustomComboFunctions;
 using AetherFlags = Dalamud.Game.ClientState.JobGauge.Enums.AetherFlags;
@@ -345,6 +348,11 @@ internal partial class SMN
             IsSTEnabled(flags, Preset.SMN_ST_Advanced_Combo_DemiSummons_Rekindle) ||
             IsAoEEnabled(flags, Preset.SMN_AoE_Advanced_Combo_DemiSummons_Rekindle);
         
+        bool rekindleRetargetEnabled =
+            flags.HasFlag(Combo.Simple) ||
+            IsSTEnabled(flags, Preset.SMN_ST_Advanced_Combo_DemiSummons_Rekindle_Retarget) ||
+            IsAoEEnabled(flags, Preset.SMN_AoE_Advanced_Combo_DemiSummons_Rekindle_Retarget);
+        
         bool searingFlashEnabled =
             flags.HasFlag(Combo.Simple) ||
             IsSTEnabled(flags, Preset.SMN_ST_Advanced_Combo_SearingFlash) ||
@@ -428,7 +436,8 @@ internal partial class SMN
             
             if (demiSummonsAttacksEnabled && DemiExists && !JustUsed(SearingLight, 1.5f) &&
                 (HasStatusEffect(Buffs.SearingLight, anyOwner: true) || //Searing is active
-                 SearingCD > Gauge.SummonTimerRemaining / 1000f + GCDTotal))  //There is not enough time left in demi phase for searing to happen
+                 SearingCD > Gauge.SummonTimerRemaining / 1000f + GCDTotal || //There is not enough time left in demi phase for searing to happen
+                 !LevelChecked(SearingLight)))  // Full send if searing light isnt of level
             {
                 if (ActionReady(OriginalHook(EnkindleBahamut)))
                 {
@@ -441,11 +450,22 @@ internal partial class SMN
                     actionID = OriginalHook(AstralFlow);
                     return true;
                 }
-                
+
                 if (rekindleEnabled && ActionReady(OriginalHook(AstralFlow)) && DemiPheonix)
                 {
-                    actionID = Rekindle;
-                    return true;
+                    if (rekindleRetargetEnabled)
+                    {
+                        actionID = Rekindle.Retarget(actionID,
+                            SimpleTarget.TargetsTarget.IfInParty() ??
+                            SimpleTarget.AnyTank.IfMissingHP() ??
+                            SimpleTarget.LowestHPPAlly.IfMissingHP() ??
+                            SimpleTarget.Self);
+                        return true;
+                    }
+                    {
+                        actionID = Rekindle;
+                        return true;
+                    }
                 }
             }
             #endregion
@@ -767,6 +787,7 @@ internal partial class SMN
         [
             Ruin3,
             SummonSolarBahamut,
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Int)),
             UmbralImpulse,
             SearingLight,
             UmbralImpulse,
@@ -804,6 +825,7 @@ internal partial class SMN
         public override int MinOpenerLevel => 100;
         public override int MaxOpenerLevel => 109;
         internal override UserData? ContentCheckConfig => SMN_Balance_Content;
+        internal override bool IncludePot => SMN_Opener_Potion;
         public override Preset Preset => Preset.SMN_ST_Advanced_Combo_Balance_Opener;
         public override bool HasCooldowns()
         {

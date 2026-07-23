@@ -1,4 +1,5 @@
 using Dalamud.Interface.Colors;
+using ECommons.ImGuiMethods;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Extensions;
 using WrathCombo.Resources.Localization.JobConfigs;
@@ -18,7 +19,13 @@ internal partial class VPR
 
                 case Preset.VPR_ST_Opener:
                     DrawBossOnlyChoice(VPR_Balance_Content);
-
+                    DrawOpenerPotionChoice(VPR_Opener_Potion);
+                    ImGuiEx.TextUnderlined("Select Opener");
+                    ImGui.Spacing();
+                    DrawRadioButton(VPR_OpenerSelection, Generics.StandardOpener,
+                        Generics.StandardOpener, 0, descriptionAsTooltip: true);
+                    DrawRadioButton(VPR_OpenerSelection, VPR_Config.EarlyBuffOpener,
+                        VPR_Config.UseEarlyBuffOpener, 1, descriptionAsTooltip: true);
                     DrawAdditionalBoolChoice(VPR_Opener_ExcludeUF,
                         FormatAndCache(Generics.Exclude0, UncoiledFury.ActionName()),
                         "");
@@ -32,24 +39,24 @@ internal partial class VPR
                     ImGui.TextColored(ImGuiColors.DalamudYellow,
                         Generics.EnemyTypeCheck);
 
-                    DrawHorizontalRadioButton(VPR_ST_SerpentsIreBossOption,
+                    DrawHorizontalRadioButton(VPR_ST_SerpentsIreHPBossOption,
                         Generics.NonBosses,
                         Generics.HPCheckNonBosses, 0);
 
-                    DrawHorizontalRadioButton(VPR_ST_SerpentsIreBossOption,
+                    DrawHorizontalRadioButton(VPR_ST_SerpentsIreHPBossOption,
                         Generics.AllEnemies,
                         Generics.HPCheckAllEnemies, 1);
                     ImGui.Unindent();
                     break;
 
                 case Preset.VPR_ST_Reawaken:
-                    DrawSliderInt(0, 100, VPR_ST_ReawakenBossOption,
+                    DrawSliderInt(0, 100, VPR_ST_ReawakenBossHPOption,
                         Generics.BossOnlyHpPercent);
 
-                    DrawSliderInt(0, 100, VPR_ST_ReawakenBossAddsOption,
+                    DrawSliderInt(0, 100, VPR_ST_ReawakenBossAddsHPOption,
                         Generics.BossEncounterNonBossHpPercent);
 
-                    DrawSliderInt(0, 100, VPR_ST_ReawakenTrashOption,
+                    DrawSliderInt(0, 100, VPR_ST_ReawakenTrashHPOption,
                         Generics.NonBossHpPercent);
 
                     DrawSliderInt(0, 5, VPR_ST_ReAwakenAlwaysUse,
@@ -181,14 +188,15 @@ internal partial class VPR
 
             //ST
             VPR_Balance_Content = new("VPR_Balance_Content", 1),
+            VPR_OpenerSelection = new("VPR_OpenerSelection"),
             VPR_ST_UncoiledFuryHoldCharges = new("VPR_ST_UncoiledFuryHoldCharges", 1),
             VPR_ST_UncoiledFuryAlwaysUse = new("VPR_ST_UncoiledFuryAlwaysUse", 5),
-            VPR_ST_ReawakenBossOption = new("VPR_ST_ReawakenBossOption"),
-            VPR_ST_ReawakenBossAddsOption = new("VPR_ST_ReawakenBossAddsOption", 10),
-            VPR_ST_ReawakenTrashOption = new("VPR_ST_ReawakenTrashOption", 25),
+            VPR_ST_ReawakenBossHPOption = new("VPR_ST_ReawakenBossHPOption"),
+            VPR_ST_ReawakenBossAddsHPOption = new("VPR_ST_ReawakenBossAddsHPOption", 10),
+            VPR_ST_ReawakenTrashHPOption = new("VPR_ST_ReawakenTrashHPOption", 25),
             VPR_ST_ReAwakenAlwaysUse = new("VPR_ST_ReAwakenAlwaysUse", 5),
             VPR_ST_SerpentsIreHPOption = new("VPR_ST_SerpentsIreHPOption", 25),
-            VPR_ST_SerpentsIreBossOption = new("VPR_ST_SerpentsIreBossOption"),
+            VPR_ST_SerpentsIreHPBossOption = new("VPR_ST_SerpentsIreHPBossOption"),
             VPR_ManualTN = new("VPR_ManualTN"),
             VPR_ST_SecondWindHPThreshold = new("VPR_ST_SecondWindHPThreshold", 40),
             VPR_ST_BloodbathHPThreshold = new("VPR_ST_BloodbathHPThreshold", 30),
@@ -208,6 +216,7 @@ internal partial class VPR
             VPR_ReawakenLegacyButton = new("VPR_ReawakenLegacyButton");
 
         public static UserBool
+            VPR_Opener_Potion = new("VPR_Opener_Potion"),
             VPR_Opener_ExcludeUF = new("VPR_Opener_ExcludeUF"),
             VPR_TrueNorthVicewinder = new("VPR_TrueNorthVicewinder"),
             VPR_Slither_FieldMouseover = new("VPR_Slither_FieldMouseover"),

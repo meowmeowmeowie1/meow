@@ -3,15 +3,15 @@
     "Author": "meowmeowmeowie1",
     "Name": "MyTweak",
     "InternalName": "MyTweak",
-    "AssemblyVersion": "1.0.7.5",
-    "TestingAssemblyVersion": "1.0.7.5",
+    "AssemblyVersion": "1.0.8.0",
+    "TestingAssemblyVersion": "1.0.8.0",
     "Punchline": "Personal utility plugin.",
     "Description": "Personal utility plugin. Not for general distribution.",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
-    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.7.5/MyTweak.zip",
-    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.7.5/MyTweak.zip",
-    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.7.5/MyTweak.zip",
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.8.0/MyTweak.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.8.0/MyTweak.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/mytweak-v1.0.8.0/MyTweak.zip",
     "DownloadCount": 0
   }
 ]

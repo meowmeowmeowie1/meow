@@ -5,6 +5,7 @@ using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.Data;
 using WrathCombo.Extensions;
+using WrathCombo.Native;
 using static WrathCombo.Combos.PvE.DRK.Config;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -64,24 +65,14 @@ internal partial class DRK : Tank
         protected override uint Invoke(uint actionID)
         {
             // Bail if not looking at the replaced action
-            if (actionID is not HardSlash) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID,
+                    CustomActionType.SingleTargetDPS, HardSlash))
+                return actionID;
 
             const Combo comboFlags = Combo.ST | Combo.Adv;
             var newAction = HardSlash;
             _ = IsBursting;
-
-            // Unmend Option for Pulling
-            var skipBecauseOpener =
-                IsEnabled(Preset.DRK_ST_BalanceOpener) &&
-                Opener().HasCooldowns() &&
-                NumberOfObjectsInRange<SelfCircle>(20) < 2; // don't skip if add-pulling
-            if (IsEnabled(Preset.DRK_ST_RangedUptime) &&
-                ActionReady(Unmend) &&
-                !InMeleeRange() &&
-                HasBattleTarget() &&
-                !skipBecauseOpener)
-                return Unmend;
-
+            
             // Opener
             if (IsEnabled(Preset.DRK_ST_BalanceOpener) &&
                 Opener().FullOpener(ref actionID))
@@ -99,6 +90,18 @@ internal partial class DRK : Tank
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
 
+            // Unmend Option for Pulling
+            var skipBecauseOpener =
+                IsEnabled(Preset.DRK_ST_BalanceOpener) &&
+                Opener().HasCooldowns() &&
+                NumberOfObjectsInRange<SelfCircle>(20) < 2; // don't skip if add-pulling
+            if (IsEnabled(Preset.DRK_ST_RangedUptime) &&
+                ActionReady(Unmend) &&
+                !InMeleeRange() &&
+                HasBattleTarget() &&
+                !skipBecauseOpener)
+                return Unmend;
+            
             // Bail if not in combat
             if (!InCombat())
             {
@@ -150,21 +153,21 @@ internal partial class DRK : Tank
         protected override uint Invoke(uint actionID)
         {
             // Bail if not looking at the replaced action
-            if (actionID is not HardSlash) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, HardSlash)) return actionID;
 
             const Combo comboFlags = Combo.ST | Combo.Simple;
             var newAction = HardSlash;
             _ = IsBursting;
 
+            if (ContentSpecificActions.TryGet(out var contentAction))
+                return contentAction;
+            
             // Unmend Option
             if (ActionReady(Unmend) &&
                 !InMeleeRange() &&
                 HasBattleTarget())
                 return Unmend;
-
-            if (ContentSpecificActions.TryGet(out var contentAction))
-                return contentAction;
-
+            
             // Bail if not in combat
             if (!InCombat())
             {
@@ -199,7 +202,7 @@ internal partial class DRK : Tank
         protected override uint Invoke(uint actionID)
         {
             // Bail if not looking at the replaced action
-            if (actionID is not Unleash) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Unleash)) return actionID;
 
             const Combo comboFlags = Combo.AoE | Combo.Adv;
             var newAction = Unleash;
@@ -240,7 +243,7 @@ internal partial class DRK : Tank
         protected override uint Invoke(uint actionID)
         {
             // Bail if not looking at the replaced action
-            if (actionID is not Unleash) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Unleash)) return actionID;
 
             const Combo comboFlags = Combo.AoE | Combo.Simple;
             var newAction = Unleash;
@@ -448,6 +451,40 @@ internal partial class DRK : Tank
                 : actionID;
         }
     }
+    
+    internal class DRK_RetargetUnmend : CustomCombo
+    {
+        protected internal override Preset Preset => Preset.DRK_Retarget_Unmend;
+
+        protected override uint Invoke(uint actionID)
+        {
+            if (actionID is not Unmend)
+                return actionID;
+
+            IGameObject? target =
+                //Mouseover Retarget
+                (DRK_Retarget_Unmend_FieldMO 
+                    ? SimpleTarget.Stack.MouseOver.IfHostile().IfWithinRange(Unmend.ActionRange())
+                    : null) ??
+    
+                (DRK_Retarget_Unmend_SmartTargeting == 0 && DRK_Retarget_Unmend_RangeBasedTargeting
+                    ? DRK_Retarget_Unmend_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.FurthestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(Unmend.ActionRange())
+                        : SimpleTarget.FurthestEnemyOver5YalmsAway.IfWithinRange(Unmend.ActionRange())
+                    : null) ??
+
+                (DRK_Retarget_Unmend_SmartTargeting == 1 && DRK_Retarget_Unmend_RangeBasedTargeting
+                    ? DRK_Retarget_Unmend_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.NearestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(Unmend.ActionRange())
+                        : SimpleTarget.NearestEnemyOver5YalmsAway.IfWithinRange(Unmend.ActionRange())
+                    : null);
+            
+            return target != null
+                ? actionID.Retarget(target)
+                : actionID;
+        }
+    }
+    
 
     #endregion
 

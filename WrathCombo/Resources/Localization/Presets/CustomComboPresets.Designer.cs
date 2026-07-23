@@ -9076,6 +9076,24 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Will retarget Unmend according to below settings..
+        /// </summary>
+        internal static string DRK_Retarget_Unmend_Desc {
+            get {
+                return ResourceManager.GetString("DRK_Retarget_Unmend_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retarget Unmend Option.
+        /// </summary>
+        internal static string DRK_Retarget_Unmend_Name {
+            get {
+                return ResourceManager.GetString("DRK_Retarget_Unmend_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Will retarget Shadowstride to your field or UI mouseover target (If Hostile) or the nearest hostile target to your mouseover target (If friendly)..
         /// </summary>
         internal static string DRK_RetargetShadowstride_Desc {
@@ -9221,7 +9239,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Delirium on Cooldown.
+        ///   Looks up a localized string similar to Delirium Option.
         /// </summary>
         internal static string DRK_ST_CD_Delirium_Name {
             get {
@@ -11372,6 +11390,24 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Will retarget Lighting Shot according to below settings..
+        /// </summary>
+        internal static string GNB_RetargetLightningShot_Desc {
+            get {
+                return ResourceManager.GetString("GNB_RetargetLightningShot_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retarget Lightning Shot Option.
+        /// </summary>
+        internal static string GNB_RetargetLightningShot_Name {
+            get {
+                return ResourceManager.GetString("GNB_RetargetLightningShot_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Retargets Trajectory to your Field or UI Mouseover target (if Hostile) or the nearest hostile target to your Mouseover target (if Friendly)..
         /// </summary>
         internal static string GNB_RetargetTrajectory_Desc {
@@ -11917,6 +11953,15 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to s, wait to Hypercharge until Tool cooldowns are at least this value.
+        /// </summary>
+        internal static string MCH_AoE_Adv_HyperchargeToolHold {
+            get {
+                return ResourceManager.GetString("MCH_AoE_Adv_HyperchargeToolHold", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Uses Head Graze to interrupt during the rotation, where applicable..
         /// </summary>
         internal static string MCH_AoE_Adv_Interrupt_Desc {
@@ -12043,7 +12088,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Adds Bioblaster, Chainsaw and Excavator to the rotation..
+        ///   Looks up a localized string similar to Adds Tools to the rotation..
         /// </summary>
         internal static string MCH_AoE_Adv_Tools_Desc {
             get {
@@ -19046,8 +19091,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Replaces Shield Lob with Holy Spirit when available.
-        ///- Must be under the effect of Divine Might or not moving..
+        ///   Looks up a localized string similar to Replacement and Retargeting Features for Shield Lob .
         /// </summary>
         internal static string PLD_ShieldLob_Feature_Desc {
             get {
@@ -19056,7 +19100,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Shield Lob / Holy Spirit Feature.
+        ///   Looks up a localized string similar to Shield Lob/Holy Spirit Retarget Feature.
         /// </summary>
         internal static string PLD_ShieldLob_Feature_Name {
             get {
@@ -21695,6 +21739,61 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Adds (Executioner&apos;s) Gibbet and Gallows on Blood Stalk.
+        ///Adds (Executioner&apos;s) Guillotine on Grim Swathe..
+        /// </summary>
+        internal static string RPR_BloodStalkEnshroudCombo_BloodSwatheCombo_Desc {
+            get {
+                return ResourceManager.GetString("RPR_BloodStalkEnshroudCombo_BloodSwatheCombo_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Gibbet and Gallows/Guillotine on Blood Stalk/Grim Swathe Feature.
+        /// </summary>
+        internal static string RPR_BloodStalkEnshroudCombo_BloodSwatheCombo_Name {
+            get {
+                return ResourceManager.GetString("RPR_BloodStalkEnshroudCombo_BloodSwatheCombo_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Adds Gibbet/Gallows and Enshroud combo on Blood Stalk and Grim Swathe without replacing them with Gluttony. Conflicts with Gluttony on Blood Stalk/Grim Swathe..
+        /// </summary>
+        internal static string RPR_BloodStalkEnshroudCombo_Desc {
+            get {
+                return ResourceManager.GetString("RPR_BloodStalkEnshroudCombo_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Adds Enshroud combo (Void/Cross Reaping, Communio, Lemure&apos;s Slice, Sacrificium and Perfectio) on Blood Stalk and Grim Swathe..
+        /// </summary>
+        internal static string RPR_BloodStalkEnshroudCombo_Enshroud_Desc {
+            get {
+                return ResourceManager.GetString("RPR_BloodStalkEnshroudCombo_Enshroud_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enshroud Combo Option.
+        /// </summary>
+        internal static string RPR_BloodStalkEnshroudCombo_Enshroud_Name {
+            get {
+                return ResourceManager.GetString("RPR_BloodStalkEnshroudCombo_Enshroud_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Blood Stalk/Grim Swathe Combos (No Gluttony).
+        /// </summary>
+        internal static string RPR_BloodStalkEnshroudCombo_Name {
+            get {
+                return ResourceManager.GetString("RPR_BloodStalkEnshroudCombo_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Adds Communio to Gibbet/Gallows and Guillotine..
         /// </summary>
         internal static string RPR_CommunioOnGGG_Desc {
@@ -22637,18 +22736,18 @@ namespace WrathCombo.Resources.Localization.Presets {
         ///   Looks up a localized string similar to Adds Ikishoten when at or below 50 Kenki.
         ///Will dump Kenki at 10 seconds left to allow Ikishoten to be used..
         /// </summary>
-        internal static string SAM_AOE_CDs_Ikishoten_Desc {
+        internal static string SAM_AoE_CDs_Ikishoten_Desc {
             get {
-                return ResourceManager.GetString("SAM_AOE_CDs_Ikishoten_Desc", resourceCulture);
+                return ResourceManager.GetString("SAM_AoE_CDs_Ikishoten_Desc", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Ikishoten Option.
         /// </summary>
-        internal static string SAM_AOE_CDs_Ikishoten_Name {
+        internal static string SAM_AoE_CDs_Ikishoten_Name {
             get {
-                return ResourceManager.GetString("SAM_AOE_CDs_Ikishoten_Name", resourceCulture);
+                return ResourceManager.GetString("SAM_AoE_CDs_Ikishoten_Name", resourceCulture);
             }
         }
         
@@ -22882,18 +22981,18 @@ namespace WrathCombo.Resources.Localization.Presets {
         /// <summary>
         ///   Looks up a localized string similar to Adds Leg Sweep when target non-boss is casting..
         /// </summary>
-        internal static string SAM_AoE_StunInterupt_Desc {
+        internal static string SAM_AoE_StunInterrupt_Desc {
             get {
-                return ResourceManager.GetString("SAM_AoE_StunInterupt_Desc", resourceCulture);
+                return ResourceManager.GetString("SAM_AoE_StunInterrupt_Desc", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Leg Sweep Option.
         /// </summary>
-        internal static string SAM_AoE_StunInterupt_Name {
+        internal static string SAM_AoE_StunInterrupt_Name {
             get {
-                return ResourceManager.GetString("SAM_AoE_StunInterupt_Name", resourceCulture);
+                return ResourceManager.GetString("SAM_AoE_StunInterrupt_Name", resourceCulture);
             }
         }
         
@@ -23825,18 +23924,18 @@ namespace WrathCombo.Resources.Localization.Presets {
         /// <summary>
         ///   Looks up a localized string similar to Adds Leg Sweep when target non-boss is casting..
         /// </summary>
-        internal static string SAM_ST_StunInterupt_Desc {
+        internal static string SAM_ST_StunInterrupt_Desc {
             get {
-                return ResourceManager.GetString("SAM_ST_StunInterupt_Desc", resourceCulture);
+                return ResourceManager.GetString("SAM_ST_StunInterrupt_Desc", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Leg Sweep Option.
         /// </summary>
-        internal static string SAM_ST_StunInterupt_Name {
+        internal static string SAM_ST_StunInterrupt_Name {
             get {
-                return ResourceManager.GetString("SAM_ST_StunInterupt_Name", resourceCulture);
+                return ResourceManager.GetString("SAM_ST_StunInterrupt_Name", resourceCulture);
             }
         }
         
@@ -25612,7 +25711,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Retargets Adlo to the heal stack (In MyTweak Settings) outside of the Burst Feature.
+        ///   Looks up a localized string similar to Retargets Adlo to the heal stack (In Wrath Settings) outside of the Burst Feature.
         /// </summary>
         internal static string SCHPvP_RetargetAdlo_Desc {
             get {
@@ -27259,7 +27358,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Retargets Kardia to the heal stack (In MyTweak Settings) outside of the Burst Feature.
+        ///   Looks up a localized string similar to Retargets Kardia to the heal stack (In Wrath Settings) outside of the Burst Feature.
         /// </summary>
         internal static string SGEPvP_RetargetKardia_Desc {
             get {
@@ -27677,7 +27776,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Adds Enkindle Bahamut, Enkindle Phoenix and Astral Flow to their relevant summons..
+        ///   Looks up a localized string similar to Adds Enkindle Bahamut, Enkindle Phoenix, Lux Solaris, and Astral Flow to their relevant summons..
         /// </summary>
         internal static string SMN_DemiAbilities_Desc {
             get {
@@ -27686,7 +27785,7 @@ namespace WrathCombo.Resources.Localization.Presets {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Astral Flow/Enkindle on Demis Feature.
+        ///   Looks up a localized string similar to Astral Flow/Enkindle/Lux Solaris on Demis Feature.
         /// </summary>
         internal static string SMN_DemiAbilities_Name {
             get {
@@ -31164,6 +31263,24 @@ namespace WrathCombo.Resources.Localization.Presets {
         internal static string WAR_RetargetOnslaught_Name {
             get {
                 return ResourceManager.GetString("WAR_RetargetOnslaught_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Will retarget Tomahawk to according to below settings..
+        /// </summary>
+        internal static string WAR_RetargetTomahawk_Desc {
+            get {
+                return ResourceManager.GetString("WAR_RetargetTomahawk_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retarget Tomahawk Option.
+        /// </summary>
+        internal static string WAR_RetargetTomahawk_Name {
+            get {
+                return ResourceManager.GetString("WAR_RetargetTomahawk_Name", resourceCulture);
             }
         }
         
