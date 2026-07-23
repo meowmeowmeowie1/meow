@@ -33,7 +33,7 @@ public partial class Configuration : IPluginConfiguration
     public int Version { get; set; } = 6;
 
     /// <summary> Custom actions (item/potion proxies) settings. </summary>
-    public WrathCombo.Native.CustomActionSettings CustomActionSettings { get; set; } = new();
+    public global::WrathCombo.Native.CustomActionSettings CustomActionSettings { get; set; } = new();
 
     /// <summary> Cached game opcodes for packet parsing (regen ticks etc). </summary>
     public OpCodeConfig OpCodes = new();
