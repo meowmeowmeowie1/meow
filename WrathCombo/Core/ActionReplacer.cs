@@ -33,6 +33,9 @@ internal sealed class ActionReplacer : IDisposable
     public readonly List<CustomCombo> CustomCombos;
     public readonly Hook<GetActionDelegate> getActionHook;
 
+    /// <summary> Whether the action-replacing (GetAdjustedActionId) hook is live. </summary>
+    public bool ActionReplacingEnabled => getActionHook.IsEnabled;
+
     private readonly Hook<IsActionReplaceableDelegate> isActionReplaceableHook;
 
     public readonly Dictionary<uint, uint> LastActionInvokeFor = [];

@@ -40,6 +40,12 @@ public partial class Configuration : IPluginConfiguration
 
     public List<FFXIVOPCodes> OpCodesBackup = [];
 
+    /// <summary> Pause length after a movement penalty, in seconds. </summary>
+    public float PenaltyPause = 1.5f;
+
+    /// <summary> Use experimental predicted-HP values for heal targeting. </summary>
+    public bool UseExperimentalHP = false;
+
     #region Settings
 
     #region UI Settings
