@@ -4,6 +4,7 @@ using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.Data;
 using WrathCombo.Extensions;
+using WrathCombo.Native;
 using static WrathCombo.Combos.PvE.PLD.Config;
 
 namespace WrathCombo.Combos.PvE;
@@ -18,9 +19,8 @@ internal partial class PLD : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not FastBlade)
-                return actionID;
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, FastBlade)) return actionID;
+
             const Combo comboFlags = Combo.ST | Combo.Simple;
 
             if (IsEnabled(Preset.PLD_BlockForWings) &&
@@ -52,9 +52,8 @@ internal partial class PLD : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not TotalEclipse)
-                return actionID;
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, TotalEclipse)) return actionID;
+
             const Combo comboFlags = Combo.AoE | Combo.Simple;
 
             if (IsEnabled(Preset.PLD_BlockForWings) &&
@@ -90,9 +89,8 @@ internal partial class PLD : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not FastBlade)
-                return actionID;
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, FastBlade)) return actionID;
+
             const Combo comboFlags = Combo.ST | Combo.Adv;
 
             if (IsEnabled(Preset.PLD_BlockForWings) && (HasStatusEffect(Buffs.PassageOfArms) || JustUsed(PassageOfArms)))
@@ -128,9 +126,8 @@ internal partial class PLD : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not TotalEclipse)
-                return actionID;
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, TotalEclipse)) return actionID;
+
             const Combo comboFlags = Combo.AoE | Combo.Adv;
 
             if (IsEnabled(Preset.PLD_BlockForWings) && (HasStatusEffect(Buffs.PassageOfArms) || JustUsed(PassageOfArms, 0.5f)))
@@ -265,11 +262,34 @@ internal partial class PLD : Tank
         {
             if (actionID is not ShieldLob)
                 return actionID;
+            
+            IGameObject? target =
+                //Mouseover Retarget
+                (PLD_ShieldLob_Feature_FieldMO 
+                    ? SimpleTarget.Stack.MouseOver.IfHostile().IfWithinRange(ShieldLob.ActionRange())
+                    : null) ??
+    
+                (PLD_ShieldLob_Feature_SmartTargeting == 0 && PLD_ShieldLob_Feature_RangeBasedTargeting
+                    ? PLD_ShieldLob_Feature_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.FurthestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(ShieldLob.ActionRange())
+                        : SimpleTarget.FurthestEnemyOver5YalmsAway.IfWithinRange(ShieldLob.ActionRange())
+                    : null) ??
 
-            if (LevelChecked(HolySpirit) && GetResourceCost(HolySpirit) <= LocalPlayer.CurrentMp && (TimeMoving.Ticks == 0 || HasStatusEffect(Buffs.DivineMight)))
-                return HolySpirit;
-
-            return actionID;
+                (PLD_ShieldLob_Feature_SmartTargeting == 1 && PLD_ShieldLob_Feature_RangeBasedTargeting
+                    ? PLD_ShieldLob_Feature_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.NearestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(ShieldLob.ActionRange())
+                        : SimpleTarget.NearestEnemyOver5YalmsAway.IfWithinRange(ShieldLob.ActionRange())
+                    : null);
+            
+            if (PLD_ShieldLob_Feature_HolySpirit && LevelChecked(HolySpirit) && GetResourceCost(HolySpirit) <= LocalPlayer.CurrentMp && 
+                (TimeMoving.Ticks == 0 || HasStatusEffect(Buffs.DivineMight)))
+                return target != null 
+                    ? HolySpirit.Retarget(ShieldLob, target)
+                    : HolySpirit;
+            
+            return target != null
+                ? actionID.Retarget(target)
+                : actionID;
         }
     }
 

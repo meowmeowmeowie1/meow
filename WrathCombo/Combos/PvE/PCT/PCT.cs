@@ -1,5 +1,7 @@
 ﻿using Dalamud.Game.ClientState.JobGauge.Types;
+using WrathCombo.Combos.PvE.ALL;
 using WrathCombo.CustomComboNS;
+using WrathCombo.Native;
 using static WrathCombo.Combos.PvE.PCT.Config;
 namespace WrathCombo.Combos.PvE;
 
@@ -11,43 +13,41 @@ internal partial class PCT : Caster
         protected internal override Preset Preset => Preset.PCT_ST_SimpleMode;
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not FireInRed)
-                return actionID;
-            
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, FireInRed)) return actionID;
 
             // Special Content
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
-            
+
             const Combo comboFlags = Combo.ST | Combo.Simple;
-            
+
             //OGCD Spells
             if (TryOGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Mitigation
             if (TryMitigation(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Movement Options
             if (TryMovementOption(comboFlags, ref actionID))
                 return actionID;
-            
+
             //GCD Spells
             if (TryGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Motifs
             if (TryDrawMotif(comboFlags, ref actionID))
                 return actionID;
-            
+
             //SubCombo
             if (TryCombos(comboFlags, ref actionID))
                 return actionID;
             else
-                return actionID;
-            
-            
+                return OriginalHook(FireInRed);
+
+
         }
     }
     internal class PCT_ST_AdvancedMode : CustomCombo
@@ -55,8 +55,7 @@ internal partial class PCT : Caster
         protected internal override Preset Preset => Preset.PCT_ST_AdvancedMode;
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not FireInRed)
-                return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, FireInRed)) return actionID;
 
             //Opener
             if (IsEnabled(Preset.PCT_ST_Advanced_Openers) && Opener().FullOpener(ref actionID))
@@ -65,34 +64,34 @@ internal partial class PCT : Caster
             // Special Content
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
-            
+
             const Combo comboFlags = Combo.ST | Combo.Adv;
-            
+
             //OGCD Spells
             if (TryOGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Mitigation
             if (TryMitigation(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Movement Options
             if (TryMovementOption(comboFlags, ref actionID))
                 return actionID;
-            
+
             //GCD Spells
             if (TryGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Motifs
             if (TryDrawMotif(comboFlags, ref actionID))
                 return actionID;
-            
+
             //SubCombo
             if (TryCombos(comboFlags, ref actionID))
                 return actionID;
             else
-                return actionID;
+                return OriginalHook(FireInRed);
         }
     }
     #endregion
@@ -104,36 +103,35 @@ internal partial class PCT : Caster
         protected internal override Preset Preset => Preset.PCT_AoE_SimpleMode;
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not FireIIinRed)
-                return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, FireIIinRed)) return actionID;
 
             // Special Content
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
-            
+
             const Combo comboFlags = Combo.AoE | Combo.Simple;
-            
+
             //OGCD Spells
             if (TryOGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Movement Options
             if (TryMovementOption(comboFlags, ref actionID))
                 return actionID;
-            
+
             //GCD Spells
             if (TryGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Motifs
             if (TryDrawMotif(comboFlags, ref actionID))
                 return actionID;
-            
+
             //SubCombo
             if (TryCombos(comboFlags, ref actionID))
                 return actionID;
             else
-                return actionID;
+                return OriginalHook(FireIIinRed);
         }
     }
     internal class PCT_AoE_AdvancedMode : CustomCombo
@@ -141,36 +139,35 @@ internal partial class PCT : Caster
         protected internal override Preset Preset => Preset.PCT_AoE_AdvancedMode;
         protected override uint Invoke(uint actionID)
         {
-            if (actionID is not FireIIinRed)
-                return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, FireIIinRed)) return actionID;
 
             // Special Content
             if (ContentSpecificActions.TryGet(out var contentAction))
                 return contentAction;
-            
+
             const Combo comboFlags = Combo.AoE | Combo.Adv;
-            
+
             //OGCD Spells
             if (TryOGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Movement Options
             if (TryMovementOption(comboFlags, ref actionID))
                 return actionID;
-            
+
             //GCD Spells
             if (TryGCDSpells(comboFlags, ref actionID))
                 return actionID;
-            
+
             //Motifs
             if (TryDrawMotif(comboFlags, ref actionID))
                 return actionID;
-            
+
             //SubCombo
             if (TryCombos(comboFlags, ref actionID))
                 return actionID;
             else
-                return actionID;
+                return OriginalHook(FireIIinRed);
         }
     }
     #endregion
@@ -191,7 +188,7 @@ internal partial class PCT : Caster
                 return HasStatusEffect(Buffs.SubtractivePalette)
                     ? OriginalHook(BlizzardinCyan)
                     : OriginalHook(FireInRed);
-                
+
             }
             if (actionID == BlizzardIIinCyan && choice is 0 or 2)
             {

@@ -87,7 +87,7 @@ public static class ConflictingPluginsChecks
         // ReSharper disable once RedundantAssignment
         var ts = TS.FromMinutes(1); // 1m initial delay after plugin launch
 #if DEBUG
-        ts = TS.FromSeconds(30); // 10s for debug mode
+        ts = TS.FromSeconds(10); // 10s for debug mode
 #endif
 
         Svc.Framework.RunOnTick(RunChecks, ts);
@@ -118,6 +118,9 @@ public static class ConflictingPluginsChecks
 
         public bool TargetingSettingConflicted;
         public bool QueueSettingConflicted;
+        public bool AutorotationConflicted;
+        public bool RetargetingConflicted;
+        public bool AiTargetingConflicted;
 
         protected override BossModIPC IPC => (BossModIPC)_ipc;
 
@@ -129,6 +132,7 @@ public static class ConflictingPluginsChecks
             _maxConflictsInARow = 1;
 #endif
 
+            var isReborn = IPC.PluginName.Contains("Reborn");
             // Reset the conflict timer, must exceed the threshold within 2 minutes
             if (_conflictFirstSeen is not null &&
                 DateTime.Now - _conflictFirstSeen > TS.FromMinutes(2))
@@ -156,11 +160,17 @@ public static class ConflictingPluginsChecks
             // Check for a targeting conflict
             TargetingSettingConflicted = false;
 
+            RetargetingConflicted = isReborn && IPC.IsSmartTargetEnabled();
+
             // Check for a queue conflict
-            QueueSettingConflicted = IPC.IsUsingCustomQueuing();
+            QueueSettingConflicted = isReborn ? IPC.IsUsingCustomQueuingReborn() : IPC.IsUsingCustomQueuing();
+
+            AutorotationConflicted = IPC.IsUsingAutorotation(isReborn);
+
+            AiTargetingConflicted = IPC.IsAITargetingEnabled(isReborn);
 
             // Check for a combo conflict
-            if (IPC.HasAutomaticActionsQueued())
+            if (isReborn ? IPC.HasAutomaticActionsQueuedReborn() : IPC.HasAutomaticActionsQueued())
             {
                 PluginLog.Verbose(
                     $"[ConflictingPlugins] [{Name}] Actions are Queued");

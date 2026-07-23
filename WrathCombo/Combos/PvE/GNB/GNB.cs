@@ -5,6 +5,7 @@ using WrathCombo.Core;
 using WrathCombo.CustomComboNS;
 using WrathCombo.Data;
 using WrathCombo.Extensions;
+using WrathCombo.Native;
 using static WrathCombo.Combos.PvE.GNB.Config;
 
 #endregion
@@ -20,8 +21,7 @@ internal partial class GNB : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID != KeenEdge)
-                return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, KeenEdge)) return actionID;
 
             #region Non-Rotation
             if (Role.CanInterject())
@@ -126,8 +126,7 @@ internal partial class GNB : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID != KeenEdge)
-                return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, KeenEdge)) return actionID;
 
             #region Non-Rotation
             if (Role.CanInterject() &&
@@ -243,8 +242,7 @@ internal partial class GNB : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID != DemonSlice)
-                return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, DemonSlice)) return actionID;
 
             #region Non-Rotation
             if (Role.CanInterject())
@@ -316,8 +314,7 @@ internal partial class GNB : Tank
 
         protected override uint Invoke(uint actionID)
         {
-            if (actionID != DemonSlice)
-                return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, DemonSlice)) return actionID;
 
             #region Non-Rotation
 
@@ -706,6 +703,41 @@ internal partial class GNB : Tank
                 CurrentTarget.IfHostile().IfWithinRange(Trajectory.ActionRange());
             
             return target != null ? actionID.Retarget(target) : actionID;
+        }
+    }
+    #endregion
+    
+    #region Lightning Shot Retargeting
+    internal class GNB_RetargetLightningShot : CustomCombo
+    {
+        protected internal override Preset Preset => Preset.GNB_RetargetLightningShot;
+
+        protected override uint Invoke(uint actionID)
+        {
+            if (actionID is not LightningShot)
+                return actionID;
+            
+            IGameObject? target =
+                //Mouseover Retarget
+                (GNB_RetargetLightningShot_FieldMO
+                    ? SimpleTarget.Stack.MouseOver.IfHostile().IfWithinRange(LightningShot.ActionRange())
+                    : null) ??
+    
+                (GNB_RetargetLightningShot_SmartTargeting == 0 && GNB_RetargetLightningShot_RangeBasedTargeting
+                    ? GNB_RetargetLightningShot_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.FurthestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(LightningShot.ActionRange())
+                        : SimpleTarget.FurthestEnemyOver5YalmsAway.IfWithinRange(LightningShot.ActionRange())
+                    : null) ??
+
+                (GNB_RetargetLightningShot_SmartTargeting == 1 && GNB_RetargetLightningShot_RangeBasedTargeting
+                    ? GNB_RetargetLightningShot_SmartTargeting_NotTargetingPlayer
+                        ? SimpleTarget.NearestEnemyOver5YalmsAwayNotTargetingPlayer.IfWithinRange(LightningShot.ActionRange())
+                        : SimpleTarget.NearestEnemyOver5YalmsAway.IfWithinRange(LightningShot.ActionRange())
+                    : null);
+            
+            return target != null
+                ? actionID.Retarget(target)
+                : actionID;
         }
     }
     #endregion

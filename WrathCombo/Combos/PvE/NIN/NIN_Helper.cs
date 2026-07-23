@@ -1,8 +1,10 @@
-﻿using Dalamud.Game.ClientState.JobGauge.Types;
+using Dalamud.Game.ClientState.JobGauge.Types;
 using ECommons.DalamudServices;
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Linq;
+using WrathCombo.Combos.PvE.ALL;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Data;
@@ -15,17 +17,175 @@ internal partial class NIN
 {
     static NINGauge gauge = GetJobGauge<NINGauge>();
     public static FrozenSet<uint> MudraSigns = [Ten, Chi, Jin, TenCombo, ChiCombo, JinCombo];
-    public static FrozenSet<uint> NormalJutsus = [FumaShuriken, Raiton, Katon, Doton, Suiton, Hyoton, HyoshoRanryu, GokaMekkyaku];
+    public static FrozenSet<uint> NormalJutsus = [FumaShuriken, Raiton, Katon, Doton, Suiton, Hyoton, HyoshoRanryu, GokaMekkyaku, Rabbit];
+    public static FrozenSet<uint> TCJJutsus = [TCJFumaShurikenChi, TCJFumaShurikenJin, TCJFumaShurikenTen, TCJRaiton, TCJKaton, TCJHyoton, TCJHuton, TCJSuiton, TCJDoton];
     internal static bool STSimpleMode => IsEnabled(Preset.NIN_ST_SimpleMode);
     internal static bool AoESimpleMode => IsEnabled(Preset.NIN_AoE_SimpleMode);
-    internal static bool NinjaWeave => CanWeave(.3f, 10);
+    internal static bool BlockDueToLag
+    {
+        get
+        {
+            return ActionWatching.LastAction != LastMudra && MudraSigns.Any(x => x == ActionWatching.LastAction);
+        }
+    }
 
     #region Mudra Logic
+    public enum MudraFlags
+    {
+        None = 0,
+        TenFirst = 1,
+        ChiFirst = 2,
+        JinFirst = 3,
+        TenSecond = 4,
+        ChiSecond = 8,
+        JinSecond = 12,
+        TenThird = 16,
+        ChiThird = 32,
+        JinThird = 48,
+        Rabbit = 255,
+    }
+
     public static uint CurrentNinjutsu => OriginalHook(Ninjutsu);
-    internal static bool InMudra = false;
+    internal static bool InMudra => JutsuFromFlags > 0 || JustUsed(Ten, 1) || JustUsed(Chi, 1) || JustUsed(Jin, 1) || JustUsed(TenCombo, 1) || JustUsed(ChiCombo, 1) || JustUsed(JinCombo, 1);
+
+    internal static MudraFlags Flags => HasStatusEffect(Buffs.Mudra) ? (MudraFlags)(GetStatusEffect(Buffs.Mudra).Param) : HasStatusEffect(Buffs.TenChiJin) ? (MudraFlags)(GetStatusEffect(Buffs.TenChiJin).Param) : MudraFlags.None;
+    internal static MudraFlags FirstMudra => Flags & MudraFlags.JinFirst;
+    internal static MudraFlags SecondMudra => Flags & MudraFlags.JinSecond;
+    internal static MudraFlags ThirdMudra => Flags & MudraFlags.JinThird;
+
+    internal static uint LastMudra
+    {
+        get
+        {
+            int raw = (int)Flags;
+
+            return ThirdMudra switch
+            {
+                not MudraFlags.None => ThirdMudra switch
+                {
+                    MudraFlags.TenThird => TenCombo,
+                    MudraFlags.ChiThird => ChiCombo,
+                    MudraFlags.JinThird => JinCombo,
+                    _ => 0
+                },
+
+                _ => SecondMudra switch
+                {
+                    not MudraFlags.None => SecondMudra switch
+                    {
+                        MudraFlags.TenSecond => TenCombo,
+                        MudraFlags.ChiSecond => ChiCombo,
+                        MudraFlags.JinSecond => JinCombo,
+                        _ => 0
+                    },
+
+                    _ => FirstMudra switch
+                    {
+                        MudraFlags.TenFirst => HasKassatsu ? TenCombo : Ten,
+                        MudraFlags.ChiFirst => HasKassatsu ? ChiCombo : Chi,
+                        MudraFlags.JinFirst => HasKassatsu ? JinCombo : Jin,
+                        _ => 0
+                    }
+                }
+            };
+        }
+    }
+
+    internal static uint JutsuFromFlags
+    {
+        get
+        {
+            if (FailedJutsu || Flags == MudraFlags.Rabbit)
+                return Rabbit;
+
+            return ThirdMudra switch
+            {
+                not MudraFlags.None => ThirdMudra switch
+                {
+                    MudraFlags.TenThird => Huton,
+                    MudraFlags.ChiThird => Doton,
+                    MudraFlags.JinThird => Suiton,
+                    _ => 0
+                },
+
+                _ => SecondMudra switch
+                {
+                    not MudraFlags.None => SecondMudra switch
+                    {
+                        MudraFlags.TenSecond => HasKassatsu ? GokaMekkyaku : Katon,
+                        MudraFlags.ChiSecond => Raiton,
+                        MudraFlags.JinSecond => HasKassatsu ? HyoshoRanryu : Hyoton,
+                        _ => 0
+                    },
+
+                    _ => FirstMudra switch
+                    {
+                        MudraFlags.TenFirst => FumaShuriken,
+                        MudraFlags.ChiFirst => FumaShuriken,
+                        MudraFlags.JinFirst => FumaShuriken,
+                        _ => 0
+                    }
+                }
+            };
+        }
+    }
+
+    internal static bool FailedJutsu =>
+        (
+            (FirstMudra == MudraFlags.TenFirst ? 1 : 0) +
+            (SecondMudra == MudraFlags.TenSecond ? 1 : 0) +
+            (ThirdMudra == MudraFlags.TenThird ? 1 : 0)
+        ) > 1
+        ||
+        (
+            (FirstMudra == MudraFlags.ChiFirst ? 1 : 0) +
+            (SecondMudra == MudraFlags.ChiSecond ? 1 : 0) +
+            (ThirdMudra == MudraFlags.ChiThird ? 1 : 0)
+        ) > 1
+        ||
+        (
+            (FirstMudra == MudraFlags.JinFirst ? 1 : 0) +
+            (SecondMudra == MudraFlags.JinSecond ? 1 : 0) +
+            (ThirdMudra == MudraFlags.JinThird ? 1 : 0)
+        ) > 1;
+
+    internal static List<uint> UnusedJutsus
+    {
+        get
+        {
+            List<uint> output = [];
+            if (FirstMudra != MudraFlags.TenFirst && SecondMudra != MudraFlags.TenSecond && ThirdMudra != MudraFlags.TenThird)
+                output.Add(Ten);
+            if (FirstMudra != MudraFlags.ChiFirst && SecondMudra != MudraFlags.ChiSecond && ThirdMudra != MudraFlags.ChiThird)
+                output.Add(Chi);
+            if (FirstMudra != MudraFlags.JinFirst && SecondMudra != MudraFlags.JinSecond && ThirdMudra != MudraFlags.JinThird)
+                output.Add(Jin);
+
+            return output;
+        }
+    }
+
+    internal static bool MudraUsed(uint actionId)
+    {
+        var baseMudra = MudraToBase(actionId);
+
+        return baseMudra != 0 && !UnusedJutsus.Contains(baseMudra);
+    }
+
+    internal static uint MudraToBase(uint actionId)
+    {
+        uint baseMudra = actionId switch
+        {
+            Ten or TenCombo => Ten,
+            Chi or ChiCombo => Chi,
+            Jin or JinCombo => Jin,
+            _ => 0u
+        };
+
+        return baseMudra;
+    }
     internal static bool Rabbitting => GetStatusEffect(Buffs.Mudra)?.Param == 255;
     internal static bool MudraPhase => WasLastAction(Ten) || WasLastAction(Chi) || WasLastAction(Jin) || WasLastAction(TenCombo) || WasLastAction(ChiCombo) || WasLastAction(JinCombo);
-    internal static bool MudraReady => MudraCasting.CanCast();
     internal static uint MudraCharges => GetRemainingCharges(Ten);
     internal static bool MudraAlmostReady => MudraCharges == 1 && GetCooldownChargeRemainingTime(Ten) < 3;
     #endregion
@@ -36,17 +196,17 @@ internal partial class NIN
     internal static bool DotonStoppedMoving => TimeStoodStill >= TimeSpan.FromSeconds(DotonTimeStill);
     internal static float DotonTimeStill => AoESimpleMode ? 1.5f : NIN_AoE_AdvancedMode_Ninjitsus_Doton_TimeStill;
 
-    internal static bool CanUseFumaShuriken => LevelChecked(FumaShuriken) && MudraReady;
+    internal static bool CanUseFumaShuriken => ActionReady(Ten);
 
-    internal static bool CanUseRaiton => LevelChecked(Raiton) && MudraReady &&
+    internal static bool CanUseRaiton => LevelChecked(Raiton) && ActionReady(Ten) &&
                                           (!HasKassatsu || IsNotEnabled(Preset.NIN_ST_AdvancedMode_Ninjitsus_Hyosho) && !STSimpleMode || !LevelChecked(HyoshoRanryu)) && //Use kassatsu on it if Hyosho isn't selected. 
                                            (TrickDebuff || // Buff Window
                                            !LevelChecked(Suiton) || //Dont Pool because of Suiton not learned yet
-                                           GetCooldownChargeRemainingTime(Ten) < 1 && TrickCD > 18|| // Spend to avoid cap
+                                           GetCooldownChargeRemainingTime(Ten) < 1 && TrickCD > 18 || // Spend to avoid cap
                                            !NIN_ST_AdvancedMode_Ninjitsus_Raiton_Pooling && !STSimpleMode || //Dont Pool because of Raiton Option
                                            NIN_ST_AdvancedMode_Ninjitsus_Raiton_Uptime && !InMeleeRange() && GetCooldownChargeRemainingTime(Ten) <= TrickCD - 10); //Uptime option
 
-    internal static bool CanUseKaton => LevelChecked(Katon) && MudraReady &&
+    internal static bool CanUseKaton => LevelChecked(Katon) && ActionReady(Ten) &&
                                          (!HasKassatsu || IsNotEnabled(Preset.NIN_AoE_AdvancedMode_Ninjitsus_Goka) && !STSimpleMode) &&
                                          (TrickDebuff || //Buff Window
                                           !LevelChecked(Huton) || //Dont Pool because of Huton not learned yet
@@ -55,18 +215,18 @@ internal partial class NIN
                                           NIN_AoE_AdvancedMode_Ninjitsus_Katon_Uptime && !InMeleeRange() &&
                                           GetCooldownChargeRemainingTime(Ten) <= TrickCD - 10); //Uptime option
 
-    internal static bool CanUseDoton => LevelChecked(Doton) && MudraReady && DotonStoppedMoving && !JustUsed(Doton) &&
+    internal static bool CanUseDoton => LevelChecked(Doton) && ActionReady(Ten) && DotonStoppedMoving && !JustUsed(Doton) &&
                                         (!HasDoton || DotonRemaining <= 2) && //No doton down
                                         (TrickDebuff || GetCooldownChargeRemainingTime(Ten) < 3); //Pool for buff window
 
-    internal static bool CanUseSuiton => LevelChecked(Suiton) && MudraReady && !HasStatusEffect(Buffs.ShadowWalker);
+    internal static bool CanUseSuiton => LevelChecked(Suiton) && ActionReady(Ten) && !HasStatusEffect(Buffs.ShadowWalker);
 
-    internal static bool CanUseHuton => LevelChecked(Huton) && MudraReady && !HasStatusEffect(Buffs.ShadowWalker);
+    internal static bool CanUseHuton => LevelChecked(Huton) && ActionReady(Ten) && !HasStatusEffect(Buffs.ShadowWalker);
 
-    internal static bool CanUseHyoshoRanryu => LevelChecked(HyoshoRanryu) && MudraReady && HasKassatsu &&
+    internal static bool CanUseHyoshoRanryu => LevelChecked(HyoshoRanryu) && ActionReady(Ten) && HasKassatsu &&
                                                (BuffWindow || IsNotEnabled(Preset.NIN_ST_AdvancedMode_TrickAttack) && !STSimpleMode || KassatsuRemaining < 3);
 
-    internal static bool CanUseGokaMekkyaku => LevelChecked(GokaMekkyaku) && MudraReady && HasKassatsu &&
+    internal static bool CanUseGokaMekkyaku => LevelChecked(GokaMekkyaku) && ActionReady(Ten) && HasKassatsu &&
                                                (BuffWindow || IsNotEnabled(Preset.NIN_ST_AdvancedMode_TrickAttack) && !STSimpleMode || KassatsuRemaining < 3);
     #endregion
 
@@ -96,9 +256,9 @@ internal partial class NIN
     internal static float TrickCD => GetCooldownRemainingTime(OriginalHook(TrickAttack));
     internal static float MugCD => GetCooldownRemainingTime(OriginalHook(Mug));
 
-    internal static bool CanTrickST => ActionReady(OriginalHook(TrickAttack)) && NinjaWeave && CanApplyStatus(CurrentTarget, [Debuffs.TrickAttack, Debuffs.KunaisBane]) && HasStatusEffect(Buffs.ShadowWalker) && !MudraPhase &&
+    internal static bool CanTrickST => ActionReady(OriginalHook(TrickAttack)) && CanWeave() && CanApplyStatus(CurrentTarget, [Debuffs.TrickAttack, Debuffs.KunaisBane]) && HasStatusEffect(Buffs.ShadowWalker) && !MudraPhase &&
                                      (MugDebuff || MugCD >= 45 || MugDisabledST);
-    internal static bool CanTrickAoE => ActionReady(OriginalHook(TrickAttack)) && NinjaWeave && CanApplyStatus(CurrentTarget, [Debuffs.TrickAttack, Debuffs.KunaisBane]) && HasStatusEffect(Buffs.ShadowWalker) && !MudraPhase &&
+    internal static bool CanTrickAoE => ActionReady(OriginalHook(TrickAttack)) && CanWeave() && CanApplyStatus(CurrentTarget, [Debuffs.TrickAttack, Debuffs.KunaisBane]) && HasStatusEffect(Buffs.ShadowWalker) && !MudraPhase &&
                                      (MugDebuff || MugCD >= 45 || MugDisabledAoE);
 
     internal static bool CanMugST => ActionReady(OriginalHook(Mug)) && CanApplyStatus(CurrentTarget, [Debuffs.Mug, Debuffs.Dokumori]) && CanDelayedWeave(1.25f, .6f, 10) && !MudraPhase &&
@@ -114,10 +274,10 @@ internal partial class NIN
 
     #region Ninki Use Logic
     internal static bool NinkiWillOvercap => gauge.Ninki > 50;
-    internal static bool CanBunshin => NinjaWeave && !MudraPhase && LevelChecked(Bunshin) && IsOffCooldown(Bunshin) && gauge.Ninki >= 50;
-    internal static bool CanBhavacakra => NinjaWeave && gauge.Ninki >= 50 && !MudraPhase &&
+    internal static bool CanBunshin => CanWeave() && !MudraPhase && ActionReady(Bunshin) && gauge.Ninki >= 50;
+    internal static bool CanBhavacakra => CanWeave() && gauge.Ninki >= 50 && !MudraPhase &&
                                           (!HasStatusEffect(Buffs.Higi) || BuffWindow || TrickDisabledST);
-    internal static bool CanHellfrogMedium => NinjaWeave && gauge.Ninki >= 50 && LevelChecked(HellfrogMedium) && !MudraPhase &&
+    internal static bool CanHellfrogMedium => CanWeave() && gauge.Ninki >= 50 && LevelChecked(HellfrogMedium) && !MudraPhase &&
                                               (!HasStatusEffect(Buffs.Higi) || BuffWindow || TrickDisabledAoE);
 
     internal static bool NinkiPooling => gauge.Ninki >= NinkiPool();
@@ -138,32 +298,32 @@ internal partial class NIN
     #region Kassatsu, Meisui, Assassinate, TenChiJin Logic
     internal static bool HasKassatsu => HasStatusEffect(Buffs.Kassatsu) || JustUsed(Kassatsu, 1);
     internal static float KassatsuRemaining => GetStatusEffectRemainingTime(Buffs.Kassatsu);
-    internal static bool CanKassatsu => !MudraPhase && ActionReady(Kassatsu) && NinjaWeave &&
+    internal static bool CanKassatsu => !MudraPhase && ActionReady(Kassatsu) && CanWeave() &&
                                         (TrickCD < 10 && HasStatusEffect(Buffs.ShadowWalker) ||
                                          BuffWindow ||
                                          TrickDisabledST);
 
-    internal static bool CanKassatsuAoE => !MudraPhase && ActionReady(Kassatsu) && NinjaWeave &&
+    internal static bool CanKassatsuAoE => !MudraPhase && ActionReady(Kassatsu) && CanWeave() &&
                                         (TrickCD < 10 && HasStatusEffect(Buffs.ShadowWalker) ||
                                          BuffWindow ||
                                          TrickDisabledAoE);
 
-    internal static bool CanMeisui => !MudraPhase && ActionReady(Meisui) && NinjaWeave && HasStatusEffect(Buffs.ShadowWalker) &&
+    internal static bool CanMeisui => !MudraPhase && ActionReady(Meisui) && CanWeave() && HasStatusEffect(Buffs.ShadowWalker) &&
                                       (BuffWindow || TrickDisabledST);
-    internal static bool CanMeisuiAoE => !MudraPhase && ActionReady(Meisui) && NinjaWeave && HasStatusEffect(Buffs.ShadowWalker) &&
+    internal static bool CanMeisuiAoE => !MudraPhase && ActionReady(Meisui) && CanWeave() && HasStatusEffect(Buffs.ShadowWalker) &&
                                       (BuffWindow || TrickDisabledAoE);
 
-    internal static bool CanAssassinate => !MudraPhase && ActionReady(OriginalHook(Assassinate)) && NinjaWeave &&
+    internal static bool CanAssassinate => !MudraPhase && ActionReady(OriginalHook(Assassinate)) && CanWeave() &&
                                            (BuffWindow || TrickDisabledST || !LevelChecked(Suiton));
-    internal static bool CanAssassinateAoE => !MudraPhase && ActionReady(OriginalHook(Assassinate)) && NinjaWeave &&
+    internal static bool CanAssassinateAoE => !MudraPhase && ActionReady(OriginalHook(Assassinate)) && CanWeave() &&
                                            (BuffWindow || TrickDisabledAoE || !LevelChecked(Huton));
 
-    internal static bool CanTenChiJin => !MudraPhase && !MudraAlmostReady && IsOffCooldown(TenChiJin) && LevelChecked(TenChiJin) && NinjaWeave &&
+    internal static bool CanTenChiJin => !MudraPhase && !MudraAlmostReady && ActionReady(TenChiJin) && CanWeave() &&
                                          (BuffWindow || TrickDisabledST);
-    internal static bool CanTenChiJinAoE => !MudraPhase && !MudraAlmostReady && IsOffCooldown(TenChiJin) && LevelChecked(TenChiJin) && NinjaWeave &&
+    internal static bool CanTenChiJinAoE => !MudraPhase && !MudraAlmostReady && ActionReady(TenChiJin) && CanWeave() &&
                                             (BuffWindow || TrickDisabledAoE);
 
-    internal static bool CanTenriJindo => NinjaWeave && HasStatusEffect(Buffs.TenriJendoReady);
+    internal static bool CanTenriJindo => CanWeave() && HasStatusEffect(Buffs.TenriJendoReady);
 
     internal static uint OriginalTen => HasKassatsu ? TenCombo : Ten;
     internal static uint OriginalJin => HasKassatsu ? JinCombo : Jin;
@@ -173,53 +333,81 @@ internal partial class NIN
     #region TCJ Methods
     internal static bool STTenChiJin(ref uint actionID)
     {
-        if (!JustUsed(TenChiJin, 6f))
-            return false;
-
-        var original = actionID;
-        actionID = ActionWatching.LastAction switch
+        if (HasStatusEffect(Buffs.TenChiJin))
         {
-            TenChiJin => TCJFumaShurikenTen,
-            TCJFumaShurikenTen => TCJRaiton,
-            TCJRaiton => TCJSuiton,
-            _ => actionID,
-        };
+            if (FirstMudra == MudraFlags.None)
+            {
+                actionID = TCJFumaShurikenTen;
+                return true;
+            }
 
-        return ActionWatching.LastAction is not TCJSuiton && original != actionID;
+            if (SecondMudra == MudraFlags.None)
+            {
+                if (FirstMudra == MudraFlags.TenFirst)
+                    actionID = TCJRaiton;
+                else if (FirstMudra == MudraFlags.JinFirst)
+                    actionID = TCJKaton;
+                else
+                    actionID = TCJHyoton;
+
+                return true;
+            }
+            else
+            {
+                if (UnusedJutsus.Contains(Ten))
+                    actionID = TCJHuton;
+                else if (UnusedJutsus.Contains(Chi))
+                    actionID = TCJDoton;
+                else
+                    actionID = TCJSuiton;
+
+                return true;
+            }
+
+        }
+        return false;
     }
-    internal static bool AoETenChiJinDoton(ref uint actionID)
+    internal static bool AoETenChiJin(ref uint actionID, bool advancedMode)
     {
-        if (!JustUsed(TenChiJin, 6f))
-            return false;
-
-        var original = actionID;
-        actionID = ActionWatching.LastAction switch
+        if (HasStatusEffect(Buffs.TenChiJin))
         {
-            TenChiJin => TCJFumaShurikenJin,
-            TCJFumaShurikenJin => TCJKaton,
-            TCJKaton => TCJDoton,
-            _ => actionID,
-        };
+            if (FirstMudra == MudraFlags.None)
+            {
+                if (DotonRemaining >= (advancedMode ? NIN_AoE_AdvancedMode_TCJ_Doton_Timer : 3))
+                    actionID = TCJFumaShurikenTen;
+                else
+                    actionID = TCJFumaShurikenJin;
 
-        return ActionWatching.LastAction is not TCJDoton && original != actionID;
+                return true;
+            }
+
+            if (SecondMudra == MudraFlags.None)
+            {
+                if (FirstMudra == MudraFlags.TenFirst)
+                    actionID = TCJRaiton;
+                else if (FirstMudra == MudraFlags.JinFirst)
+                    actionID = TCJKaton;
+                else
+                    actionID = TCJHyoton;
+
+                return true;
+            }
+            else
+            {
+                if (UnusedJutsus.Contains(Ten))
+                    actionID = TCJHuton;
+                else if (UnusedJutsus.Contains(Chi))
+                    actionID = TCJDoton;
+                else
+                    actionID = TCJSuiton;
+
+                return true;
+            }
+
+        }
+        return false;
     }
 
-    internal static bool AoETenChiJinSuiton(ref uint actionID)
-    {
-        if (!JustUsed(TenChiJin, 6f))
-            return false;
-
-        var original = actionID;
-        actionID = ActionWatching.LastAction switch
-        {
-            TenChiJin => TCJFumaShurikenChi,
-            TCJFumaShurikenChi => TCJKaton,
-            TCJKaton => TCJSuiton,
-            _ => actionID,
-        };
-
-        return ActionWatching.LastAction is not TCJSuiton && original != actionID;
-    }
     #endregion
 
     #region Mudra
@@ -228,6 +416,33 @@ internal partial class NIN
         #region Mudra State Stuff
 
         public MudraState CurrentMudra = MudraState.None;
+
+        public bool PresetEnabled => AssociatedPreset is { } pre && IsEnabled(pre);
+        internal Preset? AssociatedPreset;
+
+        public MudraCasting()
+        {
+            OnStatusChanged += StatusChanged;
+        }
+
+        private void StatusChanged(uint statusId, bool onPlayer)
+        {
+            if (!PresetEnabled) return;
+
+            if (statusId == Buffs.Mudra)
+            {
+                if (onPlayer)
+                {
+                    Svc.Log.Debug($"{AssociatedPreset} -> {CurrentMudra} set");
+                }
+                else
+                {
+                    Svc.Log.Debug($"{AssociatedPreset} -> {CurrentMudra} reset to none");
+                    CurrentMudra = MudraState.None;
+                    ActionWatching.LastAction = 0;
+                }
+            }
+        }
 
         public enum MudraState
         {
@@ -244,28 +459,6 @@ internal partial class NIN
 
         public bool ContinueCurrentMudra(ref uint actionID)
         {
-            if (ActionWatching.TimeSinceLastAction.TotalSeconds >= 2 && OriginalHook(Ninjutsu) is Rabbit or Ninjutsu)
-            {
-                InMudra = false;
-                ActionWatching.LastAction = 0;
-                CurrentMudra = MudraState.None;
-                return false;
-            }
-
-            if (ActionWatching.LastAction == FumaShuriken ||
-                ActionWatching.LastAction == Katon ||
-                ActionWatching.LastAction == Raiton ||
-                ActionWatching.LastAction == Hyoton ||
-                ActionWatching.LastAction == Huton ||
-                ActionWatching.LastAction == Doton ||
-                ActionWatching.LastAction == Suiton ||
-                ActionWatching.LastAction == GokaMekkyaku ||
-                ActionWatching.LastAction == HyoshoRanryu)
-            {
-                CurrentMudra = MudraState.None;
-                InMudra = false;
-            }
-
             return CurrentMudra switch
             {
                 MudraState.None => false,
@@ -282,34 +475,13 @@ internal partial class NIN
         }
         #endregion
 
-        #region Mudra Cast Check
-        public static bool CanCast()
-        {
-            if (InMudra) return true;
-
-            if (GetCooldown(GustSlash).CooldownTotal == 0.5) return true;
-
-            if (GetRemainingCharges(Ten) == 0 &&
-                !HasStatusEffect(Buffs.Mudra) &&
-                !HasStatusEffect(Buffs.Kassatsu))
-                return false;
-            return true;
-        }
-        #endregion
-
         #region Fuma Shuriken
         public bool CastFumaShuriken(ref uint actionID) // Ten
         {
             if (CurrentMudra is MudraState.None or MudraState.CastingFumaShuriken)
             {
-                // Reset State
-                if (!CanCast() || ActionWatching.LastAction == FumaShuriken)
-                {
-                    CurrentMudra = MudraState.None;
-                    return false;
-                }
                 // Finish the Mudra
-                if (ActionWatching.LastAction is Ten or TenCombo)
+                if (LastMudra is Ten or TenCombo)
                 {
                     actionID = FumaShuriken;
                     return true;
@@ -330,7 +502,7 @@ internal partial class NIN
             if (Raiton.LevelChecked() && CurrentMudra is MudraState.None or MudraState.CastingRaiton)
             {
                 // Finish the Mudra
-                switch (ActionWatching.LastAction)
+                switch (LastMudra)
                 {
                     case Ten or TenCombo or Jin or JinCombo:
                         actionID = ChiCombo;
@@ -355,7 +527,7 @@ internal partial class NIN
             if (Suiton.LevelChecked() && CurrentMudra is MudraState.None or MudraState.CastingSuiton)
             {
                 //Finish the Mudra
-                switch (ActionWatching.LastAction)
+                switch (LastMudra)
                 {
                     case Ten or TenCombo:
                         actionID = ChiCombo;
@@ -383,7 +555,7 @@ internal partial class NIN
             if (HyoshoRanryu.LevelChecked() && CurrentMudra is MudraState.None or MudraState.CastingHyoshoRanryu)
             {
                 //Finish the Mudra
-                switch (ActionWatching.LastAction)
+                switch (LastMudra)
                 {
                     case Ten or TenCombo or Chi or ChiCombo:
                         actionID = JinCombo;
@@ -408,7 +580,7 @@ internal partial class NIN
             if (Katon.LevelChecked() && CurrentMudra is MudraState.None or MudraState.CastingKaton)
             {
                 //Finish the Mudra
-                switch (ActionWatching.LastAction)
+                switch (LastMudra)
                 {
                     case Jin or JinCombo or Chi or ChiCombo:
                         actionID = TenCombo;
@@ -433,7 +605,7 @@ internal partial class NIN
             if (Doton.LevelChecked() && CurrentMudra is MudraState.None or MudraState.CastingDoton)
             {
                 //Finish the Mudra
-                switch (ActionWatching.LastAction)
+                switch (LastMudra)
                 {
                     case Jin or JinCombo:
                         actionID = TenCombo;
@@ -461,7 +633,7 @@ internal partial class NIN
             if (Huton.LevelChecked() && CurrentMudra is MudraState.None or MudraState.CastingHuton)
             {
                 //Finish the Mudra
-                switch (ActionWatching.LastAction)
+                switch (LastMudra)
                 {
                     case Jin or JinCombo:
                         actionID = ChiCombo;
@@ -489,7 +661,7 @@ internal partial class NIN
             if (GokaMekkyaku.LevelChecked() && CurrentMudra is MudraState.None or MudraState.CastingGokaMekkyaku)
             {
                 //Finish the Mudra
-                switch (ActionWatching.LastAction)
+                switch (LastMudra)
                 {
                     case Jin or JinCombo or Chi or ChiCombo:
                         actionID = TenCombo;
@@ -514,33 +686,33 @@ internal partial class NIN
     // Single Target
     internal static uint UseFumaShuriken(ref uint actionId)
     {
-        return actionId = ActionWatching.LastAction is Ten or Chi or Jin ? FumaShuriken : Ten;
+        return actionId = LastMudra is Ten or Chi or Jin ? FumaShuriken : Ten;
     }
     internal static uint UseRaiton(ref uint actionId) // Ten Chi
     {
-        if (ActionWatching.LastAction == OriginalTen || ActionWatching.LastAction == OriginalJin)
+        if (LastMudra == OriginalTen || LastMudra == OriginalJin)
             actionId = ChiCombo;
-        else if (ActionWatching.LastAction == ChiCombo)
+        else if (LastMudra == ChiCombo)
             actionId = Raiton;
 
         return actionId;
     }
     internal static uint UseHyoshoRanryu(ref uint actionId) // Ten Jin
     {
-        if (ActionWatching.LastAction is TenCombo or ChiCombo)
+        if (LastMudra is TenCombo or ChiCombo)
             actionId = JinCombo;
-        else if (ActionWatching.LastAction == JinCombo)
+        else if (LastMudra == JinCombo)
             actionId = HyoshoRanryu;
 
         return actionId;
     }
     internal static uint UseSuiton(ref uint actionId) // Ten Chi Jin
     {
-        if (ActionWatching.LastAction == OriginalTen)
+        if (LastMudra == OriginalTen)
             actionId = ChiCombo;
-        else if (ActionWatching.LastAction == ChiCombo)
+        else if (LastMudra == ChiCombo)
             actionId = JinCombo;
-        else if (ActionWatching.LastAction == JinCombo)
+        else if (LastMudra == JinCombo)
             actionId = Suiton;
 
         return actionId;
@@ -548,29 +720,29 @@ internal partial class NIN
     //Multi Target
     internal static uint UseGokaMekkyaku(ref uint actionId) // Chi Ten
     {
-        if (ActionWatching.LastAction == OriginalChi)
+        if (LastMudra == OriginalChi)
             actionId = TenCombo;
-        else if (ActionWatching.LastAction is TenCombo)
+        else if (LastMudra is TenCombo)
             actionId = GokaMekkyaku;
 
         return actionId;
     }
     internal static uint UseKaton(ref uint actionId) // Chi Ten
     {
-        if (ActionWatching.LastAction == OriginalChi)
+        if (LastMudra == OriginalChi)
             actionId = TenCombo;
-        else if (ActionWatching.LastAction is TenCombo)
+        else if (LastMudra is TenCombo)
             actionId = Katon;
 
         return actionId;
     }
     internal static uint UseDoton(ref uint actionId)  //Jin Ten Chi
     {
-        if (ActionWatching.LastAction == OriginalJin)
+        if (LastMudra == OriginalJin)
             actionId = TenCombo;
-        else if (ActionWatching.LastAction is TenCombo)
+        else if (LastMudra is TenCombo)
             actionId = ChiCombo;
-        else if (ActionWatching.LastAction is ChiCombo)
+        else if (LastMudra is ChiCombo)
             actionId = Doton;
 
         return actionId;
@@ -578,11 +750,11 @@ internal partial class NIN
 
     internal static uint UseHuton(ref uint actionId) // Jin Chi Ten
     {
-        if (ActionWatching.LastAction == OriginalChi)
+        if (LastMudra == OriginalChi)
             actionId = JinCombo;
-        else if (ActionWatching.LastAction is JinCombo)
+        else if (LastMudra is JinCombo)
             actionId = TenCombo;
-        else if (ActionWatching.LastAction is TenCombo)
+        else if (LastMudra is TenCombo)
             actionId = Huton;
 
         return actionId;
@@ -593,73 +765,35 @@ internal partial class NIN
     internal static NINOpenerMaxLevel4thGCDKunai Opener1 = new();
     internal static NINOpenerMaxLevel3rdGCDDokumori Opener2 = new();
     internal static NINOpenerMaxLevel3rdGCDKunai Opener3 = new();
+    internal static NINOpenerMaxLevelBuffRush Opener4 = new();
 
     internal static WrathOpener Opener()
     {
         if (IsEnabled(Preset.NIN_ST_AdvancedMode))
         {
-            if (NIN_Adv_Opener_Selection == 0 && Opener1.LevelChecked)
-                return Opener1;
-            if (NIN_Adv_Opener_Selection == 1 && Opener2.LevelChecked)
-                return Opener2;
-            if (NIN_Adv_Opener_Selection == 2 && Opener3.LevelChecked)
-                return Opener3;
+            int selection = NIN_Adv_Opener_Selection;
+            switch (selection)
+            {
+                case 0 when Opener1.LevelChecked:
+                    return Opener1;
+                case 1 when Opener2.LevelChecked:
+                    return Opener2;
+                case 2 when Opener3.LevelChecked:
+                    return Opener3;
+                case 3 when Opener4.LevelChecked:
+                    return Opener4;
+            }
         }
 
         return Opener1.LevelChecked ? Opener1 : WrathOpener.Dummy;
     }
-    internal class NINOpenerMaxLevel4thGCDKunai : WrathOpener
-    {
-        //4th GCD Kunai
-        public override List<uint> OpenerActions { get; set; } =
-        [
-            Ten, //1
-            ChiCombo, //2
-            JinCombo, //3
-            Suiton, //4
-            Kassatsu, //5
-            SpinningEdge, //6
-            GustSlash, //7
-            Dokumori, //8
-            Bunshin, //9
-            PhantomKamaitachi, //10
-            ArmorCrush, //11
-            KunaisBane, //12
-            ChiCombo, //13
-            JinCombo, //14
-            HyoshoRanryu, //15
-            DreamWithinADream, //16
-            Ten, //17
-            ChiCombo, //18
-            Raiton, //19
-            TenChiJin, //20
-            TCJFumaShurikenTen, //21
-            TCJRaiton, //22
-            TCJSuiton, //23
-            Meisui, //24
-            FleetingRaiju, //25
-            ZeshoMeppo, //26
-            TenriJendo, //27
-            FleetingRaiju, //28
-            Bhavacakra, //29
-            Ten, //30
-            ChiCombo, //31
-            Raiton, //32
-            FleetingRaiju, //33
-        ];
-       
-        public override List<(int[] Steps, Func<bool> Condition)> SkipSteps 
-        { get; set; } = [([1,2,3], () => OriginalHook(Ninjutsu) == Suiton)];
-       
-        public override List<int> DelayedWeaveSteps { get; set; } =
-        [
-            12
-        ];
 
+    internal abstract class NINOpenerBase : WrathOpener
+    {
         public override int MinOpenerLevel => 100;
         public override int MaxOpenerLevel => 109;
-        internal override UserData? ContentCheckConfig => NIN_Balance_Content;
-        public override Preset Preset => Preset.NIN_ST_AdvancedMode_BalanceOpener;
+        internal override UserData ContentCheckConfig => NIN_Balance_Content;
+        internal override bool IncludePot => NIN_Opener_Potion;
         public override bool HasCooldowns()
         {
             if (GetRemainingCharges(Ten) < 1) return false;
@@ -673,9 +807,60 @@ internal partial class NIN
 
             return true;
         }
+        public override List<(int[] Steps, Func<bool> Condition)> SkipSteps
+        { get; set; } = [([1, 2, 3], () => OriginalHook(Ninjutsu) == Suiton)];
+
+        public override Preset Preset => Preset.NIN_ST_AdvancedMode_BalanceOpener;
     }
 
-    internal class NINOpenerMaxLevel3rdGCDDokumori : WrathOpener
+    internal class NINOpenerMaxLevel4thGCDKunai : NINOpenerBase
+    {
+        //4th GCD Kunai
+        public override List<uint> OpenerActions { get; set; } =
+        [
+            Ten, //1
+            ChiCombo, //2
+            JinCombo, //3
+            Suiton, //4
+            Kassatsu, //5
+            SpinningEdge, //6
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), //7
+            GustSlash, //8
+            Dokumori, //9
+            Bunshin, //10
+            PhantomKamaitachi, //11
+            ArmorCrush, //12
+            KunaisBane, //13
+            ChiCombo, //14
+            JinCombo, //15
+            HyoshoRanryu, //16
+            DreamWithinADream, //17
+            Ten, //18
+            ChiCombo, //19
+            Raiton, //20
+            TenChiJin, //21
+            TCJFumaShurikenTen, //22
+            TCJRaiton, //23
+            TCJSuiton, //24
+            Meisui, //25
+            FleetingRaiju, //26
+            ZeshoMeppo, //27
+            TenriJendo, //28
+            FleetingRaiju, //29
+            Bhavacakra, //30
+            Ten, //31
+            ChiCombo, //32
+            Raiton, //33
+            FleetingRaiju, //34
+        ];
+
+        public override List<int> DelayedWeaveSteps { get; set; } =
+        [
+            13
+        ];
+    }
+
+    internal class NINOpenerMaxLevel3rdGCDDokumori : NINOpenerBase
     {
         //3rd GCD Dokumori
         public override List<uint> OpenerActions { get; set; } =
@@ -686,8 +871,56 @@ internal partial class NIN
             Suiton, //4
             Kassatsu, //5
             SpinningEdge, //6
-            GustSlash, //7
-            ArmorCrush, //8
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), //7
+            GustSlash, //8
+            ArmorCrush, //9
+            Dokumori, //10
+            Bunshin, //11
+            PhantomKamaitachi, //12
+            KunaisBane, //13
+            ChiCombo, //14
+            JinCombo, //15
+            HyoshoRanryu, //16
+            DreamWithinADream, //17
+            Ten, //18
+            ChiCombo, //19
+            Raiton, //20
+            TenChiJin, //21
+            TCJFumaShurikenTen, //22
+            TCJRaiton, //23
+            TCJSuiton, //24
+            Meisui, //25
+            FleetingRaiju, //26
+            ZeshoMeppo, //27
+            TenriJendo, //28
+            FleetingRaiju, //29
+            Ten, //30
+            ChiCombo, //31
+            Raiton, //32
+            FleetingRaiju, //33
+            Bhavacakra, //34
+            SpinningEdge //35
+        ];
+
+        public override List<int> DelayedWeaveSteps { get; set; } =
+        [
+            13
+        ];
+    }
+
+    internal class NINOpenerMaxLevel3rdGCDKunai : NINOpenerBase
+    {
+        //3rd GCD Kunai
+        public override List<uint> OpenerActions { get; set; } =
+        [
+            Ten, //1
+            ChiCombo, //2
+            JinCombo, //3
+            Suiton, //4
+            Kassatsu, //5
+            SpinningEdge, //6
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), //7
+            GustSlash, //8
             Dokumori, //9
             Bunshin, //10
             PhantomKamaitachi, //11
@@ -708,44 +941,23 @@ internal partial class NIN
             ZeshoMeppo, //26
             TenriJendo, //27
             FleetingRaiju, //28
-            Ten, //29
-            ChiCombo, //30
-            Raiton, //31
-            FleetingRaiju, //32
-            Bhavacakra, //33
-            SpinningEdge //34
+            ArmorCrush, //29
+            Bhavacakra, //30
+            Ten, //31
+            ChiCombo, //32
+            Raiton, //33
+            FleetingRaiju, //34
         ];
-        
-        public override List<(int[] Steps, Func<bool> Condition)> SkipSteps 
-        { get; set; } = [([1,2,3], () => OriginalHook(Ninjutsu) == Suiton)];
-        
+
         public override List<int> DelayedWeaveSteps { get; set; } =
         [
             12
         ];
 
-        public override Preset Preset => Preset.NIN_ST_AdvancedMode_BalanceOpener;
-        public override int MinOpenerLevel => 100;
-        public override int MaxOpenerLevel => 109;
-        internal override UserData? ContentCheckConfig => NIN_Balance_Content;
-        public override bool HasCooldowns()
-        {
-            if (GetRemainingCharges(Ten) < 1) return false;
-            if (IsOnCooldown(Mug)) return false;
-            if (IsOnCooldown(TenChiJin)) return false;
-            if (IsOnCooldown(PhantomKamaitachi)) return false;
-            if (IsOnCooldown(Bunshin)) return false;
-            if (IsOnCooldown(DreamWithinADream)) return false;
-            if (IsOnCooldown(Kassatsu)) return false;
-            if (IsOnCooldown(TrickAttack)) return false;
-
-            return true;
-        }
     }
 
-    internal class NINOpenerMaxLevel3rdGCDKunai : WrathOpener
+    internal class NINOpenerMaxLevelBuffRush : NINOpenerBase
     {
-        //3rd GCD Kunai
         public override List<uint> OpenerActions { get; set; } =
         [
             Ten, //1
@@ -754,10 +966,10 @@ internal partial class NIN
             Suiton, //4
             Kassatsu, //5
             SpinningEdge, //6
-            GustSlash, //7
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), //7
             Dokumori, //8
-            Bunshin, //9
-            PhantomKamaitachi, //10
+            GustSlash, //9
+            Bunshin, //10
             KunaisBane, //11
             ChiCombo, //12
             JinCombo, //13
@@ -775,39 +987,19 @@ internal partial class NIN
             ZeshoMeppo, //25
             TenriJendo, //26
             FleetingRaiju, //27
-            ArmorCrush, //28
-            Bhavacakra, //29
-            Ten, //30
-            ChiCombo, //31
-            Raiton, //32
-            FleetingRaiju, //33
+            Ten, //28
+            ChiCombo, //29
+            Raiton, //30
+            FleetingRaiju, //31
+            PhantomKamaitachi, //32
+            ArmorCrush, //33
+            Bhavacakra, //34
         ];
-        
-        public override List<(int[] Steps, Func<bool> Condition)> SkipSteps 
-        { get; set; } = [([1,2,3], () => OriginalHook(Ninjutsu) == Suiton)];
-        
+
         public override List<int> DelayedWeaveSteps { get; set; } =
         [
-            11
+            8
         ];
-
-        public override Preset Preset => Preset.NIN_ST_AdvancedMode_BalanceOpener;
-        internal override UserData? ContentCheckConfig => NIN_Balance_Content;
-        public override int MinOpenerLevel => 100;
-        public override int MaxOpenerLevel => 109;
-        public override bool HasCooldowns()
-        {
-            if (GetRemainingCharges(Ten) < 1) return false;
-            if (IsOnCooldown(Mug)) return false;
-            if (IsOnCooldown(TenChiJin)) return false;
-            if (IsOnCooldown(PhantomKamaitachi)) return false;
-            if (IsOnCooldown(Bunshin)) return false;
-            if (IsOnCooldown(DreamWithinADream)) return false;
-            if (IsOnCooldown(Kassatsu)) return false;
-            if (IsOnCooldown(TrickAttack)) return false;
-
-            return true;
-        }
     }
     #endregion
 

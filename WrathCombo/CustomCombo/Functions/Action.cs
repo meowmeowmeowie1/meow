@@ -8,8 +8,10 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WrathCombo.Combos.PvE;
 using WrathCombo.Core;
 using WrathCombo.Data;
+using WrathCombo.Data.BattleData;
 using WrathCombo.Services;
 using WrathCombo.Services.ActionRequestIPC;
 using static WrathCombo.Data.ActionWatching;
@@ -133,7 +135,7 @@ internal abstract partial class CustomComboFunctions
                     return false;
 
                 // LocalPlayer is always the source, our target, regardless of hostile/friendly, can be the object to check distance against
-                // We should also remember this is just a range check, not a target compatibility check (use (IGameObject).CanUseOn for this) 
+                // We should also remember this is just a range check, not a target compatibility check (use (IGameObject).CanUseOn for this)
                 var status = ActionManager.GetActionInRangeOrLoS(actionId, LocalPlayer.GameObject(), optionalTarget.Struct());
                 return status is 0 or 565; //0 = no message, 565 = Target is not in range (however this only generates if you're not facing them so it's technically fine with the auto-face setting)
             }
@@ -161,6 +163,9 @@ internal abstract partial class CustomComboFunctions
     /// <param name="actionId"> The action ID. </param>
     public static unsafe bool ActionReady(uint actionId, bool recastCheck = false, bool castCheck = false)
     {
+        if (actionId >= All.SingleTargetDPS)
+            return true;
+
         if (ActionRequestIPCProvider.GetArtificialCooldown(ActionType.Action, actionId) > 0)
         {
             return false;
@@ -387,9 +392,11 @@ internal abstract partial class CustomComboFunctions
             if (obj is not IBattleChara caster || !caster.IsHostile() || !caster.IsCasting)
                 continue;
 
+            if (BattleData.IgnoreRaidwide(caster.CastActionId)) continue;
+
             if (ActionSheet.TryGetValue(caster.CastActionId, out var spellSheet))
             {
-                if (spellSheet.CastType is 2 or 5 && spellSheet.EffectRange >= 30)
+                if ((spellSheet.CastType is 2 or 5 && spellSheet.EffectRange >= 30) || BattleData.IsRaidwide(caster.CastActionId))
                 {
                     if (maxTimeRemaining is null)
                         return _raidwideInc = true;

@@ -1,3 +1,5 @@
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
 using ECommons.ImGuiMethods;
 using System.Numerics;
 using WrathCombo.CustomComboNS.Functions;
@@ -19,10 +21,8 @@ internal partial class SAM
                 #region ST
 
                 case Preset.SAM_ST_Opener:
-                    ImGui.Indent();
                     DrawBossOnlyChoice(SAM_Balance_Content);
-                    ImGui.Unindent();
-                    ImGuiEx.Spacing(new Vector2(0, 10));
+                    DrawOpenerPotionChoice(SAM_Opener_Potion);
 
                     DrawSliderInt(0, 13, SAM_Opener_PrePullDelay,
                         FormatAndCache(SAM_Config.SecondsDelayFromFirstStep, MeikyoShisui.ActionName()), 75f.Scale());
@@ -31,33 +31,30 @@ internal partial class SAM
                         ImGui.SetTooltip(FormatAndCache(SAM_Config.DelaySavageBlade, All.SavageBlade.ActionName()));
 
                     ImGuiEx.Spacing(new Vector2(0, 10));
-                    ImGui.NewLine();
-
-                    DrawHorizontalRadioButton(SAM_Opener_IncludeGyoten,
+                    ImGuiEx.TextUnderlined($"{Gyoten.ActionName()} Settings");
+                    ImGui.Spacing();
+                    DrawRadioButton(SAM_Opener_IncludeGyoten,
                         FormatAndCache(SAM_Config.Include2x0, Gyoten.ActionName()),
-                        FormatAndCache(SAM_Config.IncludeBoth0, Gyoten.ActionName()), 0);
-
-                    DrawHorizontalRadioButton(SAM_Opener_IncludeGyoten,
+                        FormatAndCache(SAM_Config.IncludeBoth0, Gyoten.ActionName()), 0, descriptionAsTooltip: true);
+                    DrawRadioButton(SAM_Opener_IncludeGyoten,
                         SAM_Config.SkipBoth,
-                        FormatAndCache(SAM_Config.SkipBothUsageOf0, Gyoten.ActionName()), 1);
-
-                    DrawHorizontalRadioButton(SAM_Opener_IncludeGyoten,
+                        FormatAndCache(SAM_Config.SkipBothUsageOf0, Gyoten.ActionName()), 1, descriptionAsTooltip: true);
+                    DrawRadioButton(SAM_Opener_IncludeGyoten,
                         SAM_Config.SkipFirst,
-                        FormatAndCache(SAM_Config.SkipFirstUseOf0, Gyoten.ActionName()), 2);
-
-                    DrawHorizontalRadioButton(SAM_Opener_IncludeGyoten,
+                        FormatAndCache(SAM_Config.SkipFirstUseOf0, Gyoten.ActionName()), 2, descriptionAsTooltip: true);
+                    DrawRadioButton(SAM_Opener_IncludeGyoten,
                         SAM_Config.SkipSecond,
-                        FormatAndCache(SAM_Config.SkipSecondUseOf0, Gyoten.ActionName()), 3);
+                        FormatAndCache(SAM_Config.SkipSecondUseOf0, Gyoten.ActionName()), 3, descriptionAsTooltip: true);
                     break;
 
                 case Preset.SAM_ST_CDs_UseHiganbana:
-                    DrawSliderInt(0, 100, SAM_ST_HiganbanaBossOption,
+                    DrawSliderInt(0, 100, SAM_ST_HiganbanaBossHPOption,
                         Generics.BossOnlyHpPercent);
 
-                    DrawSliderInt(0, 100, SAM_ST_HiganbanaBossAddsOption,
+                    DrawSliderInt(0, 100, SAM_ST_HiganbanaBossAddsHPOption,
                         Generics.BossEncounterNonBossHpPercent);
 
-                    DrawSliderInt(0, 100, SAM_ST_HiganbanaTrashOption,
+                    DrawSliderInt(0, 100, SAM_ST_HiganbanaTrashHPOption,
                         Generics.NonBossHpPercent);
 
                     ImGui.Indent();
@@ -150,10 +147,10 @@ internal partial class SAM
                     break;
 
                 case Preset.SAM_ST_ComboHeals:
-                    DrawSliderInt(0, 100, SAM_STSecondWindHPThreshold,
+                    DrawSliderInt(0, 100, SAM_ST_SecondWindHPThreshold,
                         FormatAndCache(Generics.HPPercentageThreshold, Role.SecondWind.ActionName()));
 
-                    DrawSliderInt(0, 100, SAM_STBloodbathHPThreshold,
+                    DrawSliderInt(0, 100, SAM_ST_BloodbathHPThreshold,
                         FormatAndCache(Generics.HPPercentageThreshold, Role.Bloodbath.ActionName()));
                     break;
 
@@ -191,10 +188,10 @@ internal partial class SAM
                     break;
 
                 case Preset.SAM_AoE_ComboHeals:
-                    DrawSliderInt(0, 100, SAM_AoESecondWindHPThreshold,
+                    DrawSliderInt(0, 100, SAM_AoE_SecondWindHPThreshold,
                         FormatAndCache(Generics.HPPercentageThreshold, Role.SecondWind.ActionName()));
 
-                    DrawSliderInt(0, 100, SAM_AoEBloodbathHPThreshold,
+                    DrawSliderInt(0, 100, SAM_AoE_BloodbathHPThreshold,
                         FormatAndCache(Generics.HPPercentageThreshold, Role.Bloodbath.ActionName()));
                     break;
 
@@ -220,22 +217,22 @@ internal partial class SAM
             SAM_Balance_Content = new("SAM_Balance_Content", 1),
             SAM_Opener_PrePullDelay = new("SAM_Opener_PrePullDelay", 13),
             SAM_Opener_IncludeGyoten = new("SAM_Opener_IncludeGyoten"),
-            SAM_ST_HiganbanaBossOption = new("SAM_ST_HiganbanaBossOption"),
-            SAM_ST_HiganbanaBossAddsOption = new("SAM_ST_HiganbanaBossAddsOption", 25),
-            SAM_ST_HiganbanaTrashOption = new("SAM_ST_HiganbanaTrashOption", 100),
-            SAM_ST_HiganbanaRefresh = new("SAM_ST_Higanbana_Refresh", 15),
+            SAM_ST_HiganbanaBossHPOption = new("SAM_ST_HiganbanaBossHPOption"),
+            SAM_ST_HiganbanaBossAddsHPOption = new("SAM_ST_HiganbanaBossAddsHPOption", 25),
+            SAM_ST_HiganbanaTrashHPOption = new("SAM_ST_HiganbanaTrashHPOption", 100),
+            SAM_ST_HiganbanaRefresh = new("SAM_ST_HiganbanaRefresh", 15),
             SAM_ST_KenkiOvercapAmount = new("SAM_ST_KenkiOvercapAmount", 65),
             SAM_ST_YukikazeCombo_Prio = new("SAM_ST_YukikazeCombo_Prio", 1),
             SAM_ST_ExecuteThreshold = new("SAM_ST_ExecuteThreshold", 5),
             SAM_ST_MeikyoExecuteThreshold = new("SAM_ST_MeikyoExecuteThreshold", 5),
             SAM_ST_ManualTN = new("SAM_ST_ManualTN"),
-            SAM_STSecondWindHPThreshold = new("SAM_STSecondWindThreshold", 40),
-            SAM_STBloodbathHPThreshold = new("SAM_STBloodbathThreshold", 30),
+            SAM_ST_SecondWindHPThreshold = new("SAM_ST_SecondWindHPThreshold", 40),
+            SAM_ST_BloodbathHPThreshold = new("SAM_ST_BloodbathHPThreshold", 30),
 
             //AoE
             SAM_AoE_KenkiOvercapAmount = new("SAM_AoE_KenkiOvercapAmount", 50),
-            SAM_AoESecondWindHPThreshold = new("SAM_AoESecondWindThreshold", 40),
-            SAM_AoEBloodbathHPThreshold = new("SAM_AoEBloodbathThreshold", 30),
+            SAM_AoE_SecondWindHPThreshold = new("SAM_AoE_SecondWindHPThreshold", 40),
+            SAM_AoE_BloodbathHPThreshold = new("SAM_AoE_BloodbathHPThreshold", 30),
 
             //Misc
             SAM_Gekko_KenkiOvercapAmount = new("SAM_Gekko_KenkiOvercapAmount", 65),
@@ -245,6 +242,7 @@ internal partial class SAM
             SAM_Mangetsu_KenkiOvercapAmount = new("SAM_Mangetsu_KenkiOvercapAmount", 50);
 
         public static UserBool
+            SAM_Opener_Potion = new("SAM_Opener_Potion"),
             SAM_Gekko_KenkiOvercap = new("SAM_Gekko_KenkiOvercap"),
             SAM_Kasha_KenkiOvercap = new("SAM_Kasha_KenkiOvercap"),
             SAM_Yukaze_KenkiOvercap = new("SAM_Yukaze_KenkiOvercap"),

@@ -1,4 +1,7 @@
+using System.Numerics;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Style;
+using Dalamud.Interface.Utility.Raii;
 using ECommons.ImGuiMethods;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Data;
@@ -105,9 +108,14 @@ internal partial class WAR
                 #region Single-Target
                 case Preset.WAR_ST_BalanceOpener:
                     DrawBossOnlyChoice(WAR_BalanceOpener_Content);
-                    ImGui.NewLine();
-                    DrawHorizontalRadioButton(WAR_ST_BalanceOpener_GapcloserChoice, "No Gapclosers", "Skips Onslaughts use in opener.", 0);
-                    DrawHorizontalRadioButton(WAR_ST_BalanceOpener_GapcloserChoice, "Use Gapclosers", "Uses Onslaughts use in opener.", 1);
+                    DrawOpenerPotionChoice(WAR_Opener_Potion);
+
+                    ImGuiEx.TextUnderlined($"{Onslaught.ActionName()} Settings");
+                    ImGui.Spacing();
+                    DrawRadioButton(WAR_ST_BalanceOpener_GapcloserChoice,
+                        "Use Gapclosers", "Uses Onslaughts use in opener.", 1, descriptionAsTooltip: true);
+                    DrawRadioButton(WAR_ST_BalanceOpener_GapcloserChoice,
+                        "No Gapclosers", "Skips Onslaughts use in opener.", 0, descriptionAsTooltip: true);
                     break;
 
                 case Preset.WAR_ST_StormsEye:
@@ -428,7 +436,33 @@ internal partial class WAR
                 case Preset.WAR_ArmsLengthLockout:
                     DrawSliderInt(0, 5, WAR_ArmsLengthLockout_Time, "Time (In Seconds) remaining on Inner Strength to Lock out Arm's Length until.");
                     break;
-
+                   
+                case Preset.WAR_RetargetTomahawk:
+                    DrawAdditionalBoolChoice(WAR_RetargetTomahawk_FieldMO, Generics.Mouseover, FormatAndCache(Generics.MouseoverRetargetHostile, Tomahawk.ActionName()));
+                    
+                    DrawAdditionalBoolChoice(WAR_RetargetTomahawk_RangeBasedTargeting, Generics.RangeBasedTargeting, Generics.RangeBasedTargetingDesc);
+                    
+                    if (WAR_RetargetTomahawk_RangeBasedTargeting)
+                    {
+                        ImGui.Indent();
+                        ImGui.NewLine();
+                        DrawHorizontalRadioButton(WAR_RetargetTomahawk_SmartTargeting,
+                            Generics.FurthestOOR, 
+                            FormatAndCache(Generics.FurthestOORRetarget, Tomahawk.ActionName()), 0, 
+                            descriptionColor:ImGuiColors.DalamudWhite);
+                        DrawHorizontalRadioButton(WAR_RetargetTomahawk_SmartTargeting,
+                            Generics.NearestOOR, 
+                            FormatAndCache(Generics.NearestOORRetarget, Tomahawk.ActionName()), 1, 
+                            descriptionColor:ImGuiColors.DalamudWhite);
+                        ImGuiEx.Spacing(new Vector2(0, 5));
+                        ImGui.Unindent();
+                        
+                        ImGui.Indent(10f.Scale());
+                        DrawAdditionalBoolChoice(WAR_RetargetTomahawk_SmartTargeting_NotTargetingPlayer, Generics.SmartTargeting, Generics.SmartTargetingNotTargetingPlayer);
+                        ImGui.Unindent();
+                    }
+                    break;
+                    
                     #endregion
             }
         }
@@ -487,6 +521,7 @@ internal partial class WAR
             WAR_FC_PrimalRend_Movement = new("WAR_FC_PrimalRend_Movement"),
             WAR_FC_PrimalRend_EarlyLate = new("WAR_FC_PrimalRend_EarlyLate"),
             WAR_ArmsLengthLockout_Time = new("WAR_ArmsLengthLockout_Time", 3),
+            WAR_RetargetTomahawk_SmartTargeting = new("WAR_RetargetTomahawk_SmartTargeting"),
 
             //One Button Mitigation
             WAR_Mit_Holmgang_Health = new("WAR_Mit_Holmgang_Health", 20),
@@ -518,6 +553,7 @@ internal partial class WAR
             WAR_FC_PrimalRend_TimeStill = new("WAR_FC_PrimalRend_TimeStill");
 
         public static UserBool
+            WAR_Opener_Potion = new("WAR_Opener_Potion"),
             WAR_Mitigation_Boss_ThrillOfBattle_Align = new("WAR_Mitigation_Boss_ThrillOfBattle_Align", true),
             WAR_Mitigation_Boss_Vengeance_First = new("WAR_Mitigation_Boss_Vengeance_First", true),
 
@@ -528,7 +564,11 @@ internal partial class WAR
             WAR_AoE_Decimate_Pooling = new("WAR_AoE_Decimate_Pooling"),
             WAR_AoE_Decimate_Pooling_BossOnly = new("WAR_AoE_Decimate_Pooling_BossOnly"),
             WAR_AoE_Decimate_Smart = new("WAR_AoE_Decimate_Smart"),
-            WAR_AoE_Onslaught_ManualPooling = new("WAR_AoE_Onslaught_ManualPooling");
+            WAR_AoE_Onslaught_ManualPooling = new("WAR_AoE_Onslaught_ManualPooling"),
+
+            WAR_RetargetTomahawk_FieldMO = new("WAR_RetargetTomahawk_FieldMO"),
+            WAR_RetargetTomahawk_RangeBasedTargeting = new("WAR_RetargetTomahawk_RangeBasedTargeting"),
+            WAR_RetargetTomahawk_SmartTargeting_NotTargetingPlayer = new("WAR_RetargetTomahawk_SmartTargeting_NotTargetingPlayer");
         public static UserIntArray
             WAR_Mit_Priorities = new("WAR_Mit_Priorities");
 

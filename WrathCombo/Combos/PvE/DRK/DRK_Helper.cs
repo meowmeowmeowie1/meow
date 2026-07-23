@@ -6,6 +6,7 @@ using ECommons.GameFunctions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WrathCombo.Combos.PvE.ALL;
 using WrathCombo.CustomComboNS;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Data;
@@ -242,6 +243,7 @@ internal partial class DRK
         public override List<uint> OpenerActions { get; set; } =
         [
             Unmend,
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)),
             HardSlash,
             EdgeOfShadow, // Not handled like a procc, since it sets up Darkside
             LivingShadow,
@@ -287,22 +289,22 @@ internal partial class DRK
         } =
         [
             // Skip the duplicate HardSlash, if pulling with HardSlash
-            ([2], () =>
+            ([3], () =>
                 DRK_ST_OpenerAction == (int)PullAction.HardSlash),
             // Skip the early LivingShadow, if non-standard
-            ([4], () =>
+            ([5], () =>
                 DRK_ST_OpenerAction != (int)PullAction.Unmend),
             // Skip the late LivingShadow and aligning HardSlash, if Standard
-            ([6, 9], () => Bursting.PartyIsBursting ||
+            ([7, 10], () => Bursting.PartyIsBursting ||
                 DRK_ST_OpenerAction == (int)PullAction.Unmend),
             // Skip Salted Earth
-            ([11], () =>
+            ([12], () =>
                 IsOnCooldown(SaltedEarth)),
             // Skip Blood spenders when no Blood
-            ([18], () =>
+            ([19], () =>
                 Gauge.Blood < 50),
             // Skip Salt and Darkness
-            ([19], () =>
+            ([20], () =>
                 !ActionReady(SaltAndDarkness)),
         ];
 
@@ -310,6 +312,8 @@ internal partial class DRK
 
         internal override UserData? ContentCheckConfig =>
             DRK_ST_OpenerDifficulty;
+
+        internal override bool IncludePot => DRK_Opener_Potion;
 
         public override bool HasCooldowns() =>
             LocalPlayer.CurrentMp > 7000 && IsOffCooldown(LivingShadow) &&

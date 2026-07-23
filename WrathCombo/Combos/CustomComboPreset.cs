@@ -992,7 +992,7 @@ public enum Preset
 
     [AutoAction(false, true)]
     [ReplaceSkill(AST.Benefic)]
-    [ConflictingCombos(AST_ST_Heals)]
+    [ConflictingCombos(AST_ST_Heals, AST_Retargets_Benefic)]
     [JobInfo(Job.AST)]
     [SimpleCombo]
     [PossiblyRetargeted]
@@ -1166,7 +1166,7 @@ public enum Preset
 
     [AutoAction(false, true)]
     [ReplaceSkill(AST.Benefic)]
-    [ConflictingCombos(AST_Simple_ST_Heals)]
+    [ConflictingCombos(AST_Simple_ST_Heals, AST_Retargets_Benefic)]
     [JobInfo(Job.AST)]
     [PossiblyRetargeted(AST.Benefic2)]
     [HealingCombo]
@@ -1342,6 +1342,7 @@ public enum Preset
     [ReplaceSkill(AST.Benefic, AST.Benefic2)]
     [JobInfo(Job.AST)]
     [Retargeted(AST.Benefic, AST.Benefic2)]
+    [ConflictingCombos(AST_Simple_ST_Heals, AST_ST_Heals)]
     AST_Retargets_Benefic = 1086,
 
     [ParentCombo(AST_Retargets)]
@@ -2840,9 +2841,14 @@ public enum Preset
     [JobInfo(Job.DRK)]
     [Retargeted(DRK.Shadowstride)]
     DRK_RetargetShadowstride = 5135,
+    
+    [ReplaceSkill(DRK.Unmend)]
+    [JobInfo(Job.DRK)]
+    [Retargeted(DRK.Unmend)]
+    DRK_Retarget_Unmend = 5136,
 
     #endregion
-    // Last value = 5135
+    // Last value = 5136
 
     #endregion
     // Last value = 5135
@@ -3533,9 +3539,14 @@ public enum Preset
     [JobInfo(Job.GNB)]
     [Retargeted(GNB.Trajectory)]
     GNB_RetargetTrajectory = 7091,
+    
+    [ReplaceSkill(GNB.LightningShot)]
+    [JobInfo(Job.GNB)]
+    [Retargeted(GNB.LightningShot)]
+    GNB_RetargetLightningShot = 7094,
     #endregion
 
-    // Last Value = 7093
+    // Last Value = 7094
     #endregion
 
     #region MACHINIST
@@ -5157,6 +5168,7 @@ public enum Preset
     #region Blood Stalk/Grim Swathe Combo Section
 
     [ReplaceSkill(RPR.BloodStalk, RPR.GrimSwathe)]
+    [ConflictingCombos(RPR_BloodStalkEnshroudCombo)]
     [JobInfo(Job.RPR)]
     RPR_GluttonyBloodSwathe = 12200,
 
@@ -5180,7 +5192,20 @@ public enum Preset
     [JobInfo(Job.RPR)]
     RPR_TrueNorthGluttony = 12310,
 
-    // Last value = 12314
+    [ReplaceSkill(RPR.BloodStalk, RPR.GrimSwathe)]
+    [ConflictingCombos(RPR_GluttonyBloodSwathe)]
+    [JobInfo(Job.RPR)]
+    RPR_BloodStalkEnshroudCombo = 12311,
+
+    [ParentCombo(RPR_BloodStalkEnshroudCombo)]
+    [JobInfo(Job.RPR)]
+    RPR_BloodStalkEnshroudCombo_BloodSwatheCombo = 12312,
+
+    [ParentCombo(RPR_BloodStalkEnshroudCombo)]
+    [JobInfo(Job.RPR)]
+    RPR_BloodStalkEnshroudCombo_Enshroud = 12315,
+
+    // Last value = 12315
 
     #endregion
 
@@ -5603,7 +5628,7 @@ public enum Preset
 
     [AutoAction(false, true)]
     [ReplaceSkill(SGE.Diagnosis)]
-    [ConflictingCombos(SGE_ST_Heal)]
+    [ConflictingCombos(SGE_ST_Heal, SGE_Retarget_Diagnosis)]
     [JobInfo(Job.SGE)]
     [SimpleCombo]
     [PossiblyRetargeted]
@@ -5725,7 +5750,7 @@ public enum Preset
 
     [AutoAction(false, true)]
     [ReplaceSkill(SGE.Diagnosis)]
-    [ConflictingCombos(SGE_Simple_ST_Heal)]
+    [ConflictingCombos(SGE_Simple_ST_Heal, SGE_Retarget_Diagnosis)]
     [JobInfo(Job.SGE)]
     [PossiblyRetargeted(SGE.Diagnosis)]
     [HealingCombo]
@@ -5939,6 +5964,7 @@ public enum Preset
     [ParentCombo(SGE_Retarget)]
     [JobInfo(Job.SGE)]
     [Retargeted(SGE.Diagnosis)]
+    [ConflictingCombos(SGE_Simple_ST_Heal, SGE_ST_Heal)]
     SGE_Retarget_Diagnosis = 14079,
 
     [ParentCombo(SGE_Retarget)]
@@ -6124,7 +6150,7 @@ public enum Preset
 
     [ParentCombo(SAM_ST_AdvancedMode)]
     [JobInfo(Job.SAM)]
-    SAM_ST_StunInterupt = 15096,
+    SAM_ST_StunInterrupt = 15096,
 
     [ParentCombo(SAM_ST_AdvancedMode)]
     [JobInfo(Job.SAM)]
@@ -6173,7 +6199,7 @@ public enum Preset
 
     [ParentCombo(SAM_AoE_CDs)]
     [JobInfo(Job.SAM)]
-    SAM_AOE_CDs_Ikishoten = 15108,
+    SAM_AoE_CDs_Ikishoten = 15108,
 
     #endregion
 
@@ -6211,7 +6237,7 @@ public enum Preset
 
     [ParentCombo(SAM_AoE_AdvancedMode)]
     [JobInfo(Job.SAM)]
-    SAM_AoE_StunInterupt = 15196,
+    SAM_AoE_StunInterrupt = 15196,
 
     [ParentCombo(SAM_AoE_AdvancedMode)]
     [JobInfo(Job.SAM)]
@@ -6393,7 +6419,7 @@ public enum Preset
 
     [AutoAction(false, true)]
     [ReplaceSkill(SCH.Physick)]
-    [ConflictingCombos(SCH_ST_Heal)]
+    [ConflictingCombos(SCH_ST_Heal, SCH_Retarget_Physick)]
     [JobInfo(Job.SCH)]
     [SimpleCombo]
     [PossiblyRetargeted]
@@ -6499,7 +6525,7 @@ public enum Preset
     #region  ST Healing
     [AutoAction(false, true)]
     [ReplaceSkill(SCH.Physick)]
-    [ConflictingCombos(SCH_Simple_ST_Heal)]
+    [ConflictingCombos(SCH_Simple_ST_Heal, SCH_Retarget_Physick)]
     [JobInfo(Job.SCH)]
     [PossiblyRetargeted(SCH.Physick)]
     [HealingCombo]
@@ -6714,6 +6740,7 @@ public enum Preset
     [ParentCombo(SCH_Retarget)]
     [JobInfo(Job.SCH)]
     [Retargeted(SCH.Physick)]
+    [ConflictingCombos(SCH_Simple_ST_Heal, SCH_ST_Heal)]
     SCH_Retarget_Physick = 16074,
 
     [ParentCombo(SCH_Retarget)]
@@ -7638,9 +7665,14 @@ public enum Preset
     [JobInfo(Job.WAR)]
     [Retargeted(WAR.Holmgang)]
     WAR_RetargetHolmgang = 18130,
+    
+    [ReplaceSkill(WAR.Tomahawk)]
+    [JobInfo(Job.WAR)]
+    [Retargeted(WAR.Tomahawk)]
+    WAR_RetargetTomahawk = 18156,
 
     #endregion
-    // Last value = 18155
+    // Last value = 18156
     #endregion
 
     #region WHITE MAGE

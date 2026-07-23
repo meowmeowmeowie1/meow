@@ -1,4 +1,6 @@
+using System.Numerics;
 using Dalamud.Interface.Colors;
+using ECommons.ImGuiMethods;
 using WrathCombo.CustomComboNS.Functions;
 using WrathCombo.Data;
 using WrathCombo.Extensions;
@@ -46,6 +48,7 @@ internal partial class GNB
             GNB_GF_Overcap_Choice = new("GNB_GF_Overcap_Choice"),
             GNB_GF_BurstStrike_Setup = new("GNB_GF_BurstStrike_Setup"),
             GNB_ST_Balance_Content = new("GNB_ST_Balance_Content", 1),
+            GNB_RetargetLightningShot_SmartTargeting =  new("GNB_RetargetLightningShot_SmartTargeting"),
             GNB_Mit_OneButton_Superbolide_Health = new("GNB_Mit_OneButton_Superbolide_Health", 30),
             GNB_Mit_OneButton_Corundum_Health = new("GNB_Mit_OneButton_Corundum_Health", 60),
             GNB_Mit_OneButton_Aurora_Charges = new("GNB_Mit_OneButton_Aurora_Charges"),
@@ -59,8 +62,12 @@ internal partial class GNB
             GNB_Mit_Advanced_NonBoss_MitigationThreshold = new("GNB_Mit_Advanced_NonBoss_MitigationThreshold", 20f);
 
         public static UserBool
+            GNB_Opener_Potion = new("GNB_Opener_Potion"),
             GNB_Mit_Advanced_Boss_Camouflage_Align = new("GNB_Mit_Advanced_Boss_Camouflage_Align", true),
-            GNB_Mit_Advanced_Boss_Nebula_First = new("GNB_Mit_Advanced_Boss_Nebula_First", true);
+            GNB_Mit_Advanced_Boss_Nebula_First = new("GNB_Mit_Advanced_Boss_Nebula_First", true),
+            GNB_RetargetLightningShot_FieldMO = new("GNB_RetargetLightningShot_FieldMO"),
+            GNB_RetargetLightningShot_RangeBasedTargeting = new("GNB_RetargetLightningShot_RangeBasedTargeting"),
+            GNB_RetargetLightningShot_SmartTargeting_NotTargetingPlayer = new("GNB_RetargetLightningShot_SmartTargeting_NotTargetingPlayer");
 
         public static UserIntArray
             GNB_Mit_OneButton_Priorities = new("GNB_Mit_OneButton_Priorities");
@@ -162,11 +169,14 @@ internal partial class GNB
                 #region Single-Target
 
                 case Preset.GNB_ST_Opener:
-                    DrawHorizontalRadioButton(GNB_Opener_NM,
-                        $"Normal {NoMercy.ActionName()}", $"Uses {NoMercy.ActionName()} normally in all openers", 0);
-                    DrawHorizontalRadioButton(GNB_Opener_NM,
-                        $"Early {NoMercy.ActionName()}", $"Uses {NoMercy.ActionName()} as soon as possible in all openers", 1);
                     DrawBossOnlyChoice(GNB_ST_Balance_Content);
+                    DrawOpenerPotionChoice(GNB_Opener_Potion);
+                    ImGuiEx.TextUnderlined($"{NoMercy.ActionName()} Settings");
+                    ImGui.Spacing();
+                    DrawRadioButton(GNB_Opener_NM,
+                        $"Normal {NoMercy.ActionName()}", $"Uses {NoMercy.ActionName()} normally in all openers", 0, descriptionAsTooltip: true);
+                    DrawRadioButton(GNB_Opener_NM,
+                        $"Early {NoMercy.ActionName()}", $"Uses {NoMercy.ActionName()} as soon as possible in all openers", 1, descriptionAsTooltip: true);
                     break;
 
                 case Preset.GNB_ST_NoMercy:
@@ -384,6 +394,33 @@ internal partial class GNB
                     DrawHorizontalRadioButton(GNB_FC_Continuation_Procs,
                         "Only Fated Brand", $"Only uses {FatedBrand.ActionName()} regardless of other {Continuation.ActionName()} procs currently available", 1);
                     break;
+                
+                case Preset.GNB_RetargetLightningShot:
+                    DrawAdditionalBoolChoice(GNB_RetargetLightningShot_FieldMO, Generics.Mouseover, FormatAndCache(Generics.MouseoverRetargetHostile, LightningShot.ActionName()));
+                    
+                    DrawAdditionalBoolChoice(GNB_RetargetLightningShot_RangeBasedTargeting, Generics.RangeBasedTargeting, Generics.RangeBasedTargetingDesc);
+                    
+                    if (GNB_RetargetLightningShot_RangeBasedTargeting)
+                    {
+                        ImGui.Indent();
+                        ImGui.NewLine();
+                        DrawHorizontalRadioButton(GNB_RetargetLightningShot_SmartTargeting,
+                            Generics.FurthestOOR, 
+                            FormatAndCache(Generics.FurthestOORRetarget, LightningShot.ActionName()), 0, 
+                            descriptionColor:ImGuiColors.DalamudWhite);
+                        DrawHorizontalRadioButton(GNB_RetargetLightningShot_SmartTargeting,
+                            Generics.NearestOOR, 
+                            FormatAndCache(Generics.NearestOORRetarget, LightningShot.ActionName()), 1, 
+                            descriptionColor:ImGuiColors.DalamudWhite);
+                        ImGuiEx.Spacing(new Vector2(0, 5));
+                        ImGui.Unindent();
+                        
+                        ImGui.Indent(10f.Scale());
+                        DrawAdditionalBoolChoice(GNB_RetargetLightningShot_SmartTargeting_NotTargetingPlayer, Generics.SmartTargeting, Generics.SmartTargetingNotTargetingPlayer);
+                        ImGui.Unindent();
+                    }
+                    break;
+                    
                     #endregion
             }
         }
