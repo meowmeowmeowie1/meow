@@ -449,16 +449,17 @@ public static class UserConfig
     {
         // Automatic potions have a global master switch (Settings ->
         // "Automatic Potions", default off, also on the Stream Deck potion key).
-        // While it's off this per-job option does nothing, so grey it out and say
-        // so rather than letting the user tick a checkbox with no effect.
-        var potionsGloballyEnabled = Service.Configuration.EnableAutomaticPotions;
+        // Keep this per-job checkbox normal and clickable regardless; when the
+        // master switch is off, mention it in the grey helper text rather than
+        // greying out / relabelling the checkbox (which reads as a broken line).
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
-        using (ImRaii.Disabled(!potionsGloballyEnabled))
         {
-            var label = potionsGloballyEnabled
-                ? "Include Potion?"
-                : "Include Potion? (automatic potions are globally disabled)";
-            DrawAdditionalBoolChoice(config, label, "Adds the strongest potion appropriate for your job to the opener. Requires the global \"Automatic Potions\" setting to be enabled.");
+            var desc = Service.Configuration.EnableAutomaticPotions
+                ? "Adds the strongest potion appropriate for your job to the opener."
+                : "Adds the strongest potion appropriate for your job to the opener. Automatic "
+                + "potions are currently off globally — turn them on with the Stream Deck potion "
+                + "key, /mytweak potion on, or the Settings toggle.";
+            DrawAdditionalBoolChoice(config, "Include Potion?", desc);
         }
     }
 
