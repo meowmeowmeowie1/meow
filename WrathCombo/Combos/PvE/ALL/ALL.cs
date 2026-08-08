@@ -306,22 +306,4 @@ internal partial class All
                 ? RoleActions.PhysRanged.HeadGraze
                 : actionID;
     }
-
-    internal class AutoRotationButtons : CustomCombo
-    {
-        protected internal override Preset Preset => Preset.AlwaysOn;
-
-        protected override uint Invoke(uint actionID)
-        {
-            if (actionID is AutoToggle)
-            {
-                if (Service.Configuration.RotationConfig.Enabled)
-                    return AutoOff;
-
-                return AutoOn;
-            }
-
-            return actionID;
-        }
-    }
 }
