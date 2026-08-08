@@ -71,6 +71,14 @@ public partial class Configuration : IPluginConfiguration
     [Setting(Setting.Type.Toggle)]
     public bool PerformanceMode = false;
 
+    /// Master gate for automatic potion use in openers. When off, every job's
+    /// "Include Potion?" opener option is ignored and no potion is used. This is
+    /// the global switch behind the Stream Deck potion key. Default: false.
+    /// <seealso cref="CustomComboNS.WrathOpener"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool EnableAutomaticPotions = false;
+
     /// Mirrors the action-press pulse animation onto every hotbar copy of an
     /// action, not just the slot whose keybind was pressed. Default: false.
     /// <seealso cref="Tweaks.ActionPressMirroring"/>

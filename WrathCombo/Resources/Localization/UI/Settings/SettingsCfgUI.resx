@@ -473,6 +473,18 @@ This ensures that the target used to check HP% threshold logic for healing actio
   <data name="PerformanceMode_defaultValue" xml:space="preserve">
     <value>Off</value>
   </data>
+  <data name="EnableAutomaticPotions_Name" xml:space="preserve">
+    <value>Automatic Potions</value>
+  </data>
+  <data name="EnableAutomaticPotions_helpMark" xml:space="preserve">
+    <value>Master switch for using potions during openers. When off, every job's "Include Potion?" opener option is ignored and no potion is used. Toggle this from the Stream Deck potion key or with /mytweak potion.</value>
+  </data>
+  <data name="EnableAutomaticPotions_recommendedValue" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="EnableAutomaticPotions_defaultValue" xml:space="preserve">
+    <value>Off</value>
+  </data>
   <data name="DuplicateActionPresses_Name" xml:space="preserve">
     <value>Duplicate Action Presses Between Hotbars</value>
   </data>

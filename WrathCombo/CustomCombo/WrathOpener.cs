@@ -161,6 +161,11 @@ public abstract class WrathOpener
 
     internal abstract bool IncludePot { get; }
 
+    /// The job opener's per-job "Include Potion?" setting, gated by the global
+    /// <see cref="Configuration.EnableAutomaticPotions"/> master switch. When the
+    /// global switch is off, no opener uses a potion regardless of its own setting.
+    private bool UsePot => IncludePot && Service.Configuration.EnableAutomaticPotions;
+
     public bool LevelChecked => Svc.PlayerState.EffectiveLevel >= MinOpenerLevel && Svc.PlayerState.EffectiveLevel <= MaxOpenerLevel;
 
     public abstract Preset Preset { get; }
@@ -222,7 +227,7 @@ public abstract class WrathOpener
 
             if (OpenerStep <= OpenerActions.Count)
             {
-                if (CurrentOpenerAction >= All.Items && (CurrentOpenerAction == All.Items || (!IncludePot & CurrentOpenerAction >= All.Items) || !Items.ItemReady(CurrentOpenerAction - All.Items)))
+                if (CurrentOpenerAction >= All.Items && (CurrentOpenerAction == All.Items || (!UsePot & CurrentOpenerAction >= All.Items) || !Items.ItemReady(CurrentOpenerAction - All.Items)))
                 {
                     Svc.Log.Debug($"Skipping item {CurrentOpenerAction.ActionName()} at step {OpenerStep}");
                     OpenerStep++;
