@@ -369,30 +369,26 @@ internal partial class MCH
         ActionReady(OriginalHook(Ricochet)) &&
         GetRemainingCharges(OriginalHook(Ricochet)) > GetRemainingCharges(OriginalHook(GaussRound));
 
-    private static bool OvercapGaussRicochetProtection(out uint action, bool allowRicochet = true)
+    private static bool OvercapGaussRicochetProtection(ref uint actionID, bool allowRicochet = true)
     {
-        action = 0;
-
         if (OvercapGaussRound)
         {
-            action = OriginalHook(GaussRound);
+            actionID = OriginalHook(GaussRound);
             return true;
         }
 
         if (allowRicochet && OvercapRicochet)
         {
-            action = OriginalHook(Ricochet);
+            actionID = OriginalHook(Ricochet);
             return true;
         }
 
         return false;
     }
 
-    private static bool GaussRicochetWeaves(out uint action, bool onAoE, bool duringHypercharge,
+    private static bool GaussRicochetWeaves(ref uint actionID, bool onAoE, bool duringHypercharge,
         bool enabled = true, int gaussOnlyOrBoth = 0, int chargePool = 0)
     {
-        action = 0;
-
         if (!enabled)
             return false;
 
@@ -410,7 +406,7 @@ internal partial class MCH
         {
             if (HasCharges(GaussRound) && !LevelChecked(DoubleCheck))
             {
-                action = GaussRound;
+                actionID = GaussRound;
                 return true;
             }
 
@@ -421,14 +417,14 @@ internal partial class MCH
             (CanGaussRound || !LevelChecked(Ricochet)) &&
             (duringHypercharge || !JustUsed(OriginalHook(GaussRound), spacing) || !LevelChecked(Ricochet)))
         {
-            action = OriginalHook(GaussRound);
+            actionID = OriginalHook(GaussRound);
             return true;
         }
 
         if (GetRemainingCharges(OriginalHook(Ricochet)) > chargePool &&
             CanRicochet && (duringHypercharge || !JustUsed(OriginalHook(Ricochet), spacing)))
         {
-            action = OriginalHook(Ricochet);
+            actionID = OriginalHook(Ricochet);
             return true;
         }
 
@@ -654,183 +650,159 @@ internal partial class MCH
     internal static MCHLvl100EarlyWFOpener Lvl100EarlyWFOpener = new();
     internal static MCHLvl100StandardOpener Lvl100StandardOpener = new();
 
-    internal class MCHLvl100StandardOpener : WrathOpener
+    internal abstract class MCHOpenerBase : WrathOpener
     {
-        public override int MinOpenerLevel => 100;
-
-        public override int MaxOpenerLevel => 100;
-
-        public override List<uint> OpenerActions { get; set; } =
-        [
-            Reassemble,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)),
-            AirAnchor,
-            CheckMate,
-            DoubleCheck,
-            Drill,
-            BarrelStabilizer,
-            Chainsaw,
-            Excavator,
-            AutomatonQueen,
-            Reassemble,
-            Drill,
-            CheckMate,
-            Wildfire,
-            FullMetalField,
-            Hypercharge,
-            DoubleCheck,
-            BlazingShot,
-            CheckMate,
-            BlazingShot,
-            DoubleCheck,
-            BlazingShot,
-            CheckMate,
-            BlazingShot,
-            DoubleCheck,
-            BlazingShot,
-            CheckMate,
-            Drill,
-            DoubleCheck,
-            CheckMate,
-            HeatedSplitShot,
-            DoubleCheck,
-            HeatedSlugShot,
-            HeatedCleanShot
-        ];
-
         public override Preset Preset => Preset.MCH_ST_Adv_Opener;
 
         internal override UserData ContentCheckConfig => MCH_Balance_Content;
         internal override bool IncludePot => MCH_Opener_Potion;
 
-        public override List<(int[] Steps, Func<int> HoldDelay)> PrepullDelays { get; set; } =
+        public override List<(int[] Steps, Func<float> HoldDelay)> PrepullDelays { get; set; } =
         [
-            ([2], () => 3)
+            ([1], () => CountdownRemaining - 5),
+            ([2], () => CountdownRemaining - 2),
+            ([3], () => CountdownRemaining)
         ];
 
-        public override bool HasCooldowns() =>
+        protected static bool SharedOpenerCooldowns() =>
+            (!IsEnabled(Preset.MCH_ST_Opener_BlockEarly) || CountdownActive) &&
             GetRemainingCharges(Reassemble) is 2 &&
             GetRemainingCharges(OriginalHook(GaussRound)) is 3 &&
             GetRemainingCharges(OriginalHook(Ricochet)) is 3 &&
             IsOffCooldown(Chainsaw) &&
             IsOffCooldown(Wildfire) &&
-            IsOffCooldown(BarrelStabilizer) &&
-            IsOffCooldown(Excavator) &&
-            IsOffCooldown(FullMetalField);
+            IsOffCooldown(BarrelStabilizer);
     }
 
-    internal class MCHLvl100EarlyWFOpener : WrathOpener
+    internal abstract class MCHLvl100OpenerBase : MCHOpenerBase
     {
         public override int MinOpenerLevel => 100;
-
         public override int MaxOpenerLevel => 100;
 
-        public override List<uint> OpenerActions { get; set; } =
-        [
-            Reassemble,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)),
-            AirAnchor,
-            CheckMate,
-            DoubleCheck,
-            Drill,
-            BarrelStabilizer,
-            Reassemble,
-            Chainsaw,
-            DoubleCheck,
-            Wildfire,
-            Excavator,
-            Hypercharge,
-            AutomatonQueen,
-            BlazingShot,
-            CheckMate,
-            BlazingShot,
-            DoubleCheck,
-            BlazingShot,
-            CheckMate,
-            BlazingShot,
-            DoubleCheck,
-            BlazingShot,
-            CheckMate,
-            Drill,
-            DoubleCheck,
-            CheckMate,
-            FullMetalField,
-            DoubleCheck,
-            CheckMate,
-            Drill,
-            HeatedSplitShot,
-            HeatedSlugShot,
-            HeatedCleanShot
-        ];
-
-        public override Preset Preset => Preset.MCH_ST_Adv_Opener;
-
-        internal override UserData ContentCheckConfig => MCH_Balance_Content;
-        internal override bool IncludePot => MCH_Opener_Potion;
-
-        public override List<(int[] Steps, Func<int> HoldDelay)> PrepullDelays { get; set; } =
-        [
-            ([2], () => 3)
-        ];
-
         public override bool HasCooldowns() =>
-            GetRemainingCharges(Reassemble) is 2 &&
-            GetRemainingCharges(OriginalHook(GaussRound)) is 3 &&
-            GetRemainingCharges(OriginalHook(Ricochet)) is 3 &&
-            IsOffCooldown(Chainsaw) &&
-            IsOffCooldown(Wildfire) &&
-            IsOffCooldown(BarrelStabilizer) &&
+            SharedOpenerCooldowns() &&
             IsOffCooldown(Excavator) &&
             IsOffCooldown(FullMetalField);
     }
 
-    internal class MCHLvl90EarlyToolsOpener : WrathOpener
+    internal class MCHLvl100StandardOpener : MCHLvl100OpenerBase
+    {
+        public override List<uint> OpenerActions { get; set; } =
+        [
+            Reassemble, // 1
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), // 2
+            AirAnchor, // 3
+            CheckMate, // 4
+            DoubleCheck, // 5
+            Drill, // 6
+            BarrelStabilizer, // 7
+            Chainsaw, // 8
+            Excavator, // 9
+            AutomatonQueen, // 10
+            Reassemble, // 11
+            Drill, // 12
+            CheckMate, // 13
+            Wildfire, // 14
+            FullMetalField, // 15
+            Hypercharge, // 16
+            DoubleCheck, // 17
+            BlazingShot, // 18
+            CheckMate, // 19
+            BlazingShot, // 20
+            DoubleCheck, // 21
+            BlazingShot, // 22
+            CheckMate, // 23
+            BlazingShot, // 24
+            DoubleCheck, // 25
+            BlazingShot, // 26
+            CheckMate, // 27
+            Drill, // 28
+            DoubleCheck, // 29
+            CheckMate, // 30
+            HeatedSplitShot, // 31
+            DoubleCheck, // 32
+            HeatedSlugShot, // 33
+            HeatedCleanShot // 34
+        ];
+    }
+
+    internal class MCHLvl100EarlyWFOpener : MCHLvl100OpenerBase
+    {
+        public override List<uint> OpenerActions { get; set; } =
+        [
+            Reassemble, // 1
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), // 2
+            AirAnchor, // 3
+            CheckMate, // 4
+            DoubleCheck, // 5
+            Drill, // 6
+            BarrelStabilizer, // 7
+            Reassemble, // 8
+            Chainsaw, // 9
+            DoubleCheck, // 10
+            Wildfire, // 11
+            Excavator, // 12
+            Hypercharge, // 13
+            AutomatonQueen, // 14
+            BlazingShot, // 15
+            CheckMate, // 16
+            BlazingShot, // 17
+            DoubleCheck, // 18
+            BlazingShot, // 19
+            CheckMate, // 20
+            BlazingShot, // 21
+            DoubleCheck, // 22
+            BlazingShot, // 23
+            CheckMate, // 24
+            Drill, // 25
+            DoubleCheck, // 26
+            CheckMate, // 27
+            FullMetalField, // 28
+            DoubleCheck, // 29
+            CheckMate, // 30
+            Drill, // 31
+            HeatedSplitShot, // 32
+            HeatedSlugShot, // 33
+            HeatedCleanShot // 34
+        ];
+    }
+
+    internal class MCHLvl90EarlyToolsOpener : MCHOpenerBase
     {
         public override int MinOpenerLevel => 90;
-
         public override int MaxOpenerLevel => 90;
 
         public override List<uint> OpenerActions { get; set; } =
         [
-            Reassemble,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)),
-            AirAnchor,
-            GaussRound,
-            Ricochet,
-            Drill,
-            BarrelStabilizer,
-            Chainsaw,
-            GaussRound,
-            Ricochet,
-            HeatedSplitShot,
-            GaussRound,
-            Ricochet,
-            HeatedSlugShot,
-            Wildfire,
-            HeatedCleanShot,
-            AutomatonQueen,
-            Hypercharge,
-            BlazingShot,
-            Ricochet,
-            BlazingShot,
-            GaussRound,
-            BlazingShot,
-            Ricochet,
-            BlazingShot,
-            GaussRound,
-            BlazingShot,
-            Reassemble,
-            Drill
-        ];
-
-        public override Preset Preset => Preset.MCH_ST_Adv_Opener;
-
-        internal override UserData ContentCheckConfig => MCH_Balance_Content;
-        internal override bool IncludePot => MCH_Opener_Potion;
-
-        public override List<(int[] Steps, Func<int> HoldDelay)> PrepullDelays { get; set; } =
-        [
-            ([2], () => 4)
+            Reassemble, // 1
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), // 2
+            AirAnchor, // 3
+            GaussRound, // 4
+            Ricochet, // 5
+            Drill, // 6
+            BarrelStabilizer, // 7
+            Chainsaw, // 8
+            GaussRound, // 9
+            Ricochet, // 10
+            HeatedSplitShot, // 11
+            GaussRound, // 12
+            Ricochet, // 13
+            HeatedSlugShot, // 14
+            Wildfire, // 15
+            HeatedCleanShot, // 16
+            AutomatonQueen, // 17
+            Hypercharge, // 18
+            BlazingShot, // 19
+            Ricochet, // 20
+            BlazingShot, // 21
+            GaussRound, // 22
+            BlazingShot, // 23
+            Ricochet, // 24
+            BlazingShot, // 25
+            GaussRound, // 26
+            BlazingShot, // 27
+            Reassemble, // 28
+            Drill // 29
         ];
 
         public override List<int> DelayedWeaveSteps { get; set; } =
@@ -838,13 +810,7 @@ internal partial class MCH
             15
         ];
 
-        public override bool HasCooldowns() =>
-            GetRemainingCharges(Reassemble) is 2 &&
-            GetRemainingCharges(OriginalHook(GaussRound)) is 3 &&
-            GetRemainingCharges(OriginalHook(Ricochet)) is 3 &&
-            IsOffCooldown(Chainsaw) &&
-            IsOffCooldown(Wildfire) &&
-            IsOffCooldown(BarrelStabilizer);
+        public override bool HasCooldowns() => SharedOpenerCooldowns();
     }
 
     #endregion

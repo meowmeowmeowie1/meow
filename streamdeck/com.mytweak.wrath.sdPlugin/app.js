@@ -7,6 +7,7 @@ const ST = "com.mytweak.wrath.st";
 const AOE = "com.mytweak.wrath.aoe";
 const BURST = "com.mytweak.wrath.burst";
 const BURST1 = "com.mytweak.wrath.burst1";
+const POTION = "com.mytweak.wrath.potion";
 
 let ws = null;
 let apiBase = null;                 // discovered MyTweak base URL, or null
@@ -37,6 +38,8 @@ function onKeyDown(msg) {
     fetch(apiBase + "/burst/toggle", { cache: "no-store" }).catch(() => {});
   } else if (msg.action === BURST1) {
     fetch(apiBase + "/burst1/toggle", { cache: "no-store" }).catch(() => {});
+  } else if (msg.action === POTION) {
+    fetch(apiBase + "/potion/toggle", { cache: "no-store" }).catch(() => {});
   }
 }
 
@@ -121,6 +124,7 @@ async function loop() {
         else if (action === AOE) await renderAction(ctx, d.aoe);
         else if (action === BURST) show(ctx, "Burst\n" + (d.burst || "—"), "");
         else if (action === BURST1) show(ctx, "1min\n" + (d.burst1 || "—"), "");
+        else if (action === POTION) show(ctx, "Pot\n" + (d.potion || "—"), "");
       }
     } else {
       for (const ctx in contexts) show(ctx, "FFXIV\noffline", "");

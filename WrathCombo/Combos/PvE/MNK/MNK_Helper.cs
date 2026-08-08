@@ -575,273 +575,216 @@ internal partial class MNK
     internal static MNKLvl100SLOpener Lvl100SLOpener = new();
     internal static MNKLvl100BHFirstOpener Lvl100BHFirstOpener = new();
 
-    internal class MNKLvl90LLOpener : WrathOpener
+    internal abstract class MNKOpenerBase : WrathOpener
+    {
+        public override Preset Preset => Preset.MNK_STUseOpener;
+
+        internal override UserData ContentCheckConfig => MNK_Balance_Content;
+        internal override bool IncludePot => MNK_Opener_Potion;
+
+        public override List<(int[] Steps, Func<bool> Condition)> SkipSteps { get; set; } =
+        [
+            ([1], () => Chakra >= 5),
+            ([2], () => HasStatusEffect(Buffs.FormlessFist) || JustUsed(FormShift))
+        ];
+
+        public override List<(int[] Steps, Func<float> HoldDelay)> PrepullDelays { get; set; } =
+        [
+            ([1], () => CountdownRemaining - 8),
+            ([2], () => CountdownRemaining - 5)
+        ];
+
+        public override bool HasCooldowns() =>
+            GetRemainingCharges(PerfectBalance) is 2 &&
+            IsOffCooldown(Brotherhood) &&
+            IsOffCooldown(RiddleOfFire) &&
+            IsOffCooldown(RiddleOfWind) &&
+            NadiFlag is None &&
+            OpoOpoStacks is 0 &&
+            RaptorStacks is 0 &&
+            CoeurlStacks is 0;
+    }
+
+    internal class MNKLvl90LLOpener : MNKOpenerBase
     {
         public override int MinOpenerLevel => 90;
-
         public override int MaxOpenerLevel => 90;
 
         public override List<uint> OpenerActions { get; set; } =
         [
-            ForbiddenMeditation,
-            FormShift,
-            DragonKick,
-            PerfectBalance,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)),
-            Bootshine,
-            DragonKick,
-            Bootshine,
-            RiddleOfFire,
-            Brotherhood,
-            ElixirField,
-            DragonKick,
-            PerfectBalance,
-            Bootshine,
-            DragonKick,
-            Bootshine,
-            ElixirField,
-            DragonKick
+            ForbiddenMeditation, // 1
+            FormShift, // 2
+            DragonKick, // 3
+            PerfectBalance, // 4
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)), // 5
+            Bootshine, // 6
+            DragonKick, // 7
+            Bootshine, // 8
+            RiddleOfFire, // 9
+            Brotherhood, // 10
+            ElixirField, // 11
+            DragonKick, // 12
+            PerfectBalance, // 13
+            Bootshine, // 14
+            DragonKick, // 15
+            Bootshine, // 16
+            ElixirField, // 17
+            DragonKick // 18
         ];
-
-        public override Preset Preset => Preset.MNK_STUseOpener;
-
-        internal override UserData ContentCheckConfig => MNK_Balance_Content;
-        internal override bool IncludePot => MNK_Opener_Potion;
-
-        public override List<(int[] Steps, Func<bool> Condition)> SkipSteps { get; set; } =
-        [
-            ([1], () => Chakra >= 5),
-            ([2], () => JustUsed(FormShift, 30f))
-        ];
-
-        public override bool HasCooldowns() =>
-            GetRemainingCharges(PerfectBalance) is 2 &&
-            IsOffCooldown(Brotherhood) &&
-            IsOffCooldown(RiddleOfFire) &&
-            IsOffCooldown(RiddleOfWind) &&
-            (MNK_OpenerCountdown == 1 || CountdownActive) &&
-            NadiFlag is None &&
-            OpoOpoStacks is 0 &&
-            RaptorStacks is 0 &&
-            CoeurlStacks is 0;
     }
 
-    internal class MNKLvl90SLOpener : WrathOpener
+    internal class MNKLvl90SLOpener : MNKOpenerBase
     {
         public override int MinOpenerLevel => 90;
-
         public override int MaxOpenerLevel => 90;
 
         public override List<uint> OpenerActions { get; set; } =
         [
-            ForbiddenMeditation,
-            FormShift,
-            DragonKick,
-            PerfectBalance,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)),
-            Bootshine,
-            DragonKick,
-            Bootshine,
-            Brotherhood,
-            RiddleOfFire,
-            ElixirField,
-            DragonKick,
-            PerfectBalance,
-            Bootshine,
-            TwinSnakes,
-            Demolish,
-            RisingPhoenix,
-            DragonKick
+            ForbiddenMeditation, // 1
+            FormShift, // 2
+            DragonKick, // 3
+            PerfectBalance, // 4
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)), // 5
+            Bootshine, // 6
+            DragonKick, // 7
+            Bootshine, // 8
+            Brotherhood, // 9
+            RiddleOfFire, // 10
+            ElixirField, // 11
+            DragonKick, // 12
+            PerfectBalance, // 13
+            Bootshine, // 14
+            TwinSnakes, // 15
+            Demolish, // 16
+            RisingPhoenix, // 17
+            DragonKick // 18
         ];
-
-        public override Preset Preset => Preset.MNK_STUseOpener;
-
-        internal override UserData ContentCheckConfig => MNK_Balance_Content;
-        internal override bool IncludePot => MNK_Opener_Potion;
-
-        public override List<(int[] Steps, Func<bool> Condition)> SkipSteps { get; set; } =
-        [
-            ([1], () => Chakra >= 5),
-            ([2], () => JustUsed(FormShift, 30f))
-        ];
-
-        public override bool HasCooldowns() =>
-            GetRemainingCharges(PerfectBalance) is 2 &&
-            IsOffCooldown(Brotherhood) &&
-            IsOffCooldown(RiddleOfFire) &&
-            IsOffCooldown(RiddleOfWind) &&
-            (MNK_OpenerCountdown == 1 || CountdownActive) &&
-            NadiFlag is None &&
-            OpoOpoStacks is 0 &&
-            RaptorStacks is 0 &&
-            CoeurlStacks is 0;
     }
 
-    internal class MNKLvl100LLOpener : WrathOpener
+    internal class MNKLvl100LLOpener : MNKOpenerBase
     {
         public override int MinOpenerLevel => 100;
-
         public override int MaxOpenerLevel => 100;
 
         public override List<uint> OpenerActions { get; set; } =
         [
-            ForbiddenMeditation,
-            FormShift,
-            DragonKick,
-            PerfectBalance,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)),
-            LeapingOpo,
-            DragonKick,
-            Brotherhood,
-            RiddleOfFire,
-            LeapingOpo,
-            TheForbiddenChakra,
-            RiddleOfWind,
-            ElixirBurst,
-            DragonKick,
-            WindsReply,
-            FiresReply,
-            LeapingOpo,
-            PerfectBalance,
-            DragonKick,
-            LeapingOpo,
-            DragonKick,
-            ElixirBurst,
-            LeapingOpo
+            ForbiddenMeditation, // 1
+            FormShift, // 2
+            DragonKick, // 3
+            PerfectBalance, // 4
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)), // 5
+            LeapingOpo, // 6
+            DragonKick, // 7
+            Brotherhood, // 8
+            RiddleOfFire, // 9
+            LeapingOpo, // 10
+            TheForbiddenChakra, // 11
+            RiddleOfWind, // 12
+            ElixirBurst, // 13
+            DragonKick, // 14
+            WindsReply, // 15
+            FiresReply, // 16
+            LeapingOpo, // 17
+            PerfectBalance, // 18
+            DragonKick, // 19
+            LeapingOpo, // 20
+            DragonKick, // 21
+            ElixirBurst, // 22
+            LeapingOpo // 23
         ];
-
-        public override Preset Preset => Preset.MNK_STUseOpener;
-
-        internal override UserData ContentCheckConfig => MNK_Balance_Content;
-        internal override bool IncludePot => MNK_Opener_Potion;
 
         public override List<(int[] Steps, Func<bool> Condition)> SkipSteps { get; set; } =
         [
             ([1], () => Chakra >= 5),
-            ([2], () => JustUsed(FormShift, 30f))
+            ([2], () => HasStatusEffect(Buffs.FormlessFist) || JustUsed(FormShift)),
+            ([11], () => Chakra < 5)
         ];
-
-        public override bool HasCooldowns() =>
-            GetRemainingCharges(PerfectBalance) is 2 &&
-            IsOffCooldown(Brotherhood) &&
-            IsOffCooldown(RiddleOfFire) &&
-            IsOffCooldown(RiddleOfWind) &&
-            (MNK_OpenerCountdown == 1 || CountdownActive) &&
-            NadiFlag is None &&
-            OpoOpoStacks is 0 &&
-            RaptorStacks is 0 &&
-            CoeurlStacks is 0;
     }
 
-    internal class MNKLvl100SLOpener : WrathOpener
+    internal class MNKLvl100SLOpener : MNKOpenerBase
     {
         public override int MinOpenerLevel => 100;
-
         public override int MaxOpenerLevel => 100;
 
         public override List<uint> OpenerActions { get; set; } =
         [
-            ForbiddenMeditation,
-            FormShift,
-            DragonKick,
-            PerfectBalance,
-            TwinSnakes,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)),
-            Demolish,
-            Brotherhood,
-            RiddleOfFire,
-            LeapingOpo,
-            TheForbiddenChakra,
-            RiddleOfWind,
-            RisingPhoenix,
-            DragonKick,
-            WindsReply,
-            FiresReply,
-            LeapingOpo,
-            PerfectBalance,
-            DragonKick,
-            LeapingOpo,
-            DragonKick,
-            ElixirBurst,
-            LeapingOpo
+            ForbiddenMeditation, // 1
+            FormShift, // 2
+            DragonKick, // 3
+            PerfectBalance, // 4
+            TwinSnakes, // 5
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)), // 6
+            Demolish, // 7
+            Brotherhood, // 8
+            RiddleOfFire, // 9
+            LeapingOpo, // 10
+            TheForbiddenChakra, // 11
+            RiddleOfWind, // 12
+            RisingPhoenix, // 13
+            DragonKick, // 14
+            WindsReply, // 15
+            FiresReply, // 16
+            LeapingOpo, // 17
+            PerfectBalance, // 18
+            DragonKick, // 19
+            LeapingOpo, // 20
+            DragonKick, // 21
+            ElixirBurst, // 22
+            LeapingOpo // 23
         ];
-
-        public override Preset Preset => Preset.MNK_STUseOpener;
-
-        internal override UserData ContentCheckConfig => MNK_Balance_Content;
-        internal override bool IncludePot => MNK_Opener_Potion;
 
         public override List<(int[] Steps, Func<bool> Condition)> SkipSteps { get; set; } =
         [
             ([1], () => Chakra >= 5),
-            ([2], () => JustUsed(FormShift, 30f))
+            ([2], () => HasStatusEffect(Buffs.FormlessFist) || JustUsed(FormShift)),
+            ([11], () => Chakra < 5)
         ];
-
-        public override bool HasCooldowns() =>
-            GetRemainingCharges(PerfectBalance) is 2 &&
-            IsOffCooldown(Brotherhood) &&
-            IsOffCooldown(RiddleOfFire) &&
-            IsOffCooldown(RiddleOfWind) &&
-            (MNK_OpenerCountdown == 1 || CountdownActive) &&
-            NadiFlag is None &&
-            OpoOpoStacks is 0 &&
-            RaptorStacks is 0 &&
-            CoeurlStacks is 0;
     }
 
-    internal class MNKLvl100BHFirstOpener : WrathOpener
+    internal class MNKLvl100BHFirstOpener : MNKOpenerBase
     {
         public override int MinOpenerLevel => 100;
-
         public override int MaxOpenerLevel => 100;
 
         public override List<uint> OpenerActions { get; set; } =
         [
-            ForbiddenMeditation,
-            FormShift,
-            RiddleOfWind,
-            DragonKick,
-            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)),
-            Brotherhood,
-            RiddleOfFire,
-            FiresReply,
-            PerfectBalance,
-            TheForbiddenChakra,
-            WindsReply,
-            LeapingOpo,
-            DragonKick,
-            LeapingOpo,
-            ElixirBurst,
-            DragonKick,
-            PerfectBalance,
-            LeapingOpo,
-            DragonKick,
-            LeapingOpo,
-            ElixirBurst,
-            DragonKick
+            ForbiddenMeditation, // 1
+            FormShift, // 2
+            RiddleOfWind, // 3
+            DragonKick, // 4
+            Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Strength)), // 5
+            Brotherhood, // 6
+            RiddleOfFire, // 7
+            FiresReply, // 8
+            PerfectBalance, // 9
+            TheForbiddenChakra, // 10
+            WindsReply, // 11
+            LeapingOpo, // 12
+            DragonKick, // 13
+            LeapingOpo, // 14
+            ElixirBurst, // 15
+            DragonKick, // 16
+            PerfectBalance, // 17
+            LeapingOpo, // 18
+            DragonKick, // 19
+            LeapingOpo, // 20
+            ElixirBurst, // 21
+            DragonKick // 22
         ];
-
-        public override Preset Preset => Preset.MNK_STUseOpener;
-
-        internal override UserData ContentCheckConfig => MNK_Balance_Content;
-        internal override bool IncludePot => MNK_Opener_Potion;
 
         public override List<(int[] Steps, Func<bool> Condition)> SkipSteps { get; set; } =
         [
             ([1], () => Chakra >= 5),
-            ([2], () => JustUsed(FormShift, 30f))
+            ([2], () => HasStatusEffect(Buffs.FormlessFist) || JustUsed(FormShift)),
+            ([10], () => Chakra < 5)
         ];
 
-        public override bool HasCooldowns() =>
-            GetRemainingCharges(PerfectBalance) is 2 &&
-            IsOffCooldown(Brotherhood) &&
-            IsOffCooldown(RiddleOfFire) &&
-            IsOffCooldown(RiddleOfWind) &&
-            (MNK_OpenerCountdown == 1 || CountdownActive) &&
-            NadiFlag is None &&
-            OpoOpoStacks is 0 &&
-            RaptorStacks is 0 &&
-            CoeurlStacks is 0;
+        public override List<(int[] Steps, Func<float> HoldDelay)> PrepullDelays { get; set; } =
+        [
+            ([1], () => CountdownRemaining - 8),
+            ([2], () => CountdownRemaining - 5),
+            ([3], () => CountdownRemaining - 2)
+        ];
     }
 
     #endregion
