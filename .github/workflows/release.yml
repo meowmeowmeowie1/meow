@@ -3,6 +3,7 @@ name: build
 on:
   push:
     branches:
+      - claude/ffxiv-plugin-downtime-alt-w9vr1r
       - claude/affectionate-johnson-sJ0GR
       - claude/keen-sagan-OCJeZ
     paths-ignore:
