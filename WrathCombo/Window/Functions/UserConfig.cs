@@ -799,6 +799,11 @@ public static class UserConfig
             descriptionColor: ImGuiColors.DalamudYellow
         );
 
+        // DrawHorizontalBoolRadioButton ends each radio with ImGui.SameLine(), so
+        // after the last one a SameLine is still pending. Terminate the row here,
+        // otherwise the next element (e.g. the opener "Include Potion?" checkbox)
+        // renders on the same line and overlaps these radios.
+        ImGui.NewLine();
     }
 
     /// <summary>
