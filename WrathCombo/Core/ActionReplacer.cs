@@ -194,7 +194,7 @@ internal sealed class ActionReplacer : IDisposable
                         ActionManager.GetAdjustedCastTime(ActionType.Action, newActionID) > 0 &&
                         CustomComboFunctions.TimeMoving.Ticks > 0)
                     {
-                        return All.SavageBlade;
+                        return All.Cease;
                     }
 
                     return newActionID;
