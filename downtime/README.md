@@ -3,22 +3,73 @@
 After **every game patch**, Dalamud (and with it MyTweak / every plugin) and
 ACT's FFXIV_ACT_Plugin stop working until their authors ship updates:
 
-- **Dalamud** breaks because game memory structures and offsets change with the
-  patch. goatcorp has to re-map them and publish a new Dalamud build. Until the
-  release API reports the new game version as supported, XIVLauncher will
-  (correctly) refuse to inject.
+- **Dalamud** is disabled because XIVLauncher's version gate won't inject an
+  un-whitelisted build onto the new game version. Memory offsets can shift with
+  a patch, so goatcorp gate it until they publish a matching build.
 - **FFXIV_ACT_Plugin** breaks because network opcodes change. ravahn has to
-  find the new opcodes and publish a release. Until then ACT parses nothing.
+  find the new opcodes and publish a release. Until then ACT parses nothing —
+  no local trick fixes this; it's a genuine wait.
 
-**Nothing installed locally can shortcut this.** The `MyTweak-OfflineKit.ps1`
-in the repo root protects against *infrastructure* downtime (plugin repos or
-the Dalamud CDN being unreachable) — it cannot make an old Dalamud work on a
-new game version, and forcing it to inject anyway risks crashes or worse.
-Patch day is a *waiting* problem, so this kit does two things instead: tells
-you the instant the wait is over, and gives you plugin-free stand-ins in the
-meantime.
+The important nuance: **the Dalamud version gate lives only in XIVLauncher.**
+Dalamud itself and `Dalamud.Injector.exe` don't check the game version, so the
+*previous* Dalamud can often be force-loaded onto the new patch. It usually
+survives small/hotfix patches and often crashes on major ones — you're trading
+"no plugins" for "maybe plugins, maybe a crash to desktop." This kit gives you
+that option, plus a way to know when the wait is truly over, plus plugin-free
+stand-ins if you'd rather not risk it.
 
-## 1. `Watch-FFXIVPlugins.ps1` — know the moment plugins are back
+## 1. `Force-InjectDalamud.ps1` — use MyTweak now, before Dalamud is whitelisted
+
+Loads the Dalamud runtime that `MyTweak-OfflineKit.ps1` snapshotted before
+downtime (or the live `Hooks\dev`) into the running game, bypassing the gate.
+
+**Prerequisite:** run `..\MyTweak-OfflineKit.ps1` *before* the patch so a
+snapshot and the MyTweak devPlugin exist. (If your `Hooks\dev` still holds the
+last working Dalamud, that's used automatically as a fallback.)
+
+Recommended patch-day flow:
+
+1. Patch drops → launch via XIVLauncher's **"Start w/o Dalamud"**.
+2. Log in and reach **character select** (safest injection point).
+3. First pass with third-party plugins off (MyTweak still loads):
+   ```powershell
+   .\Force-InjectDalamud.ps1 -SafeMode
+   ```
+4. If that's stable, **restart the game** (don't re-inject the same session)
+   and load everything:
+   ```powershell
+   .\Force-InjectDalamud.ps1
+   ```
+
+Troubleshooting ladder if injection fails:
+
+| Try | Command |
+|---|---|
+| Access/ACL error | `.\Force-InjectDalamud.ps1 -FixAcl` |
+| Still can't open the process | *(elevated PowerShell)* `.\Force-InjectDalamud.ps1 -FixAcl -SeDebugPrivilege` |
+| Suspect a bad 3rd-party plugin | `.\Force-InjectDalamud.ps1 -SafeMode` |
+| Watch the load live | `.\Force-InjectDalamud.ps1 -DalamudConsole` |
+| Is the core even surviving? | `.\Force-InjectDalamud.ps1 -BareMode` (no plugins) |
+
+Logs land in `downtime\logs\`. `-Runtime <path>` picks a specific snapshot;
+`-Language` overrides the client language; `-SkipPreflight` forces even when the
+official Dalamud already supports your version.
+
+**The lazy route:** `.\Force-InjectDalamud.ps1 -Launch` starts XIVLauncher with
+`--dalamud-runner-override` so it injects the snapshot at launch. It's hands-off
+but injects at the entrypoint (the crashier moment), so Inject mode above is
+preferred. Close any running XIVLauncher first.
+
+> **Honest caveat:** this runs an old Dalamud against a new game binary. goatcorp's
+> position is that if you bypass the post-patch disable, you're on your own. Worst
+> case is a crash to desktop — nothing is permanently damaged, and your snapshots
+> are untouched. Forcing does **nothing** for ACT: FFXIV_ACT_Plugin's broken
+> opcodes are a real wait (see below).
+
+## 2. `Watch-FFXIVPlugins.ps1` — know the moment plugins are officially back
+
+Run this in parallel so you know when to stop forcing and return to the normal
+XIVLauncher flow (and when ACT is updatable).
 
 One-shot status check:
 
@@ -43,7 +94,7 @@ How it decides:
 - **FFXIV_ACT_Plugin**: date check — the latest GitHub release must be
   published on/after the patch date encoded in your game version.
 
-## 2. `downtime-toolkit.html` — play without plugins in the meantime
+## 3. `downtime-toolkit.html` — play without plugins if you'd rather not force
 
 Open it in any browser (double-click), ideally on a second monitor or snapped
 next to the game in borderless windowed. No install, no dependencies,
@@ -62,11 +113,9 @@ the game's network data, which is exactly what's broken until ravahn updates.
 For post-fight numbers on patch day, [FFLogs](https://www.fflogs.com/) uploads
 from other regions/players whose parser already updated are the only source.
 
-## Patch-day routine
+## When to stop
 
-1. Patch drops → launch via XIVLauncher's **"Start w/o Dalamud"** (don't force-inject).
-2. Start `.\Watch-FFXIVPlugins.ps1 -Watch` and open `downtime-toolkit.html`.
-3. Play vanilla with the toolkit as your countdown/timer/notes surface.
-4. Toast fires → restart the game through XIVLauncher normally; Dalamud and
-   MyTweak load again. When ACT flips to READY, update FFXIV_ACT_Plugin via
-   ACT's plugin listing and parsing resumes.
+`Watch-FFXIVPlugins.ps1` fires READY for Dalamud → close the game, launch
+XIVLauncher normally (it now injects the official build), and run
+`..\MyTweak-OfflineKit.ps1 -Cleanup` to remove the snapshots. When ACT flips to
+READY, update FFXIV_ACT_Plugin via ACT's plugin listing and parsing resumes.

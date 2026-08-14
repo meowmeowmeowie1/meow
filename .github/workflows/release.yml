@@ -8,7 +8,9 @@ on:
       - claude/keen-sagan-OCJeZ
     paths-ignore:
       - 'pluginmaster.json'
-      - 'README.md'
+      - '**/*.md'
+      - '**/*.ps1'
+      - 'downtime/**'
   workflow_dispatch:
 
 permissions:
