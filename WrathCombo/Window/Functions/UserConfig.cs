@@ -29,7 +29,7 @@ public static class UserConfig
     /// <param name="sliderIncrement"> How much you want the user to increment the slider by. Uses SliderIncrements as a preset. </param>
     /// <param name="hasAdditionalChoice">True if this config can trigger additional configs depending on value.</param>
     /// <param name="additonalChoiceCondition">What the condition is to convey to the user what triggers it.</param>
-    public static bool DrawSliderInt(int minValue, int maxValue, string config, string sliderDescription, float itemWidth = 150, uint sliderIncrement = SliderIncrements.Ones, bool hasAdditionalChoice = false, string additonalChoiceCondition = "")
+    public static bool DrawSliderInt(int minValue, int maxValue, string config, string sliderDescription, float itemWidth = 150, uint sliderIncrement = SliderIncrements.Ones, bool hasAdditionalChoice = false, string additonalChoiceCondition = "", int occurrence = 0)
     {
         ImGui.Indent();
         int output = Configuration.GetCustomIntValue(config, minValue);
@@ -116,7 +116,7 @@ public static class UserConfig
         };
 
         box.Draw();
-        DrawResetContextMenu(config);
+        DrawResetContextMenu(config, occurrence);
         ImGui.Spacing();
         ImGui.Unindent();
         return box.FuncRes;

@@ -459,6 +459,11 @@ public partial class Configuration : IPluginConfiguration
 
     public Dictionary<uint, uint> IgnoredNPCs { get; set; } = new();
 
+    // Occult Crescent: cached elemental weaknesses per BNpc base id, used by the
+    // OccultCrescent combos to pick the right phantom-job element. Added upstream
+    // in the 9a491ae5cf49 sync; ported here because the synced combo code needs it.
+    public Dictionary<uint, uint[]> ElementalWeaknessCache = [];
+
     // MyTweak master kill-switch: when true, combo icon replacement AND the
     // KBM action-press mirror both short-circuit. Slash: /mytweak disable.
     public bool MasterDisabled { get; set; }
