@@ -1,0 +1,77 @@
+name: maskedcarnivale
+
+on:
+  push:
+    branches:
+      - claude/ffxiv-plugin-downtime-alt-w9vr1r
+    paths:
+      - 'MaskedCarnivale/**'
+      - '.github/workflows/maskedcarnivale.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Same staging-Dalamud recipe as MyTweak's release.yml. The plugin targets
+      # DalamudApiLevel 15 (current staging). Its csproj resolves Dalamud refs from
+      # $(HOME)/.xlcore/dalamud/Hooks/dev/ on Linux.
+      - name: Fetch Dalamud (staging)
+        run: |
+          mkdir -p "$HOME/.xlcore/dalamud/Hooks/dev"
+          curl -fsSL -o /tmp/dalamud.zip https://goatcorp.github.io/dalamud-distrib/stg/latest.zip
+          unzip -o -q /tmp/dalamud.zip -d "$HOME/.xlcore/dalamud/Hooks/dev"
+
+      - name: Build (Release)
+        run: |
+          set -o pipefail
+          dotnet build MaskedCarnivale/MaskedCarnivale.csproj -c Release -p:EnableWindowsTargeting=true 2>&1 | tee build.log
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
+
+      - name: Read plugin version
+        id: ver
+        run: |
+          v=$(grep -oPm1 '(?<=<Version>)[^<]+' MaskedCarnivale/MaskedCarnivale.csproj)
+          if [ -z "$v" ]; then
+            echo "Could not read <Version> from MaskedCarnivale.csproj"; exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Plugin version: $v"
+
+      - name: Locate packaged zip
+        id: pkg
+        run: |
+          zip=$(find . -name 'latest.zip' -path '*bin*' | head -n1)
+          if [ -z "$zip" ]; then
+            echo "Could not find DalamudPackager output (latest.zip)"; exit 1
+          fi
+          echo "Found: $zip"
+          cp "$zip" MaskedCarnivale.zip
+          echo "Contents:"; unzip -l MaskedCarnivale.zip
+          echo "zip=MaskedCarnivale.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: maskedcarnivale-v${{ steps.ver.outputs.version }}
+          name: MaskedCarnivale v${{ steps.ver.outputs.version }}
+          make_latest: false
+          files: ${{ steps.pkg.outputs.zip }}
