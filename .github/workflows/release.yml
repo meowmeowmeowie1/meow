@@ -11,8 +11,6 @@ on:
       - '**/*.md'
       - '**/*.ps1'
       - 'downtime/**'
-      - 'MaskedCarnivale/**'
-      - '.github/workflows/maskedcarnivale.yml'
   workflow_dispatch:
 
 permissions:
