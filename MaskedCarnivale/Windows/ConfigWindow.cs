@@ -14,7 +14,7 @@ public class ConfigWindow : Window, IDisposable
     public ConfigWindow(Plugin plugin) : base("Masked Carnivale")
     {
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
-        Size = new Vector2(370, 330);
+        Size = new Vector2(370, 380);
         SizeCondition = ImGuiCond.Always;
         cfg = plugin.cfg;
         this.plugin = plugin;
@@ -82,7 +82,7 @@ public class ConfigWindow : Window, IDisposable
             // wrong. Turn on "Override index", press "Dump render targets", open /xllog,
             // find the index whose size matches your resolution and is flagged CANDIDATE,
             // then set it here. Changes apply live.
-            ImGui.BeginChild("Capture", new Vector2(350, 130), true);
+            ImGui.BeginChild("Capture", new Vector2(350, 150), true);
 
             bool manualIndex = cfg.manualIndex;
             if (ImGui.Checkbox("Override index (advanced)", ref manualIndex))
@@ -102,7 +102,14 @@ public class ConfigWindow : Window, IDisposable
                     cfg.Save();
                 }
 
-                ImGui.TextDisabled("Try 204 or 106 (with HUD), or 71 (no HUD).");
+                // Cycle only through full-resolution targets that have a usable view.
+                if (ImGui.Button("< Prev candidate"))
+                    plugin.StepCandidate(-1);
+                ImGui.SameLine();
+                if (ImGui.Button("Next candidate >"))
+                    plugin.StepCandidate(1);
+
+                ImGui.TextDisabled(plugin.GetCurrentIndexInfo());
             }
             else
             {

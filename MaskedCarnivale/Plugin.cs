@@ -621,6 +621,50 @@ public unsafe class Plugin : IDalamudPlugin
         Log!.Info($"MaskedCarnivale: ==== dump complete, {found} populated slots ====");
     }
 
+    // Jumps renderIndex to the next/previous full-resolution render target that has a usable
+    // shader-resource view (dir = +1 forward, -1 back), wrapping around. Lets the user click
+    // through only the plausible full-screen candidates instead of typing indices one by one.
+    // Turns on manual override so the pick sticks.
+    public unsafe void StepCandidate(int dir)
+    {
+        RenderTargetManager* rtm = RenderTargetManager.Instance();
+        if (rtm == null)
+            return;
+
+        FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device* dev = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
+        uint sw = dev->SwapChain->Width;
+        uint sh = dev->SwapChain->Height;
+
+        int max = (sizeof(RenderTargetManager) - 0x20) / 0x8;
+        int span = max + 1;
+        for (int step = 1; step <= max; step++)
+        {
+            int i = cfg.renderIndex + dir * step;
+            i = ((i % span) + span) % span; // wrap into [0, max]
+
+            Texture* t = SafeGetTexture(i);
+            if (t == null || t->D3D11Texture2D == null || t->D3D11ShaderResourceView == null)
+                continue;
+            if (t->ActualWidth != sw || t->ActualHeight != sh)
+                continue;
+
+            cfg.manualIndex = true;
+            cfg.renderIndex = i;
+            cfg.Save();
+            Log!.Info($"MaskedCarnivale: candidate -> idx {i} | {t->ActualWidth}x{t->ActualHeight} | {t->TextureFormat}");
+            return;
+        }
+    }
+
+    // Human-readable description of the currently-selected render target, for the config window.
+    public unsafe string GetCurrentIndexInfo()
+    {
+        Texture* t = SafeGetTexture(cfg.renderIndex);
+        if (t == null || t->D3D11Texture2D == null)
+            return $"idx {cfg.renderIndex}: (empty / not readable)";
+        return $"idx {cfg.renderIndex} | {t->ActualWidth}x{t->ActualHeight} | {t->TextureFormat} | SRV {(t->D3D11ShaderResourceView != null)}";
+    }
+
     //----
     // DXGIPresent
     //----

@@ -2,7 +2,7 @@
     "Author": "Marulu, StreetRat",
     "Name": "MaskedCarnivale",
     "InternalName": "MaskedCarnivale",
-    "AssemblyVersion": "0.1.0.4",
+    "AssemblyVersion": "0.1.0.5",
     "Punchline": "Display the game in a separate window",
     "Description": "Allows you to record, or stream your game without displaying Dalamud plugins.",
     "ApplicableVersion": "any",
