@@ -3,17 +3,17 @@
     "Author": "Marulu, StreetRat",
     "Name": "MaskedCarnivale",
     "InternalName": "MaskedCarnivale",
-    "AssemblyVersion": "0.1.0.0",
-    "TestingAssemblyVersion": "0.1.0.0",
+    "AssemblyVersion": "0.1.0.1",
+    "TestingAssemblyVersion": "0.1.0.1",
     "Punchline": "Display the game in a separate window.",
     "Description": "Renders a separate, overlay-free window mirroring the game so you can stream/record (Discord, Medal, OBS) without Dalamud plugin overlays showing. Opened with /carnivale. Unofficial API-15 port of ProjectMimer's MaskedCarnivale.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
     "Tags": ["utility"],
     "DalamudApiLevel": 15,
-    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/maskedcarnivale-v0.1.0.0/MaskedCarnivale.zip",
-    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/maskedcarnivale-v0.1.0.0/MaskedCarnivale.zip",
-    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/maskedcarnivale-v0.1.0.0/MaskedCarnivale.zip",
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/maskedcarnivale-v0.1.0.1/MaskedCarnivale.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/maskedcarnivale-v0.1.0.1/MaskedCarnivale.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/maskedcarnivale-v0.1.0.1/MaskedCarnivale.zip",
     "DownloadCount": 0
   }
 ]
