@@ -57,6 +57,9 @@ public unsafe class Plugin : IDalamudPlugin
     private ShaderResourceView? sharedSRV { get; set; } = null!;
     private ShaderResourceView? selectedSRV { get; set; } = null!;
     private int oldRenderIndex = -1;
+    // Last game texture we built selectedSRV from; when it changes we rebuild the view so the
+    // mirror never samples a recycled/freed render target (the "works then goes black" bug).
+    private unsafe void* lastCapturedTex = null;
 
     private RenderTargetManager* renderTargetManager = RenderTargetManager.Instance();
 
@@ -558,12 +561,15 @@ public unsafe class Plugin : IDalamudPlugin
         return true;
     }
 
-    private void DestroyTexturesShared()
+    private unsafe void DestroyTexturesShared()
     {
         sharedRTV?.Dispose();
         sharedSRV?.Dispose();
         sharedTexture?.Dispose();
         sharedTexture = null;
+        selectedSRV?.Dispose();
+        selectedSRV = null;
+        lastCapturedTex = null;
     }
 
 
@@ -689,24 +695,31 @@ public unsafe class Plugin : IDalamudPlugin
 
             cfg.renderIndex = Math.Min(Math.Max(cfg.renderIndex, 0), 511);
 
-            if (oldRenderIndex != cfg.renderIndex)
+            // Validated lookup: never dereferences an out-of-struct / unreadable pointer, so a
+            // bad manual index yields a black frame instead of crashing the game.
+            Texture* rendText = SafeGetTexture(cfg.renderIndex);
+            void* curTexPtr = rendText != null ? rendText->D3D11Texture2D : null;
+
+            // Re-acquire the shader-resource view whenever the underlying D3D texture changes
+            // (the user picked a new index, OR the game recycled the render target at this
+            // index). Caching only on index-change left a stale view pointing at a freed
+            // texture -> the mirror went black after working for a moment. Tracking the actual
+            // texture pointer fixes that while still avoiding a rebuild every single frame.
+            if (curTexPtr != lastCapturedTex)
             {
-                oldRenderIndex = cfg.renderIndex;
+                lastCapturedTex = curTexPtr;
+                selectedSRV?.Dispose();
                 selectedSRV = null;
 
-                // Validated lookup: never dereferences an out-of-struct / unreadable pointer,
-                // so a bad manual index yields a black frame instead of crashing the game.
-                Texture* rendText = SafeGetTexture(cfg.renderIndex);
-
-                if (rendText != null && rendText->D3D11Texture2D != null)
+                if (rendText != null && curTexPtr != null)
                 {
                     try
                     {
-                        Texture2DDescription rt0 = ((Texture2D)(IntPtr)rendText->D3D11Texture2D).Description;
+                        Texture2DDescription rt0 = ((Texture2D)(IntPtr)curTexPtr).Description;
 
                         if ((rt0.BindFlags & BindFlags.ShaderResource) == BindFlags.ShaderResource)
                         {
-                            SharpDX.Direct3D11.Resource tmpResource = ((Texture2D)(IntPtr)rendText->D3D11Texture2D).QueryInterface<SharpDX.Direct3D11.Resource>();
+                            SharpDX.Direct3D11.Resource tmpResource = ((Texture2D)(IntPtr)curTexPtr).QueryInterface<SharpDX.Direct3D11.Resource>();
                             selectedSRV = new ShaderResourceView(dxDevice11, tmpResource);
                             tmpResource.Dispose();
                         }
