@@ -82,7 +82,7 @@ public class ConfigWindow : Window, IDisposable
             // wrong. Turn on "Override index", press "Dump render targets", open /xllog,
             // find the index whose size matches your resolution and is flagged CANDIDATE,
             // then set it here. Changes apply live.
-            ImGui.BeginChild("Capture", new Vector2(350, 100), true);
+            ImGui.BeginChild("Capture", new Vector2(350, 130), true);
 
             bool manualIndex = cfg.manualIndex;
             if (ImGui.Checkbox("Override index (advanced)", ref manualIndex))
@@ -97,8 +97,15 @@ public class ConfigWindow : Window, IDisposable
                 if (ImGui.InputInt("Render index", ref renderIndex))
                 {
                     if (renderIndex < 0) renderIndex = 0;
-                    if (renderIndex > 255) renderIndex = 255;
+                    if (renderIndex > 511) renderIndex = 511;
                     cfg.renderIndex = renderIndex;
+                    cfg.Save();
+                }
+
+                // Quick win: index 170 is the game backbuffer (guaranteed non-black).
+                if (ImGui.Button("Use game backbuffer (170)"))
+                {
+                    cfg.renderIndex = 170;
                     cfg.Save();
                 }
             }

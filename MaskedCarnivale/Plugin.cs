@@ -99,6 +99,90 @@ public unsafe class Plugin : IDalamudPlugin
     [DllImport("user32.dll")]
     private static extern bool IsWindowVisible(IntPtr hWnd);
 
+    // ---- Safe memory probing (kernel32!VirtualQuery) ----
+    // We validate every render-target pointer before dereferencing it. Blindly walking the
+    // RenderTargetManager table and dereferencing whatever is found causes native access
+    // violations (uncatchable in .NET) that crash the game. VirtualQuery lets us confirm an
+    // address is committed + readable first.
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MEMORY_BASIC_INFORMATION
+    {
+        public IntPtr BaseAddress;
+        public IntPtr AllocationBase;
+        public uint AllocationProtect;
+        public uint __alignment1;
+        public IntPtr RegionSize;
+        public uint State;
+        public uint Protect;
+        public uint Type;
+        public uint __alignment2;
+    }
+
+    [DllImport("kernel32.dll")]
+    private static extern UIntPtr VirtualQuery(IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, UIntPtr dwLength);
+
+    private const uint MEM_COMMIT = 0x1000;
+    private const uint PAGE_NOACCESS = 0x01;
+    private const uint PAGE_GUARD = 0x100;
+    // Readable page protections (mask off GUARD/NOCACHE/WRITECOMBINE high bits with & 0xFF first).
+    private const uint PAGE_READABLE_MASK =
+        0x02 /*READONLY*/ | 0x04 /*READWRITE*/ | 0x08 /*WRITECOPY*/ |
+        0x20 /*EXECUTE_READ*/ | 0x40 /*EXECUTE_READWRITE*/ | 0x80 /*EXECUTE_WRITECOPY*/;
+
+    private static unsafe bool IsReadable(IntPtr p)
+    {
+        if (p == IntPtr.Zero || (ulong)p < 0x10000)
+            return false;
+        if (VirtualQuery(p, out MEMORY_BASIC_INFORMATION mbi, (UIntPtr)(uint)sizeof(MEMORY_BASIC_INFORMATION)) == UIntPtr.Zero)
+            return false;
+        if (mbi.State != MEM_COMMIT)
+            return false;
+        uint prot = mbi.Protect;
+        if ((prot & PAGE_GUARD) != 0)
+            return false;
+        uint baseProt = prot & 0xFF;
+        if (baseProt == PAGE_NOACCESS || baseProt == 0)
+            return false;
+        return (baseProt & PAGE_READABLE_MASK) != 0;
+    }
+
+    // Returns the render target at the given flat index (base + 0x20 + 0x8*index), or null if
+    // the slot / texture pointer is out of the struct or not safely readable. This is the ONLY
+    // path that dereferences a render-target pointer, so both the dump and the render loop are
+    // crash-proof against bad indices / layout drift.
+    private unsafe Texture* SafeGetTexture(int index)
+    {
+        if (index < 0)
+            return null;
+
+        RenderTargetManager* rtm = RenderTargetManager.Instance();
+        if (rtm == null)
+            return null;
+
+        // Bound the slot offset to within the struct so the slot read itself is on committed
+        // memory. Fall back to a conservative cap if sizeof is unexpectedly small.
+        int structSize = sizeof(RenderTargetManager);
+        int maxOffset = structSize > 0x40 ? structSize : 0x2000;
+        ulong slotOffset = 0x20UL + (ulong)(0x8 * index);
+        if (slotOffset + 8 > (ulong)maxOffset)
+            return null;
+
+        byte* slotPtr = ((byte*)rtm) + slotOffset;
+        if (!IsReadable((IntPtr)(void*)slotPtr))
+            return null;
+
+        Texture* tex = *(Texture**)slotPtr;
+        if (!IsReadable((IntPtr)(void*)tex))
+            return null;
+
+        // Ensure the D3D11Texture2D field (offset 0x68 in Texture) is itself in readable memory
+        // before the caller touches it.
+        if (!IsReadable((IntPtr)(void*)(&tex->D3D11Texture2D)))
+            return null;
+
+        return tex;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     struct OutputWindowSetup
     {
@@ -482,11 +566,11 @@ public unsafe class Plugin : IDalamudPlugin
     }
 
 
-    // Walks the RenderTargetManager Texture* table and logs every populated slot to /xllog.
-    // Use this after a game patch to find which flat index holds the composited game frame:
-    // look for entries whose Width x Height match the swapchain and that carry the
-    // ShaderResource bind flag (those are the ones we can mirror). Set that index via the
-    // "Override index" control in the config window.
+    // Logs every populated, safely-readable render-target slot to /xllog. Use this after a game
+    // patch to find which flat index holds the composited game frame: look for entries whose
+    // dimensions match the swapchain (flagged CANDIDATE). Set that value via the "Override index"
+    // control. This walks the table through SafeGetTexture and reads dimensions/format straight
+    // from the FFXIVClientStructs Texture struct (no COM calls), so it cannot crash the game.
     public unsafe void DumpRenderTargets()
     {
         RenderTargetManager* rtm = RenderTargetManager.Instance();
@@ -500,30 +584,32 @@ public unsafe class Plugin : IDalamudPlugin
         int scWidth = (int)ffxivDevice->SwapChain->Width;
         int scHeight = (int)ffxivDevice->SwapChain->Height;
 
-        Log!.Info($"MaskedCarnivale: ==== render target dump (swapchain {scWidth}x{scHeight}) ====");
-        Log!.Info("MaskedCarnivale: anchor flat index 170 == SwapChainBackBuffer on current layout.");
+        int maxIndex = (sizeof(RenderTargetManager) - 0x20) / 0x8;
+        Log!.Info($"MaskedCarnivale: ==== render target dump (swapchain {scWidth}x{scHeight}, scanning 0..{maxIndex}) ====");
 
-        UInt64 rtManagerAddr = ((UInt64)rtm) + 0x20;
-        int found = 0;
-        for (int i = 0; i <= 255; i++)
+        // Named anchor: SwapChainBackBuffer (public field). Its flat index is a reliable
+        // reference point across patches.
+        Texture* backBuffer = rtm->SwapChainBackBuffer;
+        if (IsReadable((IntPtr)(void*)backBuffer))
         {
-            Texture* rendText = *(Texture**)(rtManagerAddr + (ulong)(0x8 * i));
+            int bbIndex = (0x570 - 0x20) / 0x8; // = 170 on the current layout
+            Log!.Info($"MaskedCarnivale: SwapChainBackBuffer @ flat idx {bbIndex} | {backBuffer->ActualWidth}x{backBuffer->ActualHeight} | Format {backBuffer->TextureFormat} | hasSRV {(backBuffer->D3D11ShaderResourceView != null)}");
+        }
+
+        int found = 0;
+        for (int i = 0; i <= maxIndex; i++)
+        {
+            Texture* rendText = SafeGetTexture(i);
             if (rendText == null || rendText->D3D11Texture2D == null)
                 continue;
 
-            try
-            {
-                Texture2DDescription d = ((Texture2D)(IntPtr)rendText->D3D11Texture2D).Description;
-                bool srv = (d.BindFlags & BindFlags.ShaderResource) == BindFlags.ShaderResource;
-                bool full = d.Width == scWidth && d.Height == scHeight;
-                string tag = (full && srv) ? "  <== CANDIDATE (matches swapchain + SRV)" : "";
-                Log!.Info($"MaskedCarnivale: idx {i,3} | {d.Width}x{d.Height} | Format {d.Format} | Bind {d.BindFlags}{tag}");
-                found++;
-            }
-            catch (Exception)
-            {
-                // slot pointed at something that isn't a valid Texture2D; skip
-            }
+            uint w = rendText->ActualWidth;
+            uint h = rendText->ActualHeight;
+            bool hasSrv = rendText->D3D11ShaderResourceView != null;
+            bool full = w == (uint)scWidth && h == (uint)scHeight;
+            string tag = (full && hasSrv) ? "  <== CANDIDATE (matches swapchain + has SRV)" : "";
+            Log!.Info($"MaskedCarnivale: idx {i,3} | {w}x{h} | Format {rendText->TextureFormat} | hasSRV {hasSrv}{tag}");
+            found++;
         }
         Log!.Info($"MaskedCarnivale: ==== dump complete, {found} populated slots ====");
     }
@@ -600,33 +686,33 @@ public unsafe class Plugin : IDalamudPlugin
                     cfg.renderIndex = gameWindowWithoutUI;
             }
 
-            cfg.renderIndex = Math.Min(Math.Max(cfg.renderIndex, 0), 255);
+            cfg.renderIndex = Math.Min(Math.Max(cfg.renderIndex, 0), 511);
 
             if (oldRenderIndex != cfg.renderIndex)
             {
                 oldRenderIndex = cfg.renderIndex;
                 selectedSRV = null;
 
-                UInt64 rtManagerAddr = ((UInt64)renderTargetManager) + 0x20;
-                Texture* rendText = *(Texture**)(rtManagerAddr + (ulong)(0x8 * cfg.renderIndex));
+                // Validated lookup: never dereferences an out-of-struct / unreadable pointer,
+                // so a bad manual index yields a black frame instead of crashing the game.
+                Texture* rendText = SafeGetTexture(cfg.renderIndex);
 
                 if (rendText != null && rendText->D3D11Texture2D != null)
                 {
-                    Texture2DDescription rt0 = ((Texture2D)(IntPtr)rendText->D3D11Texture2D).Description;
-                    //Log!.Info($"ID: {cfg.renderIndex} | {(UInt64)rendText:x} | Width: {rt0.Width} | Height: {rt0.Height} | Usage: {rt0.Usage:x} | Format: {rt0.Format:x} | BindFlags: {rt0.BindFlags:x} | OptionFlags: {rt0.OptionFlags}");
-
-                    if ((rt0.BindFlags & BindFlags.ShaderResource) == BindFlags.ShaderResource)
+                    try
                     {
-                        SharpDX.Direct3D11.Resource tmpResource = ((Texture2D)(IntPtr)rendText->D3D11Texture2D).QueryInterface<SharpDX.Direct3D11.Resource>();
-                        try
+                        Texture2DDescription rt0 = ((Texture2D)(IntPtr)rendText->D3D11Texture2D).Description;
+
+                        if ((rt0.BindFlags & BindFlags.ShaderResource) == BindFlags.ShaderResource)
                         {
+                            SharpDX.Direct3D11.Resource tmpResource = ((Texture2D)(IntPtr)rendText->D3D11Texture2D).QueryInterface<SharpDX.Direct3D11.Resource>();
                             selectedSRV = new ShaderResourceView(dxDevice11, tmpResource);
+                            tmpResource.Dispose();
                         }
-                        catch (Exception)
-                        {
-                            selectedSRV = null;
-                        }
-                        tmpResource.Dispose();
+                    }
+                    catch (Exception)
+                    {
+                        selectedSRV = null;
                     }
                 }
             }
