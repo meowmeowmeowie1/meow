@@ -407,6 +407,26 @@ public unsafe class Plugin : IDalamudPlugin
         CreateShaders(dxDevice11);
         CreateBuffers(dxDevice11, dxDevCon11);
         CreateTextures(dxDevice11, dxDevCon11);
+
+        // Hook the real IDXGISwapChain::Present (vtable slot 8) for backbuffer/HUD capture.
+        // Read the COM object's vtable and take entry 8 (QI,AddRef,Release,SetPrivateData,
+        // SetPrivateDataInterface,GetPrivateData,GetParent,GetDevice, [8]=Present).
+        try
+        {
+            IntPtr swapChainPtr = (IntPtr)ffxivDevice->SwapChain->DXGISwapChain;
+            if (swapChainPtr != IntPtr.Zero)
+            {
+                IntPtr vtbl = Marshal.ReadIntPtr(swapChainPtr);
+                IntPtr presentAddr = Marshal.ReadIntPtr(vtbl, 8 * IntPtr.Size);
+                presentHook = Interop.HookFromAddress<DXGISwapChainPresentDg>(presentAddr, PresentDetour);
+                presentHook.Enable();
+                Log!.Info($"MaskedCarnivale: IDXGISwapChain::Present hook installed at 0x{presentAddr:X}.");
+            }
+        }
+        catch (Exception e)
+        {
+            Log!.Warning($"MaskedCarnivale: failed to install Present hook ({e.Message}); backbuffer/HUD mode unavailable.");
+        }
     }
 
     private void Destroy()
@@ -420,6 +440,10 @@ public unsafe class Plugin : IDalamudPlugin
 
         hookManager.DisableFunctionHandles();
         hookManager.DisposeFunctionHandles();
+
+        presentHook?.Disable();
+        presentHook?.Dispose();
+        presentHook = null;
 
         smm.CloseSharedMemory();
     }
@@ -686,6 +710,48 @@ public unsafe class Plugin : IDalamudPlugin
         }
     }
 
+    //----
+    // IDXGISwapChain::Present (the real end-of-frame present). Hooked separately so backbuffer
+    // mode can copy the finished frame (which includes the HUD). Because we install this hook
+    // after Dalamud loads, our detour runs before Dalamud's own present detour draws its ImGui
+    // overlays -> copying here yields HUD without WrathCombo/Splatoon (if that ordering holds).
+    //----
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate int DXGISwapChainPresentDg(IntPtr pSwapChain, uint syncInterval, uint flags);
+    private Hook<DXGISwapChainPresentDg>? presentHook = null;
+    private bool loggedBackbufferCopyFail = false;
+
+    private int PresentDetour(IntPtr pSwapChain, uint syncInterval, uint flags)
+    {
+        if (cfg.captureBackbuffer
+            && outputWindowData != null
+            && outputWindowData->isOutputActive > 0
+            && sharedTexture != null)
+        {
+            try
+            {
+                FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device* ffxivDevice = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
+                DeviceContext11 dxDevCon11 = (DeviceContext11)(IntPtr)ffxivDevice->D3D11DeviceContext;
+                SwapChain11 swapChain11 = (SwapChain11)(IntPtr)ffxivDevice->SwapChain->DXGISwapChain;
+
+                // Copy the just-finished backbuffer (game + HUD) into the shared texture. Backbuffer
+                // and shared texture are both full-screen 32bpp BGRA-family, so CopyResource is legal.
+                using Texture2D backBuffer = swapChain11.GetBackBuffer<Texture2D>(0);
+                dxDevCon11.CopyResource(backBuffer, sharedTexture);
+            }
+            catch (Exception e)
+            {
+                if (!loggedBackbufferCopyFail)
+                {
+                    loggedBackbufferCopyFail = true;
+                    Log!.Warning($"MaskedCarnivale: backbuffer copy failed ({e.Message}). Formats/sizes may be incompatible.");
+                }
+            }
+        }
+
+        return presentHook!.Original(pSwapChain, syncInterval, flags);
+    }
+
     private unsafe void DXGIPresentFn(UInt64 a, UInt64 b)
     {
         if (!loggedDetourActive)
@@ -726,66 +792,72 @@ public unsafe class Plugin : IDalamudPlugin
                 CreateTexturesShared(dxDevice11, dxDevCon11);
             }
 
-            // When the user has taken manual control, leave cfg.renderIndex untouched so
-            // the config-window slider drives which render target we mirror. Otherwise use
-            // the automatic Show-UI mapping.
-            if (!cfg.manualIndex)
+            // In backbuffer/HUD mode the swapchain-present hook (PresentDetour) is the sole
+            // writer of the shared texture, so skip the render-target-index shader path here to
+            // avoid fighting over the shared texture each frame.
+            if (!cfg.captureBackbuffer)
             {
-                if (cfg.showUI)
-                    cfg.renderIndex = gameWindowWithUI;
-                else
-                    cfg.renderIndex = gameWindowWithoutUI;
-            }
-
-            cfg.renderIndex = Math.Min(Math.Max(cfg.renderIndex, 0), 511);
-
-            // Validated lookup: never dereferences an out-of-struct / unreadable pointer, so a
-            // bad manual index yields a black frame instead of crashing the game.
-            Texture* rendText = SafeGetTexture(cfg.renderIndex);
-            void* curTexPtr = rendText != null ? rendText->D3D11Texture2D : null;
-
-            // Re-acquire the shader-resource view whenever the underlying D3D texture changes
-            // (the user picked a new index, OR the game recycled the render target at this
-            // index). Caching only on index-change left a stale view pointing at a freed
-            // texture -> the mirror went black after working for a moment. Tracking the actual
-            // texture pointer fixes that while still avoiding a rebuild every single frame.
-            if (curTexPtr != lastCapturedTex)
-            {
-                lastCapturedTex = curTexPtr;
-                selectedSRV?.Dispose();
-                selectedSRV = null;
-
-                if (rendText != null && curTexPtr != null)
+                // When the user has taken manual control, leave cfg.renderIndex untouched so
+                // the config-window slider drives which render target we mirror. Otherwise use
+                // the automatic Show-UI mapping.
+                if (!cfg.manualIndex)
                 {
-                    try
-                    {
-                        Texture2DDescription rt0 = ((Texture2D)(IntPtr)curTexPtr).Description;
+                    if (cfg.showUI)
+                        cfg.renderIndex = gameWindowWithUI;
+                    else
+                        cfg.renderIndex = gameWindowWithoutUI;
+                }
 
-                        if ((rt0.BindFlags & BindFlags.ShaderResource) == BindFlags.ShaderResource)
+                cfg.renderIndex = Math.Min(Math.Max(cfg.renderIndex, 0), 511);
+
+                // Validated lookup: never dereferences an out-of-struct / unreadable pointer, so a
+                // bad manual index yields a black frame instead of crashing the game.
+                Texture* rendText = SafeGetTexture(cfg.renderIndex);
+                void* curTexPtr = rendText != null ? rendText->D3D11Texture2D : null;
+
+                // Re-acquire the shader-resource view whenever the underlying D3D texture changes
+                // (the user picked a new index, OR the game recycled the render target at this
+                // index). Caching only on index-change left a stale view pointing at a freed
+                // texture -> the mirror went black after working for a moment. Tracking the actual
+                // texture pointer fixes that while still avoiding a rebuild every single frame.
+                if (curTexPtr != lastCapturedTex)
+                {
+                    lastCapturedTex = curTexPtr;
+                    selectedSRV?.Dispose();
+                    selectedSRV = null;
+
+                    if (rendText != null && curTexPtr != null)
+                    {
+                        try
                         {
-                            SharpDX.Direct3D11.Resource tmpResource = ((Texture2D)(IntPtr)curTexPtr).QueryInterface<SharpDX.Direct3D11.Resource>();
-                            selectedSRV = new ShaderResourceView(dxDevice11, tmpResource);
-                            tmpResource.Dispose();
+                            Texture2DDescription rt0 = ((Texture2D)(IntPtr)curTexPtr).Description;
+
+                            if ((rt0.BindFlags & BindFlags.ShaderResource) == BindFlags.ShaderResource)
+                            {
+                                SharpDX.Direct3D11.Resource tmpResource = ((Texture2D)(IntPtr)curTexPtr).QueryInterface<SharpDX.Direct3D11.Resource>();
+                                selectedSRV = new ShaderResourceView(dxDevice11, tmpResource);
+                                tmpResource.Dispose();
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            selectedSRV = null;
                         }
                     }
-                    catch (Exception)
-                    {
-                        selectedSRV = null;
-                    }
                 }
+
+                RawColor4 color = new RawColor4(0, 0, 0, 0);
+
+                dxDevCon11.ClearRenderTargetView(sharedRTV, color);
+                dxDevCon11.OutputMerger.SetRenderTargets(sharedRTV);
+                dxDevCon11.Rasterizer.SetViewport(0f, 0f, ffxivDevice->SwapChain->Width, ffxivDevice->SwapChain->Height, 0f, 1f);
+                dxDevCon11.PixelShader.SetSampler(0, pSamplerState);
+                if (selectedSRV != null)
+                    dxDevCon11.PixelShader.SetShaderResource(0, selectedSRV);
+                dxDevCon11.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+                if (orthogSquare != null)
+                    orthogSquare.Render();
             }
-
-            RawColor4 color = new RawColor4(0, 0, 0, 0);
-
-            dxDevCon11.ClearRenderTargetView(sharedRTV, color);
-            dxDevCon11.OutputMerger.SetRenderTargets(sharedRTV);
-            dxDevCon11.Rasterizer.SetViewport(0f, 0f, ffxivDevice->SwapChain->Width, ffxivDevice->SwapChain->Height, 0f, 1f);
-            dxDevCon11.PixelShader.SetSampler(0, pSamplerState);
-            if (selectedSRV != null)
-                dxDevCon11.PixelShader.SetShaderResource(0, selectedSRV);
-            dxDevCon11.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
-            if (orthogSquare != null)
-                orthogSquare.Render();
         }
         //----
         // If the window is not open and we have connected to the shared texture, disconnect from it

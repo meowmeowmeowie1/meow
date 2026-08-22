@@ -14,7 +14,7 @@ public class ConfigWindow : Window, IDisposable
     public ConfigWindow(Plugin plugin) : base("Masked Carnivale")
     {
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
-        Size = new Vector2(370, 380);
+        Size = new Vector2(370, 430);
         SizeCondition = ImGuiCond.Always;
         cfg = plugin.cfg;
         this.plugin = plugin;
@@ -82,7 +82,19 @@ public class ConfigWindow : Window, IDisposable
             // wrong. Turn on "Override index", press "Dump render targets", open /xllog,
             // find the index whose size matches your resolution and is flagged CANDIDATE,
             // then set it here. Changes apply live.
-            ImGui.BeginChild("Capture", new Vector2(350, 150), true);
+            ImGui.BeginChild("Capture", new Vector2(350, 190), true);
+
+            // Backbuffer/HUD mode: capture the final frame (includes the game HUD). Hides
+            // Dalamud overlays only if our present hook runs before Dalamud draws them.
+            bool captureBackbuffer = cfg.captureBackbuffer;
+            if (ImGui.Checkbox("Capture HUD (backbuffer)", ref captureBackbuffer))
+            {
+                cfg.captureBackbuffer = captureBackbuffer;
+                cfg.Save();
+            }
+            if (cfg.captureBackbuffer)
+                ImGui.TextDisabled("Shows HUD. If overlays appear, this mode can't hide them.");
+            ImGui.Separator();
 
             bool manualIndex = cfg.manualIndex;
             if (ImGui.Checkbox("Override index (advanced)", ref manualIndex))

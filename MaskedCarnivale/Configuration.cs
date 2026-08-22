@@ -20,6 +20,11 @@ public class Configuration : IPluginConfiguration
     // hunt for the correct render target after a game-patch offset shift.
     public bool manualIndex { get; set; } = false;
 
+    // When true, capture the final swapchain backbuffer (which includes the game HUD) via a
+    // dedicated present hook, instead of sampling a render-target index. Overlay-free only if
+    // our present hook runs before Dalamud draws its ImGui overlays.
+    public bool captureBackbuffer { get; set; } = false;
+
     public bool doUpdate { get; set; } = false;
 
     // the below exist just to make saving less cumbersome
