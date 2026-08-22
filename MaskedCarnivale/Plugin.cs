@@ -594,6 +594,10 @@ public unsafe class Plugin : IDalamudPlugin
         selectedSRV?.Dispose();
         selectedSRV = null;
         lastCapturedTex = null;
+        hudCopySRV?.Dispose();
+        hudCopySRV = null;
+        hudCopyTex?.Dispose();
+        hudCopyTex = null;
     }
 
 
@@ -722,10 +726,34 @@ public unsafe class Plugin : IDalamudPlugin
     private bool loggedBackbufferCopyFail = false;
     private bool loggedBackbufferCopyOk = false;
 
-    // "Show UI" is the master toggle: ON = capture the final backbuffer (game + HUD),
-    // OFF = mirror the clean 3D scene render target (no HUD). "Override index" (manualIndex)
-    // is an advanced escape hatch that forces a specific render-target index and wins over both.
-    private bool UseBackbuffer => cfg.showUI && !cfg.manualIndex;
+    // "Show UI" is the single master toggle: ON = capture the final backbuffer (game + HUD),
+    // OFF = mirror the clean 3D scene render target (no HUD). The manual-index / candidate
+    // cycler applies ONLY to the no-HUD (Show UI OFF) path, so it can never silently disable
+    // the toggle again.
+    private bool UseBackbuffer => cfg.showUI;
+
+    // Intermediate texture for backbuffer/HUD capture. The swapchain backbuffer has no SRV and
+    // a format that can't be CopyResource'd straight into the shared texture, so we copy it into
+    // this SRV-capable texture (same format => legal copy) and then run it through the same
+    // shader path that already works for scene capture.
+    private Texture2D? hudCopyTex = null;
+    private ShaderResourceView? hudCopySRV = null;
+
+    // Shared render step used by both capture paths: draw the given source view into the shared
+    // texture via the orthographic quad + texture shader (handles any format conversion).
+    private void RenderSrvToShared(DeviceContext11 ctx, ShaderResourceView? srv, float width, float height)
+    {
+        RawColor4 color = new RawColor4(0, 0, 0, 0);
+        ctx.ClearRenderTargetView(sharedRTV, color);
+        ctx.OutputMerger.SetRenderTargets(sharedRTV);
+        ctx.Rasterizer.SetViewport(0f, 0f, width, height, 0f, 1f);
+        ctx.PixelShader.SetSampler(0, pSamplerState);
+        if (srv != null)
+            ctx.PixelShader.SetShaderResource(0, srv);
+        ctx.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+        if (orthogSquare != null)
+            orthogSquare.Render();
+    }
 
     private int PresentDetour(IntPtr pSwapChain, uint syncInterval, uint flags)
     {
@@ -737,13 +765,43 @@ public unsafe class Plugin : IDalamudPlugin
             try
             {
                 FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device* ffxivDevice = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
+                Device11 dxDevice11 = (Device11)(IntPtr)ffxivDevice->D3D11Forwarder;
                 DeviceContext11 dxDevCon11 = (DeviceContext11)(IntPtr)ffxivDevice->D3D11DeviceContext;
                 SwapChain11 swapChain11 = (SwapChain11)(IntPtr)ffxivDevice->SwapChain->DXGISwapChain;
 
-                // Copy the just-finished backbuffer (game + HUD) into the shared texture. Backbuffer
-                // and shared texture are both full-screen 32bpp BGRA-family, so CopyResource is legal.
+                // At the real end-of-frame present, the backbuffer holds game + HUD (and, if our
+                // hook runs before Dalamud's, NOT the plugin overlays). The backbuffer has no SRV
+                // and a format that can't be copied straight to the shared texture, so: copy it
+                // into an SRV-capable intermediate of the SAME format (legal copy), then run that
+                // through the proven shader path into the shared texture.
                 using Texture2D backBuffer = swapChain11.GetBackBuffer<Texture2D>(0);
-                dxDevCon11.CopyResource(backBuffer, sharedTexture);
+                Texture2DDescription bbDesc = backBuffer.Description;
+
+                if (hudCopyTex == null
+                    || hudCopyTex.Description.Width != bbDesc.Width
+                    || hudCopyTex.Description.Height != bbDesc.Height
+                    || hudCopyTex.Description.Format != bbDesc.Format)
+                {
+                    hudCopySRV?.Dispose();
+                    hudCopyTex?.Dispose();
+                    hudCopyTex = new Texture2D(dxDevice11, new Texture2DDescription
+                    {
+                        Width = bbDesc.Width,
+                        Height = bbDesc.Height,
+                        MipLevels = 1,
+                        ArraySize = 1,
+                        Format = bbDesc.Format,
+                        SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
+                        Usage = ResourceUsage.Default,
+                        BindFlags = BindFlags.ShaderResource,
+                        CpuAccessFlags = CpuAccessFlags.None,
+                        OptionFlags = ResourceOptionFlags.None,
+                    });
+                    hudCopySRV = new ShaderResourceView(dxDevice11, hudCopyTex);
+                }
+
+                dxDevCon11.CopyResource(backBuffer, hudCopyTex);
+                RenderSrvToShared(dxDevCon11, hudCopySRV, bbDesc.Width, bbDesc.Height);
 
                 if (!loggedBackbufferCopyOk)
                 {
@@ -756,7 +814,7 @@ public unsafe class Plugin : IDalamudPlugin
                 if (!loggedBackbufferCopyFail)
                 {
                     loggedBackbufferCopyFail = true;
-                    Log!.Warning($"MaskedCarnivale: backbuffer copy failed ({e.Message}). Formats/sizes may be incompatible.");
+                    Log!.Warning($"MaskedCarnivale: backbuffer copy failed ({e.Message}).");
                 }
             }
         }
@@ -851,17 +909,7 @@ public unsafe class Plugin : IDalamudPlugin
                     }
                 }
 
-                RawColor4 color = new RawColor4(0, 0, 0, 0);
-
-                dxDevCon11.ClearRenderTargetView(sharedRTV, color);
-                dxDevCon11.OutputMerger.SetRenderTargets(sharedRTV);
-                dxDevCon11.Rasterizer.SetViewport(0f, 0f, ffxivDevice->SwapChain->Width, ffxivDevice->SwapChain->Height, 0f, 1f);
-                dxDevCon11.PixelShader.SetSampler(0, pSamplerState);
-                if (selectedSRV != null)
-                    dxDevCon11.PixelShader.SetShaderResource(0, selectedSRV);
-                dxDevCon11.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
-                if (orthogSquare != null)
-                    orthogSquare.Render();
+                RenderSrvToShared(dxDevCon11, selectedSRV, ffxivDevice->SwapChain->Width, ffxivDevice->SwapChain->Height);
             }
         }
         //----

@@ -90,8 +90,8 @@ public class ConfigWindow : Window, IDisposable
             // then set it here. Changes apply live.
             ImGui.BeginChild("Capture", new Vector2(350, 150), true);
 
-            ImGui.TextDisabled("Advanced: override the auto capture with a specific");
-            ImGui.TextDisabled("render-target index (for tuning after game patches).");
+            ImGui.TextDisabled("Advanced (no-HUD / Show UI OFF only): pick a specific");
+            ImGui.TextDisabled("scene render-target index. Does nothing when Show UI is ON.");
 
             bool manualIndex = cfg.manualIndex;
             if (ImGui.Checkbox("Override index (advanced)", ref manualIndex))
