@@ -39,7 +39,13 @@ public class ConfigWindow : Window, IDisposable
 
             bool showUI = cfg.showUI;
             if (ImGui.Checkbox("Show UI", ref showUI))
+            {
                 cfg.showUI = showUI;
+                cfg.Save();
+            }
+            ImGui.TextDisabled(cfg.showUI
+                ? "ON: game + HUD (backbuffer capture)."
+                : "OFF: clean scene, no HUD.");
 
 
             ImGui.BeginChild("WindowSettings", new Vector2(350, 120), true);
@@ -82,19 +88,10 @@ public class ConfigWindow : Window, IDisposable
             // wrong. Turn on "Override index", press "Dump render targets", open /xllog,
             // find the index whose size matches your resolution and is flagged CANDIDATE,
             // then set it here. Changes apply live.
-            ImGui.BeginChild("Capture", new Vector2(350, 190), true);
+            ImGui.BeginChild("Capture", new Vector2(350, 150), true);
 
-            // Backbuffer/HUD mode: capture the final frame (includes the game HUD). Hides
-            // Dalamud overlays only if our present hook runs before Dalamud draws them.
-            bool captureBackbuffer = cfg.captureBackbuffer;
-            if (ImGui.Checkbox("Capture HUD (backbuffer)", ref captureBackbuffer))
-            {
-                cfg.captureBackbuffer = captureBackbuffer;
-                cfg.Save();
-            }
-            if (cfg.captureBackbuffer)
-                ImGui.TextDisabled("Shows HUD. If overlays appear, this mode can't hide them.");
-            ImGui.Separator();
+            ImGui.TextDisabled("Advanced: override the auto capture with a specific");
+            ImGui.TextDisabled("render-target index (for tuning after game patches).");
 
             bool manualIndex = cfg.manualIndex;
             if (ImGui.Checkbox("Override index (advanced)", ref manualIndex))

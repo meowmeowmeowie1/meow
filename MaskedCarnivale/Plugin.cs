@@ -720,10 +720,16 @@ public unsafe class Plugin : IDalamudPlugin
     private delegate int DXGISwapChainPresentDg(IntPtr pSwapChain, uint syncInterval, uint flags);
     private Hook<DXGISwapChainPresentDg>? presentHook = null;
     private bool loggedBackbufferCopyFail = false;
+    private bool loggedBackbufferCopyOk = false;
+
+    // "Show UI" is the master toggle: ON = capture the final backbuffer (game + HUD),
+    // OFF = mirror the clean 3D scene render target (no HUD). "Override index" (manualIndex)
+    // is an advanced escape hatch that forces a specific render-target index and wins over both.
+    private bool UseBackbuffer => cfg.showUI && !cfg.manualIndex;
 
     private int PresentDetour(IntPtr pSwapChain, uint syncInterval, uint flags)
     {
-        if (cfg.captureBackbuffer
+        if (UseBackbuffer
             && outputWindowData != null
             && outputWindowData->isOutputActive > 0
             && sharedTexture != null)
@@ -738,6 +744,12 @@ public unsafe class Plugin : IDalamudPlugin
                 // and shared texture are both full-screen 32bpp BGRA-family, so CopyResource is legal.
                 using Texture2D backBuffer = swapChain11.GetBackBuffer<Texture2D>(0);
                 dxDevCon11.CopyResource(backBuffer, sharedTexture);
+
+                if (!loggedBackbufferCopyOk)
+                {
+                    loggedBackbufferCopyOk = true;
+                    Log!.Info("MaskedCarnivale: backbuffer copy active (HUD mode).");
+                }
             }
             catch (Exception e)
             {
@@ -795,18 +807,11 @@ public unsafe class Plugin : IDalamudPlugin
             // In backbuffer/HUD mode the swapchain-present hook (PresentDetour) is the sole
             // writer of the shared texture, so skip the render-target-index shader path here to
             // avoid fighting over the shared texture each frame.
-            if (!cfg.captureBackbuffer)
+            if (!UseBackbuffer)
             {
-                // When the user has taken manual control, leave cfg.renderIndex untouched so
-                // the config-window slider drives which render target we mirror. Otherwise use
-                // the automatic Show-UI mapping.
+                // Show UI OFF (and not manually overridden) => mirror the clean scene buffer.
                 if (!cfg.manualIndex)
-                {
-                    if (cfg.showUI)
-                        cfg.renderIndex = gameWindowWithUI;
-                    else
-                        cfg.renderIndex = gameWindowWithoutUI;
-                }
+                    cfg.renderIndex = gameWindowWithoutUI;
 
                 cfg.renderIndex = Math.Min(Math.Max(cfg.renderIndex, 0), 511);
 
