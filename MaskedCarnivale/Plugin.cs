@@ -67,11 +67,12 @@ public unsafe class Plugin : IDalamudPlugin
     private bool isEnabled = false;
     private int shareMemType = 0;
     // Flat indices into the RenderTargetManager Texture* table (base + 0x20 + 0x8*index).
-    // These drift when the game's RenderTargetManager layout changes across patches.
-    // 170 == current SwapChainBackBuffer anchor ((0x570-0x20)/8). If the mirror is black,
-    // enable "Override index" in the config and use "Dump render targets" to find the
-    // correct value for the live game build.
-    private int gameWindowWithUI = 170;
+    // These drift when the game's RenderTargetManager layout changes across patches, so if the
+    // mirror goes black after an update, enable "Override index" in the config and use "Dump
+    // render targets" to find the new values (look for CANDIDATE entries in /xllog).
+    //   204 = final composited frame WITH the game HUD (alternate: 106), overlay-free.
+    //    71 = clean 3D scene, no HUD (the game's HDR scene buffer).
+    private int gameWindowWithUI = 204;
     private int gameWindowWithoutUI = 71;
 
     // Output-window (outputwindow.exe) process + one-shot rename bookkeeping. The native

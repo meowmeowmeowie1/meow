@@ -102,12 +102,7 @@ public class ConfigWindow : Window, IDisposable
                     cfg.Save();
                 }
 
-                // Quick win: index 170 is the game backbuffer (guaranteed non-black).
-                if (ImGui.Button("Use game backbuffer (170)"))
-                {
-                    cfg.renderIndex = 170;
-                    cfg.Save();
-                }
+                ImGui.TextDisabled("Try 204 or 106 (with HUD), or 71 (no HUD).");
             }
             else
             {
