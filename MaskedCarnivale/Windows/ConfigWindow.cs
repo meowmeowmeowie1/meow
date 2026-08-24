@@ -13,9 +13,7 @@ public class ConfigWindow : Window, IDisposable
 
     public ConfigWindow(Plugin plugin) : base("Masked Carnivale")
     {
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
-        Size = new Vector2(370, 430);
-        SizeCondition = ImGuiCond.Always;
+        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize;
         cfg = plugin.cfg;
         this.plugin = plugin;
     }
@@ -29,12 +27,11 @@ public class ConfigWindow : Window, IDisposable
     {
         ShowKofi();
 
-        if (ImGui.BeginChild("Options"))
         {
             bool enable = cfg.enable;
             if (ImGui.Checkbox("Enable", ref enable))
                 cfg.enable = enable;
-            
+
             ImGui.SameLine();
 
             bool showUI = cfg.showUI;
@@ -83,54 +80,46 @@ public class ConfigWindow : Window, IDisposable
             }
             ImGui.EndChild();
 
-            // ---- Capture / render-target controls ----
-            // If the mirror is black after a game patch, the automatic render index is
-            // wrong. Turn on "Override index", press "Dump render targets", open /xllog,
-            // find the index whose size matches your resolution and is flagged CANDIDATE,
-            // then set it here. Changes apply live.
-            ImGui.BeginChild("Capture", new Vector2(350, 150), true);
-
-            ImGui.TextDisabled("Advanced (no-HUD / Show UI OFF only): pick a specific");
-            ImGui.TextDisabled("scene render-target index. Does nothing when Show UI is ON.");
-
-            bool manualIndex = cfg.manualIndex;
-            if (ImGui.Checkbox("Override index (advanced)", ref manualIndex))
+            // ---- Advanced capture tuning (collapsed by default) ----
+            // Only needed if the mirror breaks after a game patch: turn on "Override index",
+            // use "Dump render targets" (writes to /xllog) or the candidate cycler to find a
+            // full-res scene buffer, and set it. Applies only to the no-HUD (Show UI OFF) path.
+            if (ImGui.CollapsingHeader("Advanced (capture tuning)"))
             {
-                cfg.manualIndex = manualIndex;
-                cfg.Save();
-            }
+                ImGui.TextDisabled("No-HUD / Show UI OFF only. Ignored when Show UI is ON.");
 
-            if (cfg.manualIndex)
-            {
-                int renderIndex = cfg.renderIndex;
-                if (ImGui.InputInt("Render index", ref renderIndex))
+                bool manualIndex = cfg.manualIndex;
+                if (ImGui.Checkbox("Override index", ref manualIndex))
                 {
-                    if (renderIndex < 0) renderIndex = 0;
-                    if (renderIndex > 511) renderIndex = 511;
-                    cfg.renderIndex = renderIndex;
+                    cfg.manualIndex = manualIndex;
                     cfg.Save();
                 }
 
-                // Cycle only through full-resolution targets that have a usable view.
-                if (ImGui.Button("< Prev candidate"))
-                    plugin.StepCandidate(-1);
-                ImGui.SameLine();
-                if (ImGui.Button("Next candidate >"))
-                    plugin.StepCandidate(1);
+                if (cfg.manualIndex)
+                {
+                    int renderIndex = cfg.renderIndex;
+                    if (ImGui.InputInt("Render index", ref renderIndex))
+                    {
+                        if (renderIndex < 0) renderIndex = 0;
+                        if (renderIndex > 511) renderIndex = 511;
+                        cfg.renderIndex = renderIndex;
+                        cfg.Save();
+                    }
 
-                ImGui.TextDisabled(plugin.GetCurrentIndexInfo());
+                    // Cycle only through full-resolution targets that have a usable view.
+                    if (ImGui.Button("< Prev candidate"))
+                        plugin.StepCandidate(-1);
+                    ImGui.SameLine();
+                    if (ImGui.Button("Next candidate >"))
+                        plugin.StepCandidate(1);
+
+                    ImGui.TextDisabled(plugin.GetCurrentIndexInfo());
+                }
+
+                if (ImGui.Button("Dump render targets to /xllog"))
+                    plugin.DumpRenderTargets();
             }
-            else
-            {
-                ImGui.TextDisabled("Using automatic index (toggle Show UI above).");
-            }
-
-            if (ImGui.Button("Dump render targets to /xllog"))
-                plugin.DumpRenderTargets();
-
-            ImGui.EndChild();
         }
-        ImGui.EndChild();
     }
     private void ShowKofi()
     {
