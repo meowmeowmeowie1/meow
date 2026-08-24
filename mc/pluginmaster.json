@@ -6,7 +6,7 @@
     "AssemblyVersion": "0.1.0.9",
     "TestingAssemblyVersion": "0.1.0.9",
     "Punchline": "Display the game in a separate window.",
-    "Description": "Renders a separate, overlay-free window mirroring the game so you can stream/record (Discord, Medal, OBS) without Dalamud plugin overlays showing. Opened with /carnivale. Unofficial API-15 port of ProjectMimer's MaskedCarnivale.",
+    "Description": "Renders a separate window mirroring the game (with your HUD) so you can stream/record (Discord, Medal) without Dalamud plugin overlays showing. Opened with /carnivale. Unofficial API-15 port of ProjectMimer's MaskedCarnivale.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
     "Tags": ["utility"],
