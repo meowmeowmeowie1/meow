@@ -7,6 +7,7 @@ const ST = "com.mytweak.wrath.st";
 const AOE = "com.mytweak.wrath.aoe";
 const BURST = "com.mytweak.wrath.burst";
 const BURST1 = "com.mytweak.wrath.burst1";
+const POS = "com.mytweak.wrath.pos";
 const POTION = "com.mytweak.wrath.potion";
 
 let ws = null;
@@ -124,6 +125,10 @@ async function loop() {
         else if (action === AOE) await renderAction(ctx, d.aoe);
         else if (action === BURST) show(ctx, "Burst\n" + (d.burst || "—"), "");
         else if (action === BURST1) show(ctx, "1min\n" + (d.burst1 || "—"), "");
+        else if (action === POS) {
+          const z = (d.pos && d.pos.zone) || "—";
+          show(ctx, d.pos && d.pos.tn ? z + "\nTN" : z, "");
+        }
         else if (action === POTION) show(ctx, "Pot\n" + (d.potion || "—"), "");
       }
     } else {
