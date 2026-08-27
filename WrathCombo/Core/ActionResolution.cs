@@ -197,6 +197,28 @@ internal static class ActionResolution
     internal static bool ToggleBurst1(out string state) =>
         ToggleBurst(WrathCombo.Burst1PresetMap, out state);
 
+    /// <summary>
+    ///     Current melee positional zone relative to the target, plus whether
+    ///     True North is active. Zone is "—" for non-melee jobs or no target.
+    ///     Read by the tracker window and the Stream Deck bridge.
+    /// </summary>
+    internal static (string Zone, bool TrueNorth) GetPositional()
+    {
+        if (Player.Object == null || !Player.Job.IsMeleeDps())
+            return ("—", false);
+
+        var tn = CustomComboFunctions.HasStatusEffect(
+            Combos.PvE.RoleActions.Melee.Buffs.TrueNorth);
+        var zone = CustomComboFunctions.AngleToTarget() switch
+        {
+            CustomComboFunctions.AttackAngle.Front => "FRONT",
+            CustomComboFunctions.AttackAngle.Flank => "FLANK",
+            CustomComboFunctions.AttackAngle.Rear => "REAR",
+            _ => "—",
+        };
+        return (zone, tn);
+    }
+
     /// <inheritdoc cref="ToggleBurst(out string)" />
     internal static bool ToggleBurst(
         System.Collections.Generic.Dictionary<ECommons.ExcelServices.Job, Preset[]> map,

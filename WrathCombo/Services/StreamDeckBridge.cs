@@ -42,7 +42,8 @@ internal static class StreamDeckBridge
     public static int Port { get; private set; }
 
     private static readonly object _lock = new();
-    private static string _job = "—", _burst = "—", _burst1 = "—";
+    private static string _job = "—", _burst = "—", _burst1 = "—", _posZone = "—";
+    private static bool _posTn;
     private static bool _stHas, _aoeHas;
     private static uint _stId, _aoeId;
     private static string _stName = "—", _aoeName = "—";
@@ -122,6 +123,8 @@ internal static class StreamDeckBridge
                     _stIcon = _aoeIcon = 0;
                     _burst = "—";
                     _burst1 = "—";
+                    _posZone = "—";
+                    _posTn = false;
                 }
                 return;
             }
@@ -137,6 +140,7 @@ internal static class StreamDeckBridge
                 false => "ARMED",
                 _ => "—",
             };
+            var (posZone, posTn) = ActionResolution.GetPositional();
             var burst1 = ActionResolution.IsBurst1Held() switch
             {
                 true => "HELD",
@@ -157,6 +161,8 @@ internal static class StreamDeckBridge
                 _aoeIcon = aoeHas ? ActionResolution.ActionIcon(aoe) : (ushort)0;
                 _burst = burst;
                 _burst1 = burst1;
+                _posZone = posZone;
+                _posTn = posTn;
             }
         }
         catch
@@ -435,7 +441,8 @@ internal static class StreamDeckBridge
                    $"\"aoe\":{{\"has\":{Bool(_aoeHas)},\"id\":{_aoeId}," +
                    $"\"name\":\"{Esc(_aoeName)}\",\"icon\":{_aoeIcon}}}," +
                    $"\"burst\":\"{Esc(_burst)}\"," +
-                   $"\"burst1\":\"{Esc(_burst1)}\"" +
+                   $"\"burst1\":\"{Esc(_burst1)}\"," +
+                   $"\"pos\":{{\"zone\":\"{Esc(_posZone)}\",\"tn\":{Bool(_posTn)}}}" +
                    "}";
     }
 

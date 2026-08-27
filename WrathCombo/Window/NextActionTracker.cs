@@ -112,5 +112,27 @@ internal sealed class NextActionTracker : Dalamud.Interface.Windowing.Window
         ImGui.PushStyleColor(ImGuiCol.Text, color);
         ImGui.TextUnformatted(text);
         ImGui.PopStyleColor();
+
+        DrawPositional();
+    }
+
+    private static void DrawPositional()
+    {
+        var (zone, tn) = ActionResolution.GetPositional();
+        if (zone == "—" && !tn)
+            return; // non-melee or no target: keep the window compact
+
+        var color = zone switch
+        {
+            "REAR" or "FLANK" => ImGuiColors.HealerGreen,
+            "FRONT" => ImGuiColors.DalamudOrange,
+            _ => ImGuiColors.DalamudGrey,
+        };
+        if (tn)
+            color = ImGuiColors.ParsedBlue; // positionals always hit under TN
+
+        ImGui.PushStyleColor(ImGuiCol.Text, color);
+        ImGui.TextUnformatted(tn ? $"Pos: {zone}  (TN)" : $"Pos: {zone}");
+        ImGui.PopStyleColor();
     }
 }
