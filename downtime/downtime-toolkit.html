@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FFXIV Downtime Toolkit</title>
+<style>
+  :root {
+    --bg: #12141a; --panel: #1b1e27; --panel2: #232734; --border: #2e3342;
+    --text: #d7dae3; --dim: #8b90a0; --accent: #7aa2f7; --green: #9ece6a;
+    --yellow: #e0af68; --red: #f7768e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh; padding: 1.2rem;
+  }
+  h1 { font-size: 1.15rem; font-weight: 600; margin-bottom: .2rem; }
+  .sub { color: var(--dim); font-size: .8rem; margin-bottom: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem;
+  }
+  .card h2 {
+    font-size: .8rem; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--dim); margin-bottom: .7rem;
+  }
+  .big {
+    font-variant-numeric: tabular-nums; font-weight: 700; text-align: center;
+    font-size: 4.2rem; line-height: 1.1; margin: .4rem 0;
+  }
+  .big.ready   { color: var(--text); }
+  .big.running { color: var(--accent); }
+  .big.warn    { color: var(--yellow); }
+  .big.go      { color: var(--green); }
+  button {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 7px; padding: .45rem .9rem; font-size: .85rem; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #10131a; border-color: var(--accent); font-weight: 600; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; justify-content: center; }
+  .hint { color: var(--dim); font-size: .72rem; text-align: center; margin-top: .55rem; }
+  kbd {
+    background: var(--panel2); border: 1px solid var(--border); border-bottom-width: 2px;
+    border-radius: 4px; padding: 0 .35em; font-size: .9em; font-family: inherit;
+  }
+  input[type=number], input[type=date], textarea {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: .35rem .5rem; font-size: .85rem;
+  }
+  input[type=number] { width: 4.2rem; text-align: center; }
+  textarea { width: 100%; min-height: 9rem; resize: vertical; font-family: inherit; line-height: 1.45; }
+  ul.splits { list-style: none; margin-top: .6rem; font-size: .82rem; color: var(--dim); max-height: 7rem; overflow-y: auto; }
+  ul.splits li { display: flex; justify-content: space-between; padding: .12rem .3rem; }
+  ul.splits li span:last-child { font-variant-numeric: tabular-nums; color: var(--text); }
+  .status-line { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid var(--border); font-size: .85rem; }
+  .status-line:last-of-type { border-bottom: none; }
+  .pill { font-size: .7rem; font-weight: 700; border-radius: 99px; padding: .12rem .55rem; white-space: nowrap; }
+  .pill.ready   { background: rgba(158,206,106,.16); color: var(--green); }
+  .pill.pending { background: rgba(224,175,104,.16); color: var(--yellow); }
+  .pill.unknown { background: rgba(139,144,160,.16); color: var(--dim); }
+  .detail { color: var(--dim); font-size: .72rem; margin: .1rem 0 .3rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .subtimer { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .45rem 0; border-bottom: 1px solid var(--border); }
+  .subtimer:last-child { border-bottom: none; }
+  .subtimer .time { font-variant-numeric: tabular-nums; font-size: 1.35rem; font-weight: 600; min-width: 4.6rem; text-align: right; }
+  .subtimer .time.warn { color: var(--yellow); }
+  .subtimer .time.done { color: var(--red); }
+  .subtimer .label { font-size: .85rem; }
+  .subtimer .label small { display: block; color: var(--dim); font-size: .7rem; }
+</style>
+</head>
+<body>
+  <h1>FFXIV Downtime Toolkit</h1>
+  <p class="sub">Plugin-free stand-ins for patch day, while Dalamud and FFXIV_ACT_Plugin catch up. Run this on a second monitor next to the game.</p>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2>Pull countdown</h2>
+      <div id="pullDisplay" class="big ready">17</div>
+      <div class="row">
+        <button class="primary" id="pullBtn">Start</button>
+        <label>Length <input type="number" id="pullLen" min="3" max="30" value="17"> s</label>
+      </div>
+      <p class="hint"><kbd>Space</kbd> start / cancel &nbsp;·&nbsp; beeps at 3&#8209;2&#8209;1 and PULL, like an in&#8209;game <code>/cd</code></p>
+    </div>
+
+    <div class="card">
+      <h2>Fight stopwatch</h2>
+      <div id="swDisplay" class="big ready">0:00.0</div>
+      <div class="row">
+        <button class="primary" id="swBtn">Start</button>
+        <button id="swSplit">Split</button>
+        <button id="swReset">Reset</button>
+      </div>
+      <p class="hint"><kbd>S</kbd> start / stop &nbsp;·&nbsp; <kbd>Enter</kbd> split (mark phases / mechanics) &nbsp;·&nbsp; <kbd>R</kbd> reset</p>
+      <ul class="splits" id="splits"></ul>
+    </div>
+
+    <div class="card">
+      <h2>Consumable timers</h2>
+      <div class="subtimer">
+        <div class="label">Food (Well Fed)<small>warns 5 min before it falls off</small></div>
+        <span class="time" id="foodTime">30:00</span>
+        <button id="foodBtn">Eat</button>
+      </div>
+      <div class="subtimer">
+        <div class="label">Potion cooldown<small>270 s shared grade cooldown</small></div>
+        <span class="time" id="potTime">4:30</span>
+        <button id="potBtn">Pot</button>
+      </div>
+      <div class="subtimer">
+        <div class="label">Custom<small>minutes of your choice</small></div>
+        <span class="time" id="custTime">10:00</span>
+        <span class="row"><input type="number" id="custLen" min="1" max="180" value="10"><button id="custBtn">Go</button></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Plugin status</h2>
+      <div class="row" style="justify-content:flex-start; margin-bottom:.5rem">
+        <button class="primary" id="statusBtn">Check now</button>
+        <label style="font-size:.78rem; color:var(--dim)">Patch day <input type="date" id="patchDate"></label>
+      </div>
+      <div class="status-line"><span>Dalamud</span><span class="pill unknown" id="dalamudPill">not checked</span></div>
+      <p class="detail" id="dalamudDetail">Compares the official release API's supported game version.</p>
+      <div class="status-line"><span>FFXIV_ACT_Plugin</span><span class="pill unknown" id="actPill">not checked</span></div>
+      <p class="detail" id="actDetail">Compares ravahn's latest GitHub release date against patch day.</p>
+      <p class="hint" style="text-align:left">
+        Links: <a href="https://github.com/goatcorp/Dalamud" target="_blank" rel="noopener">Dalamud</a> ·
+        <a href="https://github.com/ravahn/FFXIV_ACT_Plugin/releases" target="_blank" rel="noopener">FFXIV_ACT_Plugin releases</a> ·
+        <a href="https://na.finalfantasyxiv.com/lodestone/news/" target="_blank" rel="noopener">Lodestone news</a>
+      </p>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1">
+      <h2>Fight notes</h2>
+      <textarea id="notes" placeholder="Mechanic timelines, mit assignments, priorities... saved automatically in this browser."></textarea>
+    </div>
+
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- audio ----------
+  let audioCtx = null;
+  function beep(freq, ms, gainVal = 0.25) {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = freq;
+      gain.gain.value = gainVal;
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + ms / 1000);
+    } catch (e) { /* audio blocked until first interaction */ }
+  }
+
+  const fmtClock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+  // ---------- pull countdown ----------
+  const pullDisplay = document.getElementById('pullDisplay');
+  const pullBtn = document.getElementById('pullBtn');
+  const pullLen = document.getElementById('pullLen');
+  let pullTimer = null, pullEnd = 0, pullLastWhole = null;
+
+  function pullStop(label) {
+    clearInterval(pullTimer); pullTimer = null; pullLastWhole = null;
+    pullBtn.textContent = 'Start';
+    pullDisplay.className = 'big ready';
+    pullDisplay.textContent = label ?? pullLen.value;
+  }
+  function pullTick() {
+    const left = (pullEnd - performance.now()) / 1000;
+    if (left <= 0) {
+      beep(1320, 500, 0.35);
+      pullDisplay.className = 'big go';
+      pullDisplay.textContent = 'PULL';
+      clearInterval(pullTimer); pullTimer = null;
+      pullBtn.textContent = 'Start';
+      setTimeout(() => { if (!pullTimer) pullStop(); }, 2500);
+      return;
+    }
+    const whole = Math.ceil(left);
+    if (whole !== pullLastWhole) {
+      pullLastWhole = whole;
+      if (whole <= 3) beep(880, 180);
+    }
+    pullDisplay.className = whole <= 5 ? 'big warn' : 'big running';
+    pullDisplay.textContent = whole;
+  }
+  function pullToggle() {
+    if (pullTimer) { pullStop(); return; }
+    pullEnd = performance.now() + Number(pullLen.value) * 1000;
+    pullBtn.textContent = 'Cancel';
+    pullTimer = setInterval(pullTick, 100);
+    pullTick();
+  }
+  pullBtn.addEventListener('click', pullToggle);
+  pullLen.addEventListener('change', () => { if (!pullTimer) pullDisplay.textContent = pullLen.value; });
+
+  // ---------- stopwatch ----------
+  const swDisplay = document.getElementById('swDisplay');
+  const swBtn = document.getElementById('swBtn');
+  const splitsEl = document.getElementById('splits');
+  let swTimer = null, swStart = 0, swElapsed = 0, splitCount = 0;
+
+  const swFmt = ms => {
+    const t = ms / 1000;
+    return `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}.${Math.floor((t % 1) * 10)}`;
+  };
+  function swRender() { swDisplay.textContent = swFmt(swElapsed + (swTimer ? performance.now() - swStart : 0)); }
+  function swToggle() {
+    if (swTimer) {
+      swElapsed += performance.now() - swStart;
+      clearInterval(swTimer); swTimer = null;
+      swBtn.textContent = 'Start';
+      swDisplay.className = 'big ready';
+    } else {
+      swStart = performance.now();
+      swTimer = setInterval(swRender, 100);
+      swBtn.textContent = 'Stop';
+      swDisplay.className = 'big running';
+    }
+    swRender();
+  }
+  function swSplit() {
+    if (!swTimer && swElapsed === 0) return;
+    const now = swElapsed + (swTimer ? performance.now() - swStart : 0);
+    const li = document.createElement('li');
+    li.innerHTML = `<span>#${++splitCount}</span><span>${swFmt(now)}</span>`;
+    splitsEl.prepend(li);
+  }
+  function swReset() {
+    clearInterval(swTimer); swTimer = null; swElapsed = 0; splitCount = 0;
+    splitsEl.innerHTML = '';
+    swBtn.textContent = 'Start';
+    swDisplay.className = 'big ready';
+    swDisplay.textContent = '0:00.0';
+  }
+  swBtn.addEventListener('click', swToggle);
+  document.getElementById('swSplit').addEventListener('click', swSplit);
+  document.getElementById('swReset').addEventListener('click', swReset);
+
+  // ---------- consumable timers ----------
+  function makeCountdown(timeEl, btn, getSeconds, { warnAt = 0, doneMsg = '0:00' } = {}) {
+    let timer = null, end = 0, warned = false;
+    function render() {
+      const left = Math.max(0, (end - Date.now()) / 1000);
+      timeEl.textContent = fmtClock(Math.ceil(left));
+      if (warnAt && left <= warnAt && left > 0 && !warned) {
+        warned = true;
+        timeEl.className = 'time warn';
+        beep(660, 250); setTimeout(() => beep(660, 250), 350);
+      }
+      if (left <= 0) {
+        clearInterval(timer); timer = null;
+        timeEl.className = 'time done';
+        timeEl.textContent = doneMsg;
+        beep(520, 300); setTimeout(() => beep(440, 450), 380);
+      }
+    }
+    btn.addEventListener('click', () => {
+      clearInterval(timer);
+      warned = false;
+      timeEl.className = 'time';
+      end = Date.now() + getSeconds() * 1000;
+      timer = setInterval(render, 1000);
+      render();
+    });
+  }
+  makeCountdown(document.getElementById('foodTime'), document.getElementById('foodBtn'),
+    () => 30 * 60, { warnAt: 5 * 60, doneMsg: 'EAT!' });
+  makeCountdown(document.getElementById('potTime'), document.getElementById('potBtn'),
+    () => 270, { doneMsg: 'READY' });
+  makeCountdown(document.getElementById('custTime'), document.getElementById('custBtn'),
+    () => Number(document.getElementById('custLen').value) * 60, { doneMsg: 'DONE' });
+
+  // ---------- plugin status ----------
+  const patchDateInput = document.getElementById('patchDate');
+  patchDateInput.value = localStorage.getItem('ffxiv-dt-patchdate') || '';
+  patchDateInput.addEventListener('change', () => localStorage.setItem('ffxiv-dt-patchdate', patchDateInput.value));
+
+  function setPill(pill, detail, state, text, detailText) {
+    pill.className = `pill ${state}`;
+    pill.textContent = text;
+    detail.textContent = detailText;
+  }
+  async function checkStatus() {
+    const dalamudPill = document.getElementById('dalamudPill');
+    const dalamudDetail = document.getElementById('dalamudDetail');
+    const actPill = document.getElementById('actPill');
+    const actDetail = document.getElementById('actDetail');
+    const patchDay = patchDateInput.value ? new Date(patchDateInput.value + 'T00:00:00Z') : null;
+
+    setPill(dalamudPill, dalamudDetail, 'unknown', 'checking…', 'Contacting release API…');
+    setPill(actPill, actDetail, 'unknown', 'checking…', 'Contacting GitHub…');
+
+    try {
+      const r = await fetch('https://kamori.goats.dev/Dalamud/Release/VersionInfo?track=release');
+      const j = await r.json();
+      const supported = j.supportedGameVer || j.SupportedGameVer || '?';
+      const m = /^(\d{4})\.(\d{2})\.(\d{2})/.exec(supported);
+      const supportedDate = m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
+      if (patchDay && supportedDate) {
+        const ready = supportedDate >= patchDay;
+        setPill(dalamudPill, dalamudDetail, ready ? 'ready' : 'pending', ready ? 'READY' : 'PENDING',
+          `v${j.assemblyVersion || '?'} supports game ${supported}${ready ? '' : ' — older than patch day'}`);
+      } else {
+        setPill(dalamudPill, dalamudDetail, 'unknown', 'info',
+          `v${j.assemblyVersion || '?'} supports game ${supported} — set patch day above for a verdict`);
+      }
+    } catch (e) {
+      setPill(dalamudPill, dalamudDetail, 'unknown', 'error', `Release API unreachable from the browser (${e.message}). Use Watch-FFXIVPlugins.ps1 instead.`);
+    }
+
+    try {
+      const r = await fetch('https://api.github.com/repos/ravahn/FFXIV_ACT_Plugin/releases/latest');
+      const j = await r.json();
+      const published = new Date(j.published_at);
+      const pubStr = published.toISOString().slice(0, 10);
+      if (patchDay) {
+        const ready = published >= patchDay;
+        setPill(actPill, actDetail, ready ? 'ready' : 'pending', ready ? 'READY' : 'PENDING',
+          `${j.tag_name} published ${pubStr} — ${ready ? 'after' : 'before'} patch day`);
+      } else {
+        setPill(actPill, actDetail, 'unknown', 'info',
+          `${j.tag_name} published ${pubStr} — set patch day above for a verdict`);
+      }
+    } catch (e) {
+      setPill(actPill, actDetail, 'unknown', 'error', `GitHub unreachable (${e.message}).`);
+    }
+  }
+  document.getElementById('statusBtn').addEventListener('click', checkStatus);
+  setInterval(checkStatus, 5 * 60 * 1000);
+
+  // ---------- notes ----------
+  const notes = document.getElementById('notes');
+  notes.value = localStorage.getItem('ffxiv-dt-notes') || '';
+  notes.addEventListener('input', () => localStorage.setItem('ffxiv-dt-notes', notes.value));
+
+  // ---------- hotkeys ----------
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+    if (e.code === 'Space') { e.preventDefault(); pullToggle(); }
+    else if (e.key === 's' || e.key === 'S') swToggle();
+    else if (e.key === 'Enter') swSplit();
+    else if (e.key === 'r' || e.key === 'R') swReset();
+  });
+})();
+</script>
+</body>
+</html>

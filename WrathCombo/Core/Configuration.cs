@@ -71,6 +71,14 @@ public partial class Configuration : IPluginConfiguration
     [Setting(Setting.Type.Toggle)]
     public bool PerformanceMode = false;
 
+    /// Master gate for automatic potion use in openers. When off, every job's
+    /// "Include Potion?" opener option is ignored and no potion is used. This is
+    /// the global switch behind the Stream Deck potion key. Default: false.
+    /// <seealso cref="CustomComboNS.WrathOpener"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool EnableAutomaticPotions = false;
+
     /// Mirrors the action-press pulse animation onto every hotbar copy of an
     /// action, not just the slot whose keybind was pressed. Default: false.
     /// <seealso cref="Tweaks.ActionPressMirroring"/>
@@ -231,7 +239,7 @@ public partial class Configuration : IPluginConfiguration
 
     #region Rotation Behavior Settings
 
-    /// Whether all Combos should be <see cref="All.SavageBlade"/> when moving. Default: false.
+    /// Whether all Combos should be <see cref="All.Cease"/> when moving. Default: false.
     /// <seealso cref="ActionReplacer.GetAdjustedAction"/>
     [SettingCategory(Rotation_Behavior_Options)]
     [Setting(Setting.Type.Toggle)]
@@ -450,6 +458,11 @@ public partial class Configuration : IPluginConfiguration
     public Dictionary<Preset, bool> AutoActions { get; set; } = [];
 
     public Dictionary<uint, uint> IgnoredNPCs { get; set; } = new();
+
+    // Occult Crescent: cached elemental weaknesses per BNpc base id, used by the
+    // OccultCrescent combos to pick the right phantom-job element. Added upstream
+    // in the 9a491ae5cf49 sync; ported here because the synced combo code needs it.
+    public Dictionary<uint, uint[]> ElementalWeaknessCache = [];
 
     // MyTweak master kill-switch: when true, combo icon replacement AND the
     // KBM action-press mirror both short-circuit. Slash: /mytweak disable.

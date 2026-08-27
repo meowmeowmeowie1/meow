@@ -1,10 +1,10 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
-using ECommons.DalamudServices;
+﻿using ECommons.DalamudServices;
 using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using ECommons.MathHelpers;
 using System.Collections.Frozen;
 using System.Linq;
+using WrathCombo.Extensions;
 using static WrathCombo.CustomComboNS.Functions.CustomComboFunctions;
 
 
@@ -130,16 +130,9 @@ namespace WrathCombo.Data.BattleData
                         bool pause = false;
 
                         // There can be two of these objects, only one appears to be active.
-                        IGameObject? motionScannerHelper;
-                        unsafe
-                        {
-                            motionScannerHelper = Svc.Objects.FirstOrDefault(x =>
-                                x.BaseId == 0x4C2D &&
-                                x.Address != 0 &&
-                                (int)x.Struct()->RenderFlags == 0);
-                        }
-
-                        if (motionScannerHelper is IGameObject scanner)
+                        if (Svc.Objects.GetBattleCharas().FirstOrDefault(x =>
+                            x.BaseId == 0x4C2D &&
+                            x.IsCharacterVisible()) is { } scanner)
                         {
                             var facingdirection = MathHelper.GetCardinalDirection(MathHelper.RadToDeg(scanner.Rotation));
 
@@ -246,6 +239,20 @@ namespace WrathCombo.Data.BattleData
                         49182, 49179 // Shinryu & Hollow King Super Nova, Empty Proclamation
                     }.ToFrozenSet();
 
+                    break;
+
+                case 1346: //The Forked Tower: Magic
+                           // Two-headed Aevis Blue Head = 14491
+                           // Two-headed Aevis Green Head = 14490
+                    _invincibleCheck = (_, targetID, _) =>
+                    {
+                        if (targetID is 14491 or 14490)
+                        {
+                            if (HasStatusEffect(4192)) return Result(targetID != 14491); // Two-headed Aevis Blue Head
+                            if (HasStatusEffect(4194)) return Result(targetID != 14490); // Two-headed Aevis Green Head
+                        }
+                        return Invincible.False;
+                    };
                     break;
                 default:
                     dataLoaded = false;

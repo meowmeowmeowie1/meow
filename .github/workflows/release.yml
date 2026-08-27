@@ -3,11 +3,17 @@ name: build
 on:
   push:
     branches:
+      - claude/ffxiv-plugin-downtime-alt-w9vr1r
       - claude/affectionate-johnson-sJ0GR
       - claude/keen-sagan-OCJeZ
     paths-ignore:
       - 'pluginmaster.json'
-      - 'README.md'
+      - '**/*.md'
+      - '**/*.ps1'
+      - 'downtime/**'
+      - 'MaskedCarnivale/**'
+      - '.github/workflows/maskedcarnivale.yml'
+      - 'mc/**'
   workflow_dispatch:
 
 permissions:
@@ -69,10 +75,23 @@ jobs:
           cp "$zip" MyTweak.zip
           echo "zip=MyTweak.zip" >> "$GITHUB_OUTPUT"
 
+      # Package the Stream Deck companion plugin. A .streamDeckPlugin file is
+      # just a zip with the .sdPlugin folder at its root; double-clicking it
+      # installs the plugin into the Stream Deck app.
+      - name: Package Stream Deck plugin
+        id: sdplugin
+        run: |
+          cd streamdeck
+          zip -r -q ../MyTweak-StreamDeck.streamDeckPlugin com.mytweak.wrath.sdPlugin
+          cd ..
+          echo "file=MyTweak-StreamDeck.streamDeckPlugin" >> "$GITHUB_OUTPUT"
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: mytweak-v${{ steps.ver.outputs.version }}
           name: MyTweak v${{ steps.ver.outputs.version }}
           make_latest: true
-          files: ${{ steps.pkg.outputs.zip }}
+          files: |
+            ${{ steps.pkg.outputs.zip }}
+            ${{ steps.sdplugin.outputs.file }}

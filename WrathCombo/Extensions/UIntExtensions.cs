@@ -16,7 +16,7 @@ internal static class UIntExtensions
 
     internal static string ItemName(this uint value) => ActionAndStatusLocalization.GetItemName(value);
 
-    internal static ActionAttackType ActionAttackType(this uint value) => (ActionAttackType)ActionSheet[value].ActionCategory.RowId;
+    internal static ActionAttackType ActionAttackType(this uint value) => (ActionAttackType)(ActionSheet.TryGetValue(value, out var actSheet) ? actSheet.ActionCategory.RowId : 0);
 
     internal static float ActionRange(this uint value) =>
         ActionManager.GetActionRange(value);
@@ -29,6 +29,10 @@ internal static class UIntExtensions
 
     internal static bool IsFriendlyTargetable(this uint value) =>
         ActionSheet.FirstOrDefault(x => x.Value.RowId == value).Value.CanTargetAlly;
+
+    internal static string StatusName(this uint value) => ActionAndStatusLocalization.GetStatusName(value);
+
+    internal static string TraitName(this uint value) => ActionAndStatusLocalization.GetTraitName(value);
 }
 
 internal static class UShortExtensions

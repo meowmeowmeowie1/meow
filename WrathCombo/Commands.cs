@@ -95,6 +95,7 @@ public partial class WrathCombo
             $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
             $"{Command} burst1 hold | resume → Same, but only the ~60s (odd-minute) subset.\n" +
+            $"{Command} potion on | off → Toggle automatic potions in openers (default off).\n" +
             $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
             $"{Command} tracker reset → Un-hide and re-center it if you lost it.\n" +
             $"{Command} debug → Dumps a debug log onto your desktop.\n" +
@@ -132,6 +133,10 @@ public partial class WrathCombo
 
             case "burst1":
                 HandleBurstControl(argumentParts, Burst1PresetMap, "1-minute burst"); break;
+
+            case "potion":
+            case "potions":
+                HandlePotionControl(argumentParts); break;
 
             case "disable":
             case "enable":
@@ -871,5 +876,26 @@ public partial class WrathCombo
             else
                 PresetStorage.DisablePreset(preset, ConfigChangeSource.Command);
         }
+    }
+
+    /// <summary>
+    ///     Toggles (or explicitly sets) the global automatic-potions switch,
+    ///     the same setting behind the Stream Deck potion key.
+    /// </summary>
+    private void HandlePotionControl(string[] argument)
+    {
+        var sub = argument.Length > 1 ? argument[1] : "";
+        var enable = sub switch
+        {
+            "off" => false,
+            "disable" => false,
+            "on" => true,
+            "enable" => true,
+            _ => !Service.Configuration.EnableAutomaticPotions,
+        };
+
+        Service.Configuration.EnableAutomaticPotions = enable;
+        Service.Configuration.Save();
+        DuoLog.Information($"Automatic potions: {(enable ? "ON" : "OFF")}");
     }
 }

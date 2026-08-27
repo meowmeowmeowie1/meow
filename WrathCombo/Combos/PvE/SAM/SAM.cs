@@ -11,87 +11,60 @@ internal partial class SAM : Melee
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Hakaze, Gyofu)) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Hakaze, Gyofu))
+                return actionID;
 
-            //Meikyo to start before combat
-            if (ActionReady(MeikyoShisui) &&
-                !HasStatusEffect(Buffs.MeikyoShisui) &&
-                !InCombat() && HasBattleTarget())
+            if (UsePrepullMeikyo())
                 return MeikyoShisui;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
-            //oGCDs
             if (CanWeave())
             {
-                //Meikyo Feature
-                if (CanMeikyo())
+                if (UseMeikyo(false))
                     return MeikyoShisui;
 
-                //Ikishoten Feature
-                if (CanIkishoten())
-                    return Ikishoten;
-
-                if (GetTargetHPPercent() < 1)
-                    return UseKenkiSpender(actionID, true, true, true);
-
-                //Senei Feature
-                if (CanSenei())
+                if (UseSenei())
                     return Senei;
 
-                //Guren if no Senei
-                if (!LevelChecked(Senei) &&
-                    ActionReady(Guren) && InActionRange(Guren))
+                if (!LevelChecked(Senei) && UseGuren())
                     return Guren;
 
-                //Zanshin Usage
-                if (CanZanshin())
-                    return Zanshin;
-
-                //Shoha Usage
-                if (CanShoha())
-                    return Shoha;
-
-                //Shinten Usage
-                if (CanShinten())
+                if (NeedKenkiRoomForIkishoten() && !ActionReady(Senei) && UseShinten())
                     return Shinten;
 
-                if (Role.CanFeint() &&
-                    GroupDamageIncoming())
-                    return Role.Feint;
+                if (UseIkishoten())
+                    return Ikishoten;
 
-                //Auto Third Eye
-                if (CanThirdEye())
-                    return OriginalHook(ThirdEye);
+                if (UseSenei())
+                    return Senei;
 
-                // healing
-                if (Role.CanSecondWind(25))
-                    return Role.SecondWind;
+                if (UseZanshin())
+                    return Zanshin;
 
-                if (Role.CanBloodBath(40))
-                    return Role.Bloodbath;
+                if (UseShoha())
+                    return Shoha;
 
-                if (RoleActions.Melee.CanLegSweep())
-                    return Role.LegSweep;
+                if (UseKenki(ref actionID, false))
+                    return actionID;
             }
 
-            if (CanTsubame())
+            if (UseTsubame(false))
                 return OriginalHook(TsubameGaeshi);
 
-            //Ogi Namikiri feature
-            if (CanOgiNamikiri(onlyWhenStationary: true))
+            if (UseOgiNamikiri(false))
                 return OriginalHook(OgiNamikiri);
 
-            // Iaijutsu feature
-            if (CanStIaijutsu(true, true, true, true))
+            if (UseIaiJutsu(false))
                 return OriginalHook(Iaijutsu);
 
-            //Ranged
             if (ActionReady(Enpi) && !InMeleeRange() && HasBattleTarget())
                 return Enpi;
 
-            return DoCombo(false);
+            return HasStatusEffect(Buffs.MeikyoShisui)
+                ? DoMeikyoCombo(actionID, false)
+                : DoBasicCombo(false);
         }
     }
 
@@ -101,55 +74,48 @@ internal partial class SAM : Melee
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Fuga, Fuko)) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Fuga, Fuko))
+                return actionID;
 
-            //Meikyo to start before combat
-            if (ActionReady(MeikyoShisui) &&
-                !HasStatusEffect(Buffs.MeikyoShisui) &&
-                !InCombat() && HasBattleTarget())
+            if (UsePrepullMeikyo())
                 return MeikyoShisui;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
-            //oGCD feature
             if (CanWeave())
             {
-                if (CanAoEHagakure())
-                    return Hagakure;
-
-                if (CanAoEMeikyo())
+                if (UseMeikyo(true))
                     return MeikyoShisui;
 
-                if (CanAoEIkishotenKenki(out uint kenkiAction))
-                    return kenkiAction;
-
-                if (CanAoEZanshin())
-                    return Zanshin;
-
-                if (CanAoEGuren())
+                if (UseGuren())
                     return Guren;
 
-                if (CanAoEShoha())
+                if (UseIkishoten())
+                    return Ikishoten;
+
+                if (UseZanshin())
+                    return Zanshin;
+
+                if (UseShoha())
                     return Shoha;
 
-                if (CanAoEKyuten())
-                    return Kyuten;
-
-                // healing
-                if (Role.CanSecondWind(25))
-                    return Role.SecondWind;
-
-                if (Role.CanBloodBath(40))
-                    return Role.Bloodbath;
+                if (UseKenki(ref actionID, true))
+                    return actionID;
             }
 
-            if (CanAoEOgiNamikiri(onlyWhenStationary: true))
+            if (UseTsubame(true))
+                return OriginalHook(TsubameGaeshi);
+
+            if (UseOgiNamikiri(true))
                 return OriginalHook(OgiNamikiri);
 
-            return CanAoESenGCD(out uint senAction, onlyWhenStationary: true)
-                ? senAction
-                : DoCombo(onAoE: true);
+            if (UseIaiJutsu(true))
+                return OriginalHook(Iaijutsu);
+
+            return HasStatusEffect(Buffs.MeikyoShisui)
+                ? DoMeikyoCombo(actionID, true)
+                : DoBasicCombo(true);
         }
     }
 
@@ -159,146 +125,149 @@ internal partial class SAM : Melee
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Hakaze, Gyofu)) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Hakaze, Gyofu))
+                return actionID;
 
-            // Opener for SAM
-            if (IsEnabled(Preset.SAM_ST_Opener) &&
+            if (IsEnabled(Preset.SAM_ST_Adv_Opener) &&
                 Opener().FullOpener(ref actionID) &&
                 HasBattleTarget())
                 return actionID;
 
-            //Meikyo to start before combat
-            if (IsEnabled(Preset.SAM_ST_CDs) &&
-                IsEnabled(Preset.SAM_ST_CDs_MeikyoShisui) &&
-                ActionReady(MeikyoShisui) &&
-                !HasStatusEffect(Buffs.MeikyoShisui) &&
-                !InCombat() && HasBattleTarget() &&
-                !JustUsed(MeikyoShisui))
+            if (IsEnabled(Preset.SAM_ST_Adv_CDs) &&
+                IsEnabled(Preset.SAM_ST_Adv_Meikyo) &&
+                UsePrepullMeikyo(requireNotJustUsed: true))
                 return MeikyoShisui;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
-            //oGCDs
             if (CanWeave())
             {
-                if (IsEnabled(Preset.SAM_ST_CDs))
+                if (IsEnabled(Preset.SAM_ST_Adv_CDs) &&
+                    IsEnabled(Preset.SAM_ST_Adv_Meikyo) &&
+                    UseMeikyo(false, SAM_ST_MeikyoExecuteHP))
+                    return MeikyoShisui;
+
+                if (IsEnabled(Preset.SAM_ST_Adv_Damage))
                 {
-                    //Meikyo feature
-                    if (IsEnabled(Preset.SAM_ST_CDs_MeikyoShisui) &&
-                        CanMeikyo(SAM_ST_MeikyoExecuteThreshold))
-                        return MeikyoShisui;
+                    bool holdForSenei = IsEnabled(Preset.SAM_ST_Adv_Senei);
 
-                    //Ikishoten feature
-                    if (IsEnabled(Preset.SAM_ST_CDs_Ikishoten) &&
-                        CanIkishoten())
-                        return Ikishoten;
-                }
-
-                if (IsEnabled(Preset.SAM_ST_Damage))
-                {
-                    if (GetTargetHPPercent() < SAM_ST_ExecuteThreshold)
-                        return UseKenkiSpender(actionID,
-                            IsEnabled(Preset.SAM_ST_CDs_Zanshin),
-                            IsEnabled(Preset.SAM_ST_CDs_Senei),
-                            IsEnabled(Preset.SAM_ST_Shinten));
-
-                    //Senei feature
-                    if (IsEnabled(Preset.SAM_ST_CDs_Senei))
+                    if (holdForSenei)
                     {
-                        if (CanSenei())
+                        if (UseSenei())
                             return Senei;
 
-                        //Guren if no Senei
-                        if (SAM_ST_CDs_Guren &&
+                        if (SAM_ST_Senei_Guren &&
                             !LevelChecked(Senei) &&
-                            ActionReady(Guren) && InActionRange(Guren))
+                            UseGuren())
                             return Guren;
                     }
 
-                    //Zanshin Usage
-                    if (IsEnabled(Preset.SAM_ST_CDs_Zanshin) &&
-                        CanZanshin())
-                        return Zanshin;
-
-                    if (IsEnabled(Preset.SAM_ST_CDs_Shoha) &&
-                        CanShoha(SAM_ST_HiganbanaRefresh))
-                        return Shoha;
-
-                    if (IsEnabled(Preset.SAM_ST_Shinten) &&
-                        CanShinten(SAM_ST_ExecuteThreshold, SAM_ST_KenkiOvercapAmount))
+                    if (IsEnabled(Preset.SAM_ST_Adv_Shinten) &&
+                        IsEnabled(Preset.SAM_ST_Adv_Ikishoten) &&
+                        NeedKenkiRoomForIkishoten() &&
+                        !(holdForSenei && ActionReady(Senei)) &&
+                        UseShinten(SAM_ST_ShintenExecuteHP, SAM_ST_ShintenKenkiOvercap,
+                            holdForBurst: holdForSenei))
                         return Shinten;
                 }
 
-                if (IsEnabled(Preset.SAM_ST_Feint) &&
+                if (IsEnabled(Preset.SAM_ST_Adv_CDs) &&
+                    IsEnabled(Preset.SAM_ST_Adv_Ikishoten) &&
+                    UseIkishoten())
+                    return Ikishoten;
+
+                if (IsEnabled(Preset.SAM_ST_Adv_Damage))
+                {
+                    bool holdForSenei = IsEnabled(Preset.SAM_ST_Adv_Senei);
+
+                    if (holdForSenei && UseSenei())
+                        return Senei;
+
+                    if (IsEnabled(Preset.SAM_ST_Adv_Zanshin) &&
+                        UseZanshin(holdForBurst: holdForSenei))
+                        return Zanshin;
+
+                    if (IsEnabled(Preset.SAM_ST_Adv_Shoha) &&
+                        UseShoha(holdForBurst: holdForSenei))
+                        return Shoha;
+
+                    if (IsEnabled(Preset.SAM_ST_Adv_Shinten) &&
+                        UseShinten(SAM_ST_ShintenExecuteHP, SAM_ST_ShintenKenkiOvercap,
+                            holdForBurst: holdForSenei))
+                        return Shinten;
+                }
+
+                if (IsEnabled(Preset.SAM_ST_Adv_Feint) &&
                     Role.CanFeint() &&
                     GroupDamageIncoming())
                     return Role.Feint;
 
-                //Auto Third Eye
-                if (IsEnabled(Preset.SAM_ST_ThirdEye) &&
-                    CanThirdEye())
+                if (IsEnabled(Preset.SAM_ST_Adv_ThirdEye) &&
+                    UseThirdEye())
                     return OriginalHook(ThirdEye);
 
-                //Auto Meditate
-                if (IsEnabled(Preset.SAM_ST_Meditate) &&
-                    CanMeditate())
+                if (IsEnabled(Preset.SAM_ST_Adv_Meditate) &&
+                    UseMeditate())
                     return Meditate;
 
-                // healing
-                if (IsEnabled(Preset.SAM_ST_ComboHeals))
+                if (IsEnabled(Preset.SAM_ST_Adv_ComboHeals))
                 {
-                    if (Role.CanSecondWind(SAM_ST_SecondWindHPThreshold))
+                    if (Role.CanSecondWind(SAM_ST_SecondWindOption))
                         return Role.SecondWind;
 
-                    if (Role.CanBloodBath(SAM_ST_BloodbathHPThreshold))
+                    if (Role.CanBloodBath(SAM_ST_BloodbathOption))
                         return Role.Bloodbath;
                 }
 
-                if (IsEnabled(Preset.SAM_ST_StunInterrupt) &&
+                if (IsEnabled(Preset.SAM_ST_Adv_StunInterrupt) &&
                     RoleActions.Melee.CanLegSweep())
                     return Role.LegSweep;
             }
 
-            if (IsEnabled(Preset.SAM_ST_Damage))
+            if (IsEnabled(Preset.SAM_ST_Adv_Damage))
             {
-                if (IsEnabled(Preset.SAM_ST_CDs_Iaijutsu) &&
-                    IsEnabled(Preset.SAM_ST_CDs_UseTsubame) &&
-                    CanTsubame())
+                if (IsEnabled(Preset.SAM_ST_Adv_Iaijutsu) &&
+                    IsEnabled(Preset.SAM_ST_Adv_Tsubame) &&
+                    UseTsubame(false))
                     return OriginalHook(TsubameGaeshi);
 
-                //Ogi Namikiri Feature
-                if (IsEnabled(Preset.SAM_ST_CDs_OgiNamikiri) &&
-                    CanOgiNamikiri(
-                        respectMovementOption: SAM_ST_CDs_OgiNamikiri_Movement,
-                        useHiganbanaBurstRules: IsEnabled(Preset.SAM_ST_CDs_UseHiganbana),
-                        higanbanaBossOnly: SAM_ST_HiganbanaBossHPOption == 1))
+                if (IsEnabled(Preset.SAM_ST_Adv_OgiNamikiri) &&
+                    UseOgiNamikiri(false, respectMovement: SAM_ST_OgiNamikiri_Movement))
                     return OriginalHook(OgiNamikiri);
 
-                // Iaijutsu Feature
-                if (IsEnabled(Preset.SAM_ST_CDs_Iaijutsu) &&
-                    CanStIaijutsu(
-                        IsEnabled(Preset.SAM_ST_CDs_UseHiganbana),
-                        IsEnabled(Preset.SAM_ST_CDs_UseTenkaGoken),
-                        IsEnabled(Preset.SAM_ST_CDs_UseMidare),
-                        IsEnabled(Preset.SAM_ST_CDs_Iaijutsu_Movement),
-                        HiganbanaHPThreshold(),
-                        SAM_ST_HiganbanaRefresh))
+                if (IsEnabled(Preset.SAM_ST_Adv_Iaijutsu) &&
+                    UseIaiJutsu(
+                        false,
+                        useHiganbana: IsEnabled(Preset.SAM_ST_Adv_Higanbana),
+                        useTenkaGoken: IsEnabled(Preset.SAM_ST_Adv_TenkaGoken),
+                        useMidare: IsEnabled(Preset.SAM_ST_Adv_Midare),
+                        onlyWhenStationary: IsEnabled(Preset.SAM_ST_Adv_Iaijutsu_Movement),
+                        higanbanaHpThreshold: HiganbanaHPThreshold(),
+                        higanbanaDotRefresh: SAM_ST_HiganbanaRefresh))
                     return OriginalHook(Iaijutsu);
 
-                //Ranged
-                if (IsEnabled(Preset.SAM_ST_RangedUptime) &&
+                if (IsEnabled(Preset.SAM_ST_Adv_RangedUptime) &&
                     ActionReady(Enpi) && !InMeleeRange() && HasBattleTarget())
                     return Enpi;
             }
 
-            return DoCombo(
-                false,
-                IsEnabled(Preset.SAM_ST_TrueNorth),
-                IsEnabled(Preset.SAM_ST_Yukikaze),
-                IsEnabled(Preset.SAM_ST_Kasha),
-                IsEnabled(Preset.SAM_ST_Gekko),
-                trueNorthCharges: SAM_ST_ManualTN);
+            return HasStatusEffect(Buffs.MeikyoShisui)
+                ? DoMeikyoCombo(
+                    actionID,
+                    false,
+                    useTrueNorth: IsEnabled(Preset.SAM_ST_Adv_TrueNorth),
+                    useYukikaze: IsEnabled(Preset.SAM_ST_Adv_Yukikaze),
+                    useKasha: IsEnabled(Preset.SAM_ST_Adv_Kasha),
+                    useGekko: IsEnabled(Preset.SAM_ST_Adv_Gekko),
+                    trueNorthCharges: SAM_ST_TrueNorthCharges)
+                : DoBasicCombo(
+                    false,
+                    useTrueNorth: IsEnabled(Preset.SAM_ST_Adv_TrueNorth),
+                    useYukikaze: IsEnabled(Preset.SAM_ST_Adv_Yukikaze),
+                    useKasha: IsEnabled(Preset.SAM_ST_Adv_Kasha),
+                    useGekko: IsEnabled(Preset.SAM_ST_Adv_Gekko),
+                    trueNorthCharges: SAM_ST_TrueNorthCharges);
         }
     }
 
@@ -308,78 +277,96 @@ internal partial class SAM : Melee
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Fuga, Fuko)) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, Fuga, Fuko))
+                return actionID;
 
-            //Meikyo to start before combat
-            if (IsEnabled(Preset.SAM_AoE_CDs) &&
-                IsEnabled(Preset.SAM_AoE_MeikyoShisui) &&
-                ActionReady(MeikyoShisui) &&
-                !HasStatusEffect(Buffs.MeikyoShisui) &&
-                !InCombat() && HasBattleTarget() &&
-                !JustUsed(MeikyoShisui))
+            if (IsEnabled(Preset.SAM_AoE_Adv_CDs) &&
+                IsEnabled(Preset.SAM_AoE_Adv_Meikyo) &&
+                UsePrepullMeikyo(requireNotJustUsed: true))
                 return MeikyoShisui;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
-            //oGCD feature
             if (CanWeave())
             {
-                if (IsEnabled(Preset.SAM_AoE_Hagakure) && CanAoEHagakure())
-                    return Hagakure;
+                if (IsEnabled(Preset.SAM_AoE_Adv_CDs) &&
+                    IsEnabled(Preset.SAM_AoE_Adv_Meikyo) &&
+                    UseMeikyo(true))
+                    return MeikyoShisui;
 
-                if (IsEnabled(Preset.SAM_AoE_CDs))
+                if (IsEnabled(Preset.SAM_AoE_Adv_Damage))
                 {
-                    if (IsEnabled(Preset.SAM_AoE_MeikyoShisui) && CanAoEMeikyo())
-                        return MeikyoShisui;
+                    bool holdForGuren = IsEnabled(Preset.SAM_AoE_Adv_Guren);
 
-                    if (IsEnabled(Preset.SAM_AoE_CDs_Ikishoten) &&
-                        CanAoEIkishotenKenki(out uint kenkiAction))
-                        return kenkiAction;
-                }
-
-                if (IsEnabled(Preset.SAM_AoE_Damage))
-                {
-                    if (IsEnabled(Preset.SAM_AoE_Zanshin) && CanAoEZanshin())
-                        return Zanshin;
-
-                    if (IsEnabled(Preset.SAM_AoE_Guren) && CanAoEGuren())
+                    if (holdForGuren && UseGuren())
                         return Guren;
 
-                    if (IsEnabled(Preset.SAM_AoE_Shoha) && CanAoEShoha())
-                        return Shoha;
+                    if (IsEnabled(Preset.SAM_AoE_Adv_Kyuten) &&
+                        IsEnabled(Preset.SAM_AoE_Adv_Ikishoten) &&
+                        NeedKenkiRoomForIkishoten() &&
+                        !(holdForGuren && ActionReady(Guren)) &&
+                        UseKyuten(SAM_AoE_KyutenKenkiOvercap, holdForBurst: holdForGuren))
+                        return Kyuten;
                 }
 
-                if (IsEnabled(Preset.SAM_AoE_Kyuten) &&
-                    CanAoEKyuten(SAM_AoE_KenkiOvercapAmount))
-                    return Kyuten;
+                if (IsEnabled(Preset.SAM_AoE_Adv_CDs) &&
+                    IsEnabled(Preset.SAM_AoE_Adv_Ikishoten) &&
+                    UseIkishoten())
+                    return Ikishoten;
 
-                if (IsEnabled(Preset.SAM_AoE_ComboHeals))
+                if (IsEnabled(Preset.SAM_AoE_Adv_Damage))
                 {
-                    if (Role.CanSecondWind(SAM_AoE_SecondWindHPThreshold))
+                    bool holdForGuren = IsEnabled(Preset.SAM_AoE_Adv_Guren);
+
+                    if (IsEnabled(Preset.SAM_AoE_Adv_Zanshin) &&
+                        UseZanshin(holdForBurst: holdForGuren))
+                        return Zanshin;
+
+                    if (holdForGuren && UseGuren())
+                        return Guren;
+
+                    if (IsEnabled(Preset.SAM_AoE_Adv_Shoha) &&
+                        UseShoha(holdForBurst: holdForGuren))
+                        return Shoha;
+
+                    if (IsEnabled(Preset.SAM_AoE_Adv_Kyuten) &&
+                        UseKyuten(SAM_AoE_KyutenKenkiOvercap, holdForBurst: holdForGuren))
+                        return Kyuten;
+                }
+
+                if (IsEnabled(Preset.SAM_AoE_Adv_ComboHeals))
+                {
+                    if (Role.CanSecondWind(SAM_AoE_SecondWindOption))
                         return Role.SecondWind;
 
-                    if (Role.CanBloodBath(SAM_AoE_BloodbathHPThreshold))
+                    if (Role.CanBloodBath(SAM_AoE_BloodbathOption))
                         return Role.Bloodbath;
                 }
 
-                if (IsEnabled(Preset.SAM_AoE_StunInterrupt) &&
+                if (IsEnabled(Preset.SAM_AoE_Adv_StunInterrupt) &&
                     RoleActions.Melee.CanLegSweep())
                     return Role.LegSweep;
             }
 
-            if (IsEnabled(Preset.SAM_AoE_Damage))
+            if (IsEnabled(Preset.SAM_AoE_Adv_Damage))
             {
-                if (IsEnabled(Preset.SAM_AoE_OgiNamikiri) &&
-                    CanAoEOgiNamikiri())
+                if (IsEnabled(Preset.SAM_AoE_Adv_TenkaGoken) &&
+                    UseTsubame(true))
+                    return OriginalHook(TsubameGaeshi);
+
+                if (IsEnabled(Preset.SAM_AoE_Adv_OgiNamikiri) &&
+                    UseOgiNamikiri(true))
                     return OriginalHook(OgiNamikiri);
 
-                if (IsEnabled(Preset.SAM_AoE_TenkaGoken) &&
-                    CanAoESenGCD(out uint senAction, onlyWhenStationary: true))
-                    return senAction;
+                if (IsEnabled(Preset.SAM_AoE_Adv_TenkaGoken) &&
+                    UseIaiJutsu(true))
+                    return OriginalHook(Iaijutsu);
             }
 
-            return DoCombo(true, useOka: IsEnabled(Preset.SAM_AoE_Oka));
+            return HasStatusEffect(Buffs.MeikyoShisui)
+                ? DoMeikyoCombo(actionID, true, useOka: IsEnabled(Preset.SAM_AoE_Adv_Oka))
+                : DoBasicCombo(true, useOka: IsEnabled(Preset.SAM_AoE_Adv_Oka));
         }
     }
 
@@ -392,25 +379,24 @@ internal partial class SAM : Melee
             if (actionID is not Yukikaze)
                 return actionID;
 
-            if (SAM_Yukaze_KenkiOvercap && CanWeave() &&
-                Kenki >= SAM_Yukaze_KenkiOvercapAmount && LevelChecked(Shinten))
-                return OriginalHook(Shinten);
+            if (UseFeatureKenkiOvercap(ref actionID, SAM_Yukikaze_KenkiOvercap, SAM_Yukikaze_KenkiOvercapAmount, Shinten))
+                return actionID;
 
             if (HasStatusEffect(Buffs.MeikyoShisui))
             {
                 if (LevelChecked(Yukikaze) && !HasSetsu &&
-                    (HasKa || !SAM_Yukaze_Gekko) &&
-                    (HasGetsu || !SAM_Yukaze_Kasha))
+                    (HasGetsu || !SAM_Yukikaze_Gekko) &&
+                    (HasKa || !SAM_Yukikaze_Kasha))
                     return Yukikaze;
 
-                if (SAM_Yukaze_Gekko &&
+                if (SAM_Yukikaze_Gekko &&
                     LevelChecked(Gekko) &&
                     ((OnTargetsRear() || OnTargetsFront()) && !HasGetsu ||
                      OnTargetsFlank() && HasKa ||
                      !HasStatusEffect(Buffs.Fugetsu) && !HasGetsu))
                     return Gekko;
 
-                if (SAM_Yukaze_Kasha &&
+                if (SAM_Yukikaze_Kasha &&
                     LevelChecked(Kasha) &&
                     ((OnTargetsFlank() || OnTargetsFront()) && !HasKa ||
                      OnTargetsRear() && HasGetsu ||
@@ -425,33 +411,35 @@ internal partial class SAM : Melee
                     if (LevelChecked(Yukikaze) &&
                         !HasSetsu &&
                         (SAM_ST_YukikazeCombo_Prio == 0 ||
-                         (HasStatusEffect(Buffs.Fugetsu) || !SAM_Yukaze_Gekko) &&
-                         (HasStatusEffect(Buffs.Fuka) || !SAM_Yukaze_Kasha)))
+                         (HasStatusEffect(Buffs.Fugetsu) || !SAM_Yukikaze_Gekko) &&
+                         (HasStatusEffect(Buffs.Fuka) || !SAM_Yukikaze_Kasha)))
                         return Yukikaze;
 
-                    if (SAM_Yukaze_Gekko &&
+                    if (SAM_Yukikaze_Gekko &&
                         LevelChecked(Jinpu) &&
-                        (!LevelChecked(Kasha) && LevelChecked(Gekko) ||
+                        (!LevelChecked(Gekko) ||
+                         !LevelChecked(Kasha) && LevelChecked(Gekko) ||
                          (OnTargetsRear() || OnTargetsFront()) && !HasGetsu && LevelChecked(Gekko) ||
                          HasKa && !HasGetsu && LevelChecked(Gekko) ||
                          SAM_ST_YukikazeCombo_Prio == 1 && !HasStatusEffect(Buffs.Fugetsu) ||
                          SenCount is 3 && ShouldRefreshFugetsu))
                         return Jinpu;
 
-                    if (SAM_Yukaze_Kasha &&
+                    if (SAM_Yukikaze_Kasha &&
                         LevelChecked(Shifu) &&
                         ((OnTargetsFlank() || OnTargetsFront()) && !HasKa && LevelChecked(Kasha) ||
                          HasGetsu && !HasKa && LevelChecked(Kasha) ||
                          SAM_ST_YukikazeCombo_Prio == 1 && !HasStatusEffect(Buffs.Fuka) ||
-                         SenCount is 3 && ShouldRefreshFuka))
+                         SenCount is 3 && ShouldRefreshFuka ||
+                         !LevelChecked(Gekko)))
                         return Shifu;
                 }
 
-                if (SAM_Yukaze_Gekko &&
+                if (SAM_Yukikaze_Gekko &&
                     ComboAction is Jinpu && LevelChecked(Gekko))
                     return Gekko;
 
-                if (SAM_Yukaze_Kasha &&
+                if (SAM_Yukikaze_Kasha &&
                     ComboAction is Shifu && LevelChecked(Kasha))
                     return Kasha;
             }
@@ -469,9 +457,8 @@ internal partial class SAM : Melee
             if (actionID is not Kasha)
                 return actionID;
 
-            if (SAM_Kasha_KenkiOvercap && CanWeave() &&
-                Kenki >= SAM_Kasha_KenkiOvercapAmount && LevelChecked(Shinten))
-                return OriginalHook(Shinten);
+            if (UseFeatureKenkiOvercap(ref actionID, SAM_Kasha_KenkiOvercap, SAM_Kasha_KenkiOvercapAmount, Shinten))
+                return actionID;
 
             if (HasStatusEffect(Buffs.MeikyoShisui) && LevelChecked(Kasha))
                 return OriginalHook(Kasha);
@@ -498,9 +485,8 @@ internal partial class SAM : Melee
             if (actionID is not Gekko)
                 return actionID;
 
-            if (SAM_Gekko_KenkiOvercap && CanWeave() &&
-                Kenki >= SAM_Gekko_KenkiOvercapAmount && LevelChecked(Shinten))
-                return OriginalHook(Shinten);
+            if (UseFeatureKenkiOvercap(ref actionID, SAM_Gekko_KenkiOvercap, SAM_Gekko_KenkiOvercapAmount, Shinten))
+                return actionID;
 
             if (HasStatusEffect(Buffs.MeikyoShisui) && LevelChecked(Gekko))
                 return OriginalHook(Gekko);
@@ -527,10 +513,8 @@ internal partial class SAM : Melee
             if (actionID is not Oka)
                 return actionID;
 
-            if (SAM_Oka_KenkiOvercap &&
-                Kenki >= SAM_Oka_KenkiOvercapAmount &&
-                LevelChecked(Kyuten) && CanWeave())
-                return Kyuten;
+            if (UseFeatureKenkiOvercap(ref actionID, SAM_Oka_KenkiOvercap, SAM_Oka_KenkiOvercapAmount, Kyuten))
+                return actionID;
 
             if (HasStatusEffect(Buffs.MeikyoShisui) ||
                 ComboTimer > 0 && LevelChecked(Oka) &&
@@ -550,29 +534,12 @@ internal partial class SAM : Melee
             if (actionID is not Mangetsu)
                 return actionID;
 
-            if (SAM_Mangetsu_KenkiOvercap && Kenki >= SAM_Mangetsu_KenkiOvercapAmount &&
-                LevelChecked(Kyuten) && CanWeave())
-                return Kyuten;
+            if (UseFeatureKenkiOvercap(ref actionID, SAM_Mangetsu_KenkiOvercap, SAM_Mangetsu_KenkiOvercapAmount, Kyuten))
+                return actionID;
 
             if (ComboTimer > 0 && ComboAction is Fuko or Fuga ||
                 HasStatusEffect(Buffs.MeikyoShisui))
-            {
-                if (SAM_Mangetsu_Oka &&
-                    LevelChecked(Oka) &&
-                    (!HasKa ||
-                     !HasStatusEffect(Buffs.Fuka) ||
-                     SenCount is 2 or 3 && ShouldRefreshFuka))
-                    return Oka;
-
-                if (LevelChecked(Mangetsu) &&
-                    HasStatusEffect(Buffs.Fuka) &&
-                    (!HasGetsu ||
-                     !SAM_Mangetsu_Oka ||
-                     !HasStatusEffect(Buffs.Fugetsu) ||
-                     !LevelChecked(Oka) ||
-                     SenCount is 2 or 3 && ShouldRefreshFugetsu))
-                    return Mangetsu;
-            }
+                return DoMeikyoCombo(OriginalHook(Fuko), true, useOka: SAM_Mangetsu_Oka);
 
             return OriginalHook(Fuko);
         }
@@ -613,7 +580,7 @@ internal partial class SAM : Melee
 
             return HasStatusEffect(Buffs.MeikyoShisui) &&
                    ActionReady(MeikyoShisui)
-                ? All.SavageBlade
+                ? All.Cease
                 : actionID;
         }
     }
@@ -671,7 +638,7 @@ internal partial class SAM : Melee
 
             if (IsEnabled(Preset.SAM_Shinten_Ikishoten) &&
                 ActionReady(Ikishoten) &&
-                Gauge.Kenki < 50)
+                Kenki < 50)
                 return Ikishoten;
 
             if (IsEnabled(Preset.SAM_Shinten_Senei) &&
@@ -703,7 +670,7 @@ internal partial class SAM : Melee
 
             if (IsEnabled(Preset.SAM_Kyuten_Ikishoten) &&
                 ActionReady(Ikishoten) &&
-                Gauge.Kenki < 50)
+                Kenki < 50)
                 return Ikishoten;
 
             if (IsEnabled(Preset.SAM_Kyuten_Guren) &&
@@ -753,13 +720,7 @@ internal partial class SAM : Melee
                 return actionID;
 
             if (Kenki >= 10)
-            {
-                if (InMeleeRange())
-                    return Yaten;
-
-                if (!InMeleeRange())
-                    return Gyoten;
-            }
+                return InMeleeRange() ? Yaten : Gyoten;
 
             return actionID;
         }

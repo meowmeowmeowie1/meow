@@ -29,7 +29,7 @@ public static class UserConfig
     /// <param name="sliderIncrement"> How much you want the user to increment the slider by. Uses SliderIncrements as a preset. </param>
     /// <param name="hasAdditionalChoice">True if this config can trigger additional configs depending on value.</param>
     /// <param name="additonalChoiceCondition">What the condition is to convey to the user what triggers it.</param>
-    public static bool DrawSliderInt(int minValue, int maxValue, string config, string sliderDescription, float itemWidth = 150, uint sliderIncrement = SliderIncrements.Ones, bool hasAdditionalChoice = false, string additonalChoiceCondition = "")
+    public static bool DrawSliderInt(int minValue, int maxValue, string config, string sliderDescription, float itemWidth = 150, uint sliderIncrement = SliderIncrements.Ones, bool hasAdditionalChoice = false, string additonalChoiceCondition = "", int occurrence = 0)
     {
         ImGui.Indent();
         int output = Configuration.GetCustomIntValue(config, minValue);
@@ -116,7 +116,7 @@ public static class UserConfig
         };
 
         box.Draw();
-        DrawResetContextMenu(config);
+        DrawResetContextMenu(config, occurrence);
         ImGui.Spacing();
         ImGui.Unindent();
         return box.FuncRes;
@@ -447,9 +447,19 @@ public static class UserConfig
     /// <param name="indentDescription"></param>
     internal static void DrawOpenerPotionChoice(UserBool config)
     {
+        // Automatic potions have a global master switch (Settings ->
+        // "Automatic Potions", default off, also on the Stream Deck potion key).
+        // Keep this per-job checkbox normal and clickable regardless; when the
+        // master switch is off, mention it in the grey helper text rather than
+        // greying out / relabelling the checkbox (which reads as a broken line).
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
         {
-            DrawAdditionalBoolChoice(config, "Include Potion?", "Adds the strongest potion appropriate for your job to the opener.");
+            var desc = Service.Configuration.EnableAutomaticPotions
+                ? "Adds the strongest potion appropriate for your job to the opener."
+                : "Adds the strongest potion appropriate for your job to the opener. Automatic "
+                + "potions are currently off globally — turn them on with the Stream Deck potion "
+                + "key, /mytweak potion on, or the Settings toggle.";
+            DrawAdditionalBoolChoice(config, "Include Potion?", desc);
         }
     }
 
@@ -789,6 +799,11 @@ public static class UserConfig
             descriptionColor: ImGuiColors.DalamudYellow
         );
 
+        // DrawHorizontalBoolRadioButton ends each radio with ImGui.SameLine(), so
+        // after the last one a SameLine is still pending. Terminate the row here,
+        // otherwise the next element (e.g. the opener "Include Potion?" checkbox)
+        // renders on the same line and overlaps these radios.
+        ImGui.NewLine();
     }
 
     /// <summary>

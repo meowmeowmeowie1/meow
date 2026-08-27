@@ -22,12 +22,14 @@ namespace WrathCombo.Services;
 /// </summary>
 /// <remarks>
 ///     Endpoints:
-///       GET /state        → JSON snapshot (job, st, aoe, burst).
-///       GET /burst/toggle → toggles burst, returns the new state as JSON.
+///       GET /state         → JSON snapshot (job, st, aoe, burst, burst1, potion).
+///       GET /burst/toggle  → toggles burst, returns the new state as JSON.
+///       GET /burst1/toggle → toggles the 1-minute burst subset.
+///       GET /potion/toggle → toggles the global automatic-potions switch.
 ///     Thread-safety: the snapshot is built on the framework (game) thread in
 ///     <see cref="UpdateSnapshot" />; the HTTP worker thread only reads that
-///     snapshot under a lock, and marshals the burst toggle back onto the
-///     framework thread. It only refreshes while the deck is actively polling.
+///     snapshot under a lock, and marshals toggles back onto the framework
+///     thread. It only refreshes while the deck is actively polling.
 /// </remarks>
 internal static class StreamDeckBridge
 {
@@ -42,7 +44,7 @@ internal static class StreamDeckBridge
     public static int Port { get; private set; }
 
     private static readonly object _lock = new();
-    private static string _job = "—", _burst = "—", _burst1 = "—", _posZone = "—";
+    private static string _job = "—", _burst = "—", _burst1 = "—", _posZone = "—", _potion = "—";
     private static bool _posTn;
     private static bool _stHas, _aoeHas;
     private static uint _stId, _aoeId;
@@ -125,6 +127,7 @@ internal static class StreamDeckBridge
                     _burst1 = "—";
                     _posZone = "—";
                     _posTn = false;
+                    _potion = "—";
                 }
                 return;
             }
@@ -147,6 +150,7 @@ internal static class StreamDeckBridge
                 false => "ARMED",
                 _ => "—",
             };
+            var potion = ActionResolution.ArePotionsEnabled() ? "ON" : "OFF";
 
             lock (_lock)
             {
@@ -163,6 +167,7 @@ internal static class StreamDeckBridge
                 _burst1 = burst1;
                 _posZone = posZone;
                 _posTn = posTn;
+                _potion = potion;
             }
         }
         catch
@@ -263,6 +268,8 @@ internal static class StreamDeckBridge
             bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: true));
         else if (path.StartsWith("/burst/toggle", StringComparison.Ordinal))
             bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: false));
+        else if (path.StartsWith("/potion/toggle", StringComparison.Ordinal))
+            bytes = Encoding.UTF8.GetBytes(TogglePotionJson());
         else
             bytes = Encoding.UTF8.GetBytes(StateJson());
 
@@ -431,6 +438,27 @@ internal static class StreamDeckBridge
         return $"{{\"burst\":\"{Esc(state)}\"}}";
     }
 
+    private static string TogglePotionJson()
+    {
+        var state = "—";
+        try
+        {
+            var t = Svc.Framework.RunOnFrameworkThread(() =>
+            {
+                ActionResolution.TogglePotions(out var s);
+                return s;
+            });
+            if (t.Wait(2000))
+                state = t.Result;
+        }
+        catch
+        {
+            // Fall through with the placeholder state.
+        }
+
+        return $"{{\"potion\":\"{Esc(state)}\"}}";
+    }
+
     private static string StateJson()
     {
         lock (_lock)
@@ -442,7 +470,8 @@ internal static class StreamDeckBridge
                    $"\"name\":\"{Esc(_aoeName)}\",\"icon\":{_aoeIcon}}}," +
                    $"\"burst\":\"{Esc(_burst)}\"," +
                    $"\"burst1\":\"{Esc(_burst1)}\"," +
-                   $"\"pos\":{{\"zone\":\"{Esc(_posZone)}\",\"tn\":{Bool(_posTn)}}}" +
+                   $"\"pos\":{{\"zone\":\"{Esc(_posZone)}\",\"tn\":{Bool(_posTn)}}}," +
+                   $"\"potion\":\"{Esc(_potion)}\"" +
                    "}";
     }
 

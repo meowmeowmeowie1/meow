@@ -12,7 +12,8 @@ internal partial class MNK : Melee
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Bootshine, LeapingOpo)) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Bootshine, LeapingOpo))
+                return actionID;
 
             if (CanMeditate())
                 return OriginalHook(SteeledMeditation);
@@ -20,7 +21,7 @@ internal partial class MNK : Melee
             if (CanFormshift())
                 return FormShift;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
             // OGCDs
@@ -58,10 +59,8 @@ internal partial class MNK : Melee
             if (CanMasterfulBlitz(false))
                 return OriginalHook(MasterfulBlitz);
 
-            if (HasStatusEffect(Buffs.FormlessFist))
-                return ForcedOpoGCD(false);
-
-            if (ForceSecondOpo(false))
+            if (HasStatusEffect(Buffs.FormlessFist) ||
+                ForceSecondOpo(false))
                 return ForcedOpoGCD(false);
 
             if (CanFiresReply())
@@ -77,13 +76,14 @@ internal partial class MNK : Melee
         }
     }
 
-    internal class MNK_AOE_SimpleMode : CustomCombo
+    internal class MNK_AoE_SimpleMode : CustomCombo
     {
-        protected internal override Preset Preset => Preset.MNK_AOE_SimpleMode;
+        protected internal override Preset Preset => Preset.MNK_AoE_SimpleMode;
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, ArmOfTheDestroyer, ShadowOfTheDestroyer)) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.AoEDPS, ArmOfTheDestroyer, ShadowOfTheDestroyer))
+                return actionID;
 
             if (CanMeditate(true))
                 return OriginalHook(InspiritedMeditation);
@@ -91,7 +91,7 @@ internal partial class MNK : Melee
             if (CanFormshift())
                 return FormShift;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
             // OGCD's
@@ -136,12 +136,9 @@ internal partial class MNK : Melee
             if (CanWindsReply())
                 return WindsReply;
 
-            // Perfect Balance
-            if (DoPerfectBalanceCombo(ref actionID, true))
-                return actionID;
-
-            // Monk Rotation
-            return DoBasicCombo(onAoE: true);
+            return DoPerfectBalanceCombo(ref actionID, true)
+                ? actionID
+                : DoBasicCombo(onAoE: true);
         }
     }
 
@@ -151,11 +148,12 @@ internal partial class MNK : Melee
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Bootshine, LeapingOpo)) return actionID;
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Bootshine, LeapingOpo))
+                return actionID;
 
             if (IsEnabled(Preset.MNK_STUseOpener) &&
                 Opener().FullOpener(ref actionID))
-                return Opener().OpenerStep >= 9 &&
+                return Opener().OpenerStep > 11 &&
                        CanWeave() && Chakra >= 5
                     ? TheForbiddenChakra
                     : actionID;
@@ -168,7 +166,7 @@ internal partial class MNK : Melee
                 CanFormshift())
                 return FormShift;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
             // OGCDs
@@ -261,9 +259,9 @@ internal partial class MNK : Melee
         }
     }
 
-    internal class MNK_AOE_AdvancedMode : CustomCombo
+    internal class MNK_AoE_AdvancedMode : CustomCombo
     {
-        protected internal override Preset Preset => Preset.MNK_AOE_AdvancedMode;
+        protected internal override Preset Preset => Preset.MNK_AoE_AdvancedMode;
 
         protected override uint Invoke(uint actionID)
         {
@@ -277,7 +275,7 @@ internal partial class MNK : Melee
                 CanFormshift())
                 return FormShift;
 
-            if (ContentSpecificActions.TryGet(out uint contentAction))
+            if (ContentSpecificActions.TryGet(ref actionID, out uint contentAction))
                 return contentAction;
 
             // OGCD's
@@ -350,12 +348,9 @@ internal partial class MNK : Melee
                 CanWindsReply())
                 return WindsReply;
 
-            // Perfect Balance
-            if (DoPerfectBalanceCombo(ref actionID, true))
-                return actionID;
-
-            // Monk Rotation
-            return DoBasicCombo(onAoE: true);
+            return DoPerfectBalanceCombo(ref actionID, true)
+                ? actionID
+                : DoBasicCombo(onAoE: true);
         }
     }
 
@@ -485,7 +480,7 @@ internal partial class MNK : Melee
 
             return HasStatusEffect(Buffs.PerfectBalance) &&
                    LevelChecked(PerfectBalance)
-                ? All.SavageBlade
+                ? All.Cease
                 : actionID;
         }
     }

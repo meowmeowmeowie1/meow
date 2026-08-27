@@ -258,4 +258,26 @@ internal static class ActionResolution
         state = enable ? "ARMED" : "HELD";
         return true;
     }
+
+    /// <summary>
+    ///     Whether automatic potions are globally enabled
+    ///     (<see cref="Configuration.EnableAutomaticPotions" />). This is a
+    ///     plugin-wide switch, not per-job, so it is valid with no player logged in.
+    /// </summary>
+    internal static bool ArePotionsEnabled() =>
+        Service.Configuration.EnableAutomaticPotions;
+
+    /// <summary>
+    ///     Toggle the global automatic-potions switch. Callable off the command
+    ///     path (e.g. the Stream Deck bridge); persists the change.
+    ///     <paramref name="state" /> is the resulting state ("ON" / "OFF").
+    /// </summary>
+    internal static bool TogglePotions(out string state)
+    {
+        var enable = !Service.Configuration.EnableAutomaticPotions;
+        Service.Configuration.EnableAutomaticPotions = enable;
+        Service.Configuration.Save();
+        state = enable ? "ON" : "OFF";
+        return true;
+    }
 }
