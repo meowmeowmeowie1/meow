@@ -1659,8 +1659,8 @@ public enum Preset
     #region Single Target - Advanced
 
     [AutoAction(false, false)]
-    [ReplaceSkill(BLM.Blizzard)]
-    [ConflictingCombos(BLM_ST_SimpleMode, BLM_Blizzard1and3, BLM_B1toB4)]
+    [ReplaceSkill(BLM.Blizzard, BLM.Fire3)]
+    [ConflictingCombos(BLM_ST_SimpleMode, BLM_Blizzard1and3, BLM_B1toB4, BLM_Fire1and3)]
     [JobInfo(Job.BLM)]
     [AdvancedCombo]
     BLM_ST_AdvancedMode = 2100,
