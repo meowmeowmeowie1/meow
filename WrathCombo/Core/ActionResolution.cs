@@ -241,8 +241,8 @@ internal static class ActionResolution
             && ReferenceEquals(map, WrathCombo.Burst1PresetMap)
             && IsBurstHeld() == true)
         {
-            ECommons.Logging.DuoLog.Warning(
-                "1-min burst NOT re-armed: the full burst is held. Resume it first.");
+            ECommons.DalamudServices.Svc.Log.Information(
+                "[Burst] 1-min burst NOT re-armed: the full burst is held.");
             state = "HELD";
             return true;
         }
