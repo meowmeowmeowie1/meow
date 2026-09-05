@@ -190,5 +190,44 @@ namespace WrathCombo.Combos.PvE.ALL
             Mind = 5,
             Piety = 6
         }
+
+        /// <summary>The main-stat potion type for a job.</summary>
+        public static PotionType JobPotionType(ECommons.ExcelServices.Job job) => job switch
+        {
+            ECommons.ExcelServices.Job.PLD or ECommons.ExcelServices.Job.WAR or
+            ECommons.ExcelServices.Job.DRK or ECommons.ExcelServices.Job.GNB or
+            ECommons.ExcelServices.Job.MNK or ECommons.ExcelServices.Job.DRG or
+            ECommons.ExcelServices.Job.SAM or ECommons.ExcelServices.Job.RPR
+                => PotionType.Strength,
+            ECommons.ExcelServices.Job.NIN or ECommons.ExcelServices.Job.VPR or
+            ECommons.ExcelServices.Job.BRD or ECommons.ExcelServices.Job.MCH or
+            ECommons.ExcelServices.Job.DNC
+                => PotionType.Dex,
+            ECommons.ExcelServices.Job.BLM or ECommons.ExcelServices.Job.SMN or
+            ECommons.ExcelServices.Job.RDM or ECommons.ExcelServices.Job.PCT or
+            ECommons.ExcelServices.Job.BLU
+                => PotionType.Int,
+            ECommons.ExcelServices.Job.WHM or ECommons.ExcelServices.Job.SCH or
+            ECommons.ExcelServices.Job.AST or ECommons.ExcelServices.Job.SGE
+                => PotionType.Mind,
+            _ => PotionType.Strength,
+        };
+
+        /// <summary>
+        ///     Re-resolves every potion step in an opener's action list against the
+        ///     CURRENT inventory and job. Opener lists are built once at class
+        ///     construction — often before login, when the inventory scan sees
+        ///     nothing — so without this the potion step freezes as the skip
+        ///     sentinel forever (and never notices newly bought potions either).
+        /// </summary>
+        internal static void RefreshPotionSteps(System.Collections.Generic.IList<uint> actions)
+        {
+            if (!ECommons.GameHelpers.Player.Available)
+                return;
+            for (var i = 0; i < actions.Count; i++)
+                if (actions[i] >= All.Items)
+                    actions[i] = UseItem(GetStrongestPotionRow(
+                        JobPotionType(ECommons.GameHelpers.Player.Job)));
+        }
     }
 }
