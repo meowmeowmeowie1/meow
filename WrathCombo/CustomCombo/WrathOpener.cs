@@ -330,6 +330,11 @@ public abstract class WrathOpener
         OpenerStep = 0;
         CurrentOpenerAction = 0;
         CurrentState = OpenerState.OpenerNotReady;
+
+        // Potion steps were resolved when this opener object was constructed
+        // (possibly pre-login with an unreadable inventory) — re-resolve them
+        // against the current inventory so pots actually fire.
+        Items.RefreshPotionSteps(OpenerActions);
     }
 
     internal static void SelectOpener()
@@ -360,6 +365,11 @@ public abstract class WrathOpener
             _ => Dummy
         };
         CurrentOpener?.CacheReady = true;
+
+        // The freshly selected opener may still carry potion steps frozen at
+        // construction time — re-resolve them now that the inventory is live.
+        if (CurrentOpener is { } sel)
+            Items.RefreshPotionSteps(sel.OpenerActions);
     }
 
     public static WrathOpener? CurrentOpener
