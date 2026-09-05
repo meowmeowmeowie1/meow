@@ -789,7 +789,7 @@ public partial class WrathCombo
             Service.Configuration.NextActionTrackerHidden = false;
             Service.Configuration.Save();
             NextActionTracker?.Recenter();
-            DuoLog.Information(
+            Svc.Log.Information(
                 "Next-action tracker reset to the centre of your screen.");
             return;
         }
@@ -837,13 +837,13 @@ public partial class WrathCombo
     {
         if (!PresetStorage.AllPresets.Any(p => p.Value.JobInfo?.Job == Player.Job && p.Value.ComboType == ComboType.Advanced && PresetStorage.IsEnabled(p.Key)))
         {
-            DuoLog.Error("This feature is for Advanced Mode Combos.");
+            Svc.Log.Information("[Burst] Ignored: no Advanced Mode combo enabled.");
             return;
         }
 
         if (!map.TryGetValue(Player.Job, out var presets))
         {
-            DuoLog.Error($"No {label} presets defined for your current job.");
+            Svc.Log.Information($"[Burst] Ignored: no {label} presets defined for {Player.Job}.");
             return;
         }
 
@@ -864,8 +864,8 @@ public partial class WrathCombo
             && ReferenceEquals(map, Burst1PresetMap)
             && Core.ActionResolution.IsBurstHeld() == true)
         {
-            DuoLog.Warning(
-                "1-min burst NOT re-armed: the full burst is held. Resume it first.");
+            Svc.Log.Information(
+                "[Burst] 1-min burst NOT re-armed: the full burst is held.");
             return;
         }
 
@@ -896,6 +896,6 @@ public partial class WrathCombo
 
         Service.Configuration.EnableAutomaticPotions = enable;
         Service.Configuration.Save();
-        DuoLog.Information($"Automatic potions: {(enable ? "ON" : "OFF")}");
+        Svc.Log.Information($"[Potion] Automatic potions: {(enable ? "ON" : "OFF")}");
     }
 }

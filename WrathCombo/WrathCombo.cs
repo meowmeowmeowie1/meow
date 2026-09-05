@@ -359,8 +359,8 @@ public sealed partial class WrathCombo : IDalamudPlugin
     {
         Task.Delay(TimeSpan.FromSeconds(5)).ContinueWith(_ => ResetFeatures());
 
-        if (!Service.Configuration.HideMessageOfTheDay)
-            Task.Delay(TimeSpan.FromSeconds(3)).ContinueWith(_ => PrintMotD());
+        // Chat kept silent by request: version message goes to the log only.
+        Svc.Log.Information($"MyTweak v{GetType().Assembly.GetName().Version} loaded.");
     }
 
     private void PrintMotD()
