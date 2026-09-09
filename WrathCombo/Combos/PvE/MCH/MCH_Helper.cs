@@ -640,6 +640,10 @@ internal partial class MCH
             MCH_SelectedOpener == 1)
             return Lvl100EarlyWFOpener;
 
+        if (Lvl100TOPOpener.LevelChecked &&
+            MCH_SelectedOpener == 2)
+            return Lvl100TOPOpener;
+
         if (Lvl90EarlyTools.LevelChecked)
             return Lvl90EarlyTools;
 
@@ -649,6 +653,7 @@ internal partial class MCH
     internal static MCHLvl90EarlyToolsOpener Lvl90EarlyTools = new();
     internal static MCHLvl100EarlyWFOpener Lvl100EarlyWFOpener = new();
     internal static MCHLvl100StandardOpener Lvl100StandardOpener = new();
+    internal static MCHLvl100TOPOpener Lvl100TOPOpener = new();
 
     internal abstract class MCHOpenerBase : WrathOpener
     {
@@ -764,6 +769,50 @@ internal partial class MCH
             HeatedSplitShot, // 32
             HeatedSlugShot, // 33
             HeatedCleanShot // 34
+        ];
+    }
+
+    // User-supplied TOP (The Omega Protocol) opener. Prepull Reassemble ->
+    // Chain Saw, tools + early Wildfire into an early Hypercharge window, then
+    // Slug/Clean into Queen. oGCD names are the Lv100 upgrades: Gauss Round =
+    // Double Check, Ricochet = Checkmate. No potion step by request.
+    internal class MCHLvl100TOPOpener : MCHLvl100OpenerBase
+    {
+        public override List<uint> OpenerActions { get; set; } =
+        [
+            Reassemble,       // 1  [-5.0] prepull
+            Chainsaw,         // 2  [-0.3] Chain Saw
+            DoubleCheck,      // 3  [0.4]  Gauss Round
+            CheckMate,        // 4  [1.2]  Ricochet
+            Drill,            // 5  [2.3]
+            Reassemble,       // 6  [2.9]
+            BarrelStabilizer, // 7  [3.6]
+            AirAnchor,        // 8  [4.8]
+            DoubleCheck,      // 9  [5.5]  Gauss Round
+            Wildfire,         // 10 [6.7]
+            HeatedSplitShot,  // 11 [7.4]
+            DoubleCheck,      // 12 [8.0]  Gauss Round
+            Hypercharge,      // 13 [8.8]
+            BlazingShot,      // 14 [9.9]  Blazing Shot x5, weaving between each
+            CheckMate,        // 15
+            BlazingShot,      // 16
+            DoubleCheck,      // 17
+            BlazingShot,      // 18
+            CheckMate,        // 19
+            BlazingShot,      // 20
+            DoubleCheck,      // 21
+            BlazingShot,      // 22
+            HeatedSlugShot,   // 23 [17.4]
+            HeatedCleanShot,  // 24 [19.9]
+            AutomatonQueen,   // 25 [20.6]
+            Drill             // 26 [22.4]
+        ];
+
+        // Wildfire is the second weave after Air Anchor; hold it late so it
+        // doesn't clip the following GCD.
+        public override List<int> DelayedWeaveSteps { get; set; } =
+        [
+            10
         ];
     }
 
