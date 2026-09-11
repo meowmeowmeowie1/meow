@@ -216,7 +216,7 @@ internal class Debug : ConfigWindow, IDisposable
             {
                 // Set Status
                 string statusId = status.StatusId.ToString();
-                string statusName = StatusCache.GetStatusName(status.StatusId) ?? string.Empty;
+                string statusName = ((ushort)status.StatusId).StatusName();
 
                 // Set Source Name
                 string sourceName = status.SourceId != player.GameObjectId
@@ -265,7 +265,7 @@ internal class Debug : ConfigWindow, IDisposable
                     // Set Status
                     string statusId = status.StatusId.ToString();
                     string sourceName = status.SourceObject?.Name?.ToString() ?? string.Empty;
-                    string statusName = StatusCache.GetStatusName(status.StatusId) ?? string.Empty;
+                    string statusName = ((ushort)status.StatusId).StatusName();
 
                     // Set Duration
                     float debuffDuration = GetStatusEffectRemainingTime((ushort)status.StatusId, chara, true);
@@ -600,7 +600,7 @@ internal class Debug : ConfigWindow, IDisposable
                         WrathOpener.CurrentOpener.OpenerStep <
                         WrathOpener.CurrentOpener.OpenerActions.Count)
                     {
-                        CustomStyleText("Next Action:", WrathOpener.CurrentOpener.OpenerActions[WrathOpener.CurrentOpener.OpenerStep].ActionName());
+                        CustomStyleText("Next Action:", WrathOpener.CurrentOpener.OpenerActions[WrathOpener.CurrentOpener.OpenerStep].Invoke().ActionName());
                         CustomStyleText("Is Delayed Weave:", WrathOpener.CurrentOpener.DelayedWeaveSteps.Any(x => x == WrathOpener.CurrentOpener.OpenerStep));
                         CustomStyleText("Can Delayed Weave:", CanDelayedWeave(weaveEnd: 0.1f));
                     }
@@ -812,7 +812,7 @@ internal class Debug : ConfigWindow, IDisposable
                 // Target Required
                 if (target is not null)
                 {
-                    var canUseOnTarget = ActionManager.CanUseActionOnTarget(_debugSpell.Value.RowId, target.Struct());
+                    var canUseOnTarget = ActionManager.CanUseActionOnTarget(_debugSpell.Value.RowId, (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)target.Struct());
                     CustomStyleText("Can Use on Target:", canUseOnTarget);
 
                     CustomStyleText($"Just Used on Target:", $"{JustUsedOn(_debugSpell.Value.RowId, target)}");

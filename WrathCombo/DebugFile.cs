@@ -715,7 +715,7 @@ public static class DebugFile
                 $"STACKS: {effect.Param}, " +
                 $"SOURCE: {(effect.SourceId == playerID ? "self" : effect
                     .SourceId)}, " +
-                $"NAME: {GetStatusName(effect.StatusId)}");
+                $"NAME: {((ushort)effect.StatusId).StatusName()}");
         AddLine("END STATUS EFFECTS");
 
         AddLine();

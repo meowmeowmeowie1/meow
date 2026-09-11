@@ -1,22 +1,20 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using ECommons.DalamudServices;
+using Lumina.Excel.Sheets;
 using System.Linq;
+
 namespace WrathCombo.Services;
 
-internal unsafe static class BlueMageService
+/// <summary>
+///     Minimal BLU spell helpers. Upstream added a fuller BlueMageService in
+///     Services/ (out of this fork's sync scope); this provides the one method
+///     the fork's Features window needs.
+/// </summary>
+internal static class BlueMageService
 {
-    public static void PopulateBLUSpells()
+    /// <summary>The BLU log number for a spell action id (for display).</summary>
+    public static int GetBLUIndex(uint id)
     {
-        var prevList = Service.Configuration.ActiveBLUSpells.ToList();
-        Service.Configuration.ActiveBLUSpells.Clear();
-
-        for (int i = 0; i <= 24; i++)
-        {
-            var id = ActionManager.Instance()->GetActiveBlueMageActionInSlot(i);
-            if (id != 0)
-                Service.Configuration.ActiveBLUSpells.Add(id);
-        }
-
-        if (Service.Configuration.ActiveBLUSpells.Except(prevList).Any())
-            Service.Configuration.Save();
+        var aozKey = Svc.Data.GetExcelSheet<AozAction>()!.First(x => x.Action.RowId == id).RowId;
+        return Svc.Data.GetExcelSheet<AozActionTransient>().GetRow(aozKey).Number;
     }
 }

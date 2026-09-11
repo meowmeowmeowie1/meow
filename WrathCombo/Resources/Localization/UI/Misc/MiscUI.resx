@@ -135,6 +135,9 @@
   <data name="Occult Crescent" xml:space="preserve">
     <value>Occult Crescent</value>
   </data>
+  <data name="Deep Dungeon" xml:space="preserve">
+    <value>Deep Dungeon</value>
+  </data>
   <data name="Replaces" xml:space="preserve">
     <value>Replaces</value>
   </data>

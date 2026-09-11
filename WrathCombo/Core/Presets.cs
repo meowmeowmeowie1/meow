@@ -49,6 +49,7 @@ internal static class PresetStorage
             GetRetargetedActions(Preset, RetargetedAttribute, PossiblyRetargeted, Parent);
         public bool IsBozja { get; }
         public bool IsOccultCrescent => OccultCrescentJob != null;
+        public bool IsDeepDungeon { get; }
         public OccultCrescentAttribute? OccultCrescentJob;
         public string? HoverText { get; }
         public ReplaceSkillAttribute? ReplaceSkill;
@@ -70,6 +71,7 @@ internal static class PresetStorage
             PossiblyRetargeted = preset.GetAttribute<PossiblyRetargetedAttribute>();
             RetargetedAttribute = preset.GetAttribute<RetargetedAttribute>();
             IsBozja = preset.GetAttribute<BozjaAttribute>() != null;
+            IsDeepDungeon = preset.GetAttribute<DeepDungeonAttribute>() != null;
             OccultCrescentJob = preset.GetAttribute<OccultCrescentAttribute>();
             HoverText = preset.GetAttribute<HoverInfoAttribute>()?.HoverText;
             ReplaceSkill = preset.GetAttribute<ReplaceSkillAttribute>();
