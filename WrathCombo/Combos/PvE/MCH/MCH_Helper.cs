@@ -778,34 +778,34 @@ internal partial class MCH
     // Double Check, Ricochet = Checkmate. No potion step by request.
     internal class MCHLvl100TOPOpener : MCHLvl100OpenerBase
     {
-        public override List<uint> OpenerActions { get; set; } =
+        public override List<Func<uint>> OpenerActions { get; set; } =
         [
-            Reassemble,       // 1  [-5.0] prepull
-            Chainsaw,         // 2  [-0.3] Chain Saw
-            DoubleCheck,      // 3  [0.4]  Gauss Round
-            CheckMate,        // 4  [1.2]  Ricochet
-            Drill,            // 5  [2.3]
-            Reassemble,       // 6  [2.9]
-            BarrelStabilizer, // 7  [3.6]
-            AirAnchor,        // 8  [4.8]
-            DoubleCheck,      // 9  [5.5]  Gauss Round
-            Wildfire,         // 10 [6.7]
-            HeatedSplitShot,  // 11 [7.4]
-            DoubleCheck,      // 12 [8.0]  Gauss Round
-            Hypercharge,      // 13 [8.8]
-            BlazingShot,      // 14 [9.9]  Blazing Shot x5, weaving between each
-            CheckMate,        // 15
-            BlazingShot,      // 16
-            DoubleCheck,      // 17
-            BlazingShot,      // 18
-            CheckMate,        // 19
-            BlazingShot,      // 20
-            DoubleCheck,      // 21
-            BlazingShot,      // 22
-            HeatedSlugShot,   // 23 [17.4]
-            HeatedCleanShot,  // 24 [19.9]
-            AutomatonQueen,   // 25 [20.6]
-            Drill             // 26 [22.4]
+            () => Reassemble,       // 1  [-5.0] prepull
+            () => Chainsaw,         // 2  [-0.3] Chain Saw
+            () => DoubleCheck,      // 3  [0.4]  Gauss Round
+            () => CheckMate,        // 4  [1.2]  Ricochet
+            () => Drill,            // 5  [2.3]
+            () => Reassemble,       // 6  [2.9]
+            () => BarrelStabilizer, // 7  [3.6]
+            () => AirAnchor,        // 8  [4.8]
+            () => DoubleCheck,      // 9  [5.5]  Gauss Round
+            () => Wildfire,         // 10 [6.7]
+            () => HeatedSplitShot,  // 11 [7.4]
+            () => DoubleCheck,      // 12 [8.0]  Gauss Round
+            () => Hypercharge,      // 13 [8.8]
+            () => BlazingShot,      // 14 [9.9]  Blazing Shot x5, weaving between each
+            () => CheckMate,        // 15
+            () => BlazingShot,      // 16
+            () => DoubleCheck,      // 17
+            () => BlazingShot,      // 18
+            () => CheckMate,        // 19
+            () => BlazingShot,      // 20
+            () => DoubleCheck,      // 21
+            () => BlazingShot,      // 22
+            () => HeatedSlugShot,   // 23 [17.4]
+            () => HeatedCleanShot,  // 24 [19.9]
+            () => AutomatonQueen,   // 25 [20.6]
+            () => Drill             // 26 [22.4]
         ];
 
         // Wildfire is the second weave after Air Anchor; hold it late so it
