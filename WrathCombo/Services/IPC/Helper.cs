@@ -83,7 +83,7 @@ public partial class Helper(ref Leasing leasing)
         var presetData = preset.Attributes();
 
         // Bail if it is not one of the main combos
-        if (presetData.ComboType is not (ComboType.Advanced or ComboType.Simple))
+        if (presetData.ComboType is not (ComboType.AdvancedDPS or ComboType.SimpleDPS))
             return null;
 
         // Detect the target type
@@ -95,7 +95,7 @@ public partial class Helper(ref Leasing leasing)
 
         // Detect the simplicity level
         var simplicityLevel =
-            presetData.ComboType is ComboType.Simple
+            presetData.ComboType is ComboType.SimpleDPS
                 ? ComboSimplicityLevelKeys.Simple
                 : ComboSimplicityLevelKeys.Advanced;
         // Flip the simplicity level

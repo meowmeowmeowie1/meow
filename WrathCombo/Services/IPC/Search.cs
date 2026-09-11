@@ -423,9 +423,9 @@ public class Search(Leasing leasing)
                             g2 => g2.GroupBy(x =>
                                     x.ComboType switch
                                     {
-                                        ComboType.Advanced =>
+                                        ComboType.AdvancedDPS =>
                                             ComboSimplicityLevelKeys.Advanced,
-                                        ComboType.Simple =>
+                                        ComboType.SimpleDPS =>
                                             ComboSimplicityLevelKeys.Simple,
                                         _ => ComboSimplicityLevelKeys.Other,
                                     }

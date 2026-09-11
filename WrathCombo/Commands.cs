@@ -835,7 +835,7 @@ public partial class WrathCombo
     private void HandleBurstControl(string[] argument,
         Dictionary<Job, Preset[]> map, string label)
     {
-        if (!PresetStorage.AllPresets.Any(p => p.Value.JobInfo?.Job == Player.Job && p.Value.ComboType == ComboType.Advanced && PresetStorage.IsEnabled(p.Key)))
+        if (!PresetStorage.AllPresets.Any(p => p.Value.JobInfo?.Job == Player.Job && p.Value.ComboType is ComboType.AdvancedDPS or ComboType.AdvancedHealing && PresetStorage.IsEnabled(p.Key)))
         {
             Svc.Log.Information("[Burst] Ignored: no Advanced Mode combo enabled.");
             return;
