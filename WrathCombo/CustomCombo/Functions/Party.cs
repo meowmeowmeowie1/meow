@@ -85,7 +85,8 @@ internal abstract partial class CustomComboFunctions
                 if (npc.BattleNpcKind is BattleNpcSubKind.Pet) continue; // Skips carbuncles, fairies etc.
                 if (npc.Struct()->BattleNpcSubKind is BattleNpcSubKindCS.Buddy  && npc.OwnerId != Player.GameObject->GetGameObjectId()) continue; // Skips other players' chocobos
 
-                if (ActionManager.CanUseActionOnTarget(RoleActions.Healer.Esuna, npc.GameObject()))
+                uint friendCheck = Player.Job is Job.BLU ? BLU.PomCure : RoleActions.Healer.Esuna;
+                if (ActionManager.CanUseActionOnTarget(friendCheck, npc.GameObject()))
                 {
                     WrathPartyMember wmember = new()
                     {

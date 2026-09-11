@@ -213,21 +213,5 @@ namespace WrathCombo.Combos.PvE.ALL
             _ => PotionType.Strength,
         };
 
-        /// <summary>
-        ///     Re-resolves every potion step in an opener's action list against the
-        ///     CURRENT inventory and job. Opener lists are built once at class
-        ///     construction — often before login, when the inventory scan sees
-        ///     nothing — so without this the potion step freezes as the skip
-        ///     sentinel forever (and never notices newly bought potions either).
-        /// </summary>
-        internal static void RefreshPotionSteps(System.Collections.Generic.IList<uint> actions)
-        {
-            if (!ECommons.GameHelpers.Player.Available)
-                return;
-            for (var i = 0; i < actions.Count; i++)
-                if (actions[i] >= All.Items)
-                    actions[i] = UseItem(GetStrongestPotionRow(
-                        JobPotionType(ECommons.GameHelpers.Player.Job)));
-        }
     }
 }

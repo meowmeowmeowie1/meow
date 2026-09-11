@@ -112,6 +112,15 @@ namespace WrathCombo.Resources.Localization.UI.Misc {
                 return ResourceManager.GetString("Occult Crescent", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Deep Dungeon.
+        /// </summary>
+        internal static string Deep_Dungeon {
+            get {
+                return ResourceManager.GetString("Deep Dungeon", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Or.

@@ -579,9 +579,15 @@ public static class ActionWatching
 
                         // Self-retargeting features (Clemency, Oblation, the Raises, ...)
                         // register their Retarget during Invoke() while TryInvoke still
-                        // returns false - record the identity mapping so the gate passes.
+                        // returns false - record the NATIVE-adjusted id (exactly what
+                        // the normal-mode icon hook writes via OriginalHook). For a
+                        // raise/self-retarget this is the id itself; for AST manual
+                        // cards it resolves Play1 -> the drawn card id, which is what
+                        // the retarget gate (LastActionInvokeFor[pressed]==retarget.Action)
+                        // requires - so manual card retargeting works in Performance Mode.
                         if (actionId == pressed)
-                            Service.ActionReplacer.LastActionInvokeFor[pressed] = pressed;
+                            Service.ActionReplacer.LastActionInvokeFor[pressed] =
+                                actionManager->GetAdjustedActionId(pressed);
                     }
                 }
 
@@ -700,7 +706,7 @@ public static class ActionWatching
                     actionManager->QueuedActionId = Service.ActionReplacer.ActionReplacingEnabled ? actionId : replacedWith;
 
                 // Determine if the action will queue according to user settings
-                bool willQueue = CanQueueCS(replacedWith) && RemainingGCD > 0;
+                bool willQueue = CanQueueCS(replacedWith) && RemainingGCD > 0 && mode is not ActionManager.UseActionMode.Macro;
 
                 // If the action is going to queue, and we've retargeted, update the queued target to match the retargeted target at time of queue
                 if (willQueue && changed)
@@ -790,14 +796,6 @@ public static class ActionWatching
     public static unsafe bool OutOfRange(uint actionId, IGameObject source, IGameObject target)
     {
         return ActionManager.GetActionInRangeOrLoS(actionId, source.Struct(), target.Struct()) is 566;
-    }
-
-    public static string GetBLUIndex(uint id)
-    {
-        var aozKey = Svc.Data.GetExcelSheet<AozAction>()!.First(x => x.Action.RowId == id).RowId;
-        var index = Svc.Data.GetExcelSheet<AozActionTransient>().GetRow(aozKey).Number;
-
-        return $"#{index} ";
     }
 
     public static ActionAttackType GetAttackType(uint actionId)

@@ -101,7 +101,7 @@ internal class Presets : ConfigWindow
         if (ipcControl is not null)
             enabled = ipcControl.Value.enabled;
 
-        if (comboType is (ComboType.Advanced or ComboType.Simple))
+        if (comboType is (ComboType.AdvancedDPS or ComboType.SimpleDPS))
             if (ipcControl is not null)
                 P.UIHelper.ShowIPCControlledIndicatorIfNeeded(preset);
 
@@ -180,7 +180,7 @@ internal class Presets : ConfigWindow
             if (blueAttr.Actions.Count > 0)
             {
                 ImGui.PushStyleColor(ImGuiCol.Text, blueAttr.NoneSet ? ImGuiColors.DPSRed : ImGuiColors.DalamudOrange);
-                ImGui.Text($"{(blueAttr.NoneSet ? FeaturesUI.Warning_BLUNoSpells : FeaturesUI.Warning_BLUMissingSpells)} {string.Join(", ", blueAttr.Actions.Select(x => ActionWatching.GetBLUIndex(x) + GetActionName(x)))}");
+                ImGui.Text($"{(blueAttr.NoneSet ? FeaturesUI.Warning_BLUNoSpells : FeaturesUI.Warning_BLUMissingSpells)} {string.Join(", ", blueAttr.Actions.Select(x => BlueMageService.GetBLUIndex(x) + GetActionName(x)))}");
                 ImGui.PopStyleColor();
             }
 
