@@ -44,7 +44,7 @@ internal static class StreamDeckBridge
     public static int Port { get; private set; }
 
     private static readonly object _lock = new();
-    private static string _job = "—", _burst = "—", _burst1 = "—", _posZone = "—", _potion = "—";
+    private static string _job = "—", _burst = "—", _burst1 = "—", _posZone = "—", _potion = "—", _gap = "—";
     private static bool _posTn;
     private static bool _stHas, _aoeHas;
     private static uint _stId, _aoeId;
@@ -128,6 +128,7 @@ internal static class StreamDeckBridge
                     _posZone = "—";
                     _posTn = false;
                     _potion = "—";
+                    _gap = "—";
                 }
                 return;
             }
@@ -144,6 +145,12 @@ internal static class StreamDeckBridge
                 _ => "—",
             };
             var (posZone, posTn) = ActionResolution.GetPositional();
+            var gap = ActionResolution.IsGapCloserHeld() switch
+            {
+                true => "HELD",
+                false => "ARMED",
+                _ => "—",
+            };
             var burst1 = ActionResolution.IsBurst1Held() switch
             {
                 true => "HELD",
@@ -168,6 +175,7 @@ internal static class StreamDeckBridge
                 _posZone = posZone;
                 _posTn = posTn;
                 _potion = potion;
+                _gap = gap;
             }
         }
         catch
@@ -268,6 +276,8 @@ internal static class StreamDeckBridge
             bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: true));
         else if (path.StartsWith("/burst/toggle", StringComparison.Ordinal))
             bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: false));
+        else if (path.StartsWith("/gapcloser/toggle", StringComparison.Ordinal))
+            bytes = Encoding.UTF8.GetBytes(ToggleGapCloserJson());
         else if (path.StartsWith("/potion/toggle", StringComparison.Ordinal))
             bytes = Encoding.UTF8.GetBytes(TogglePotionJson());
         else
@@ -438,6 +448,27 @@ internal static class StreamDeckBridge
         return $"{{\"burst\":\"{Esc(state)}\"}}";
     }
 
+    private static string ToggleGapCloserJson()
+    {
+        var state = "—";
+        try
+        {
+            var t = Svc.Framework.RunOnFrameworkThread(() =>
+            {
+                ActionResolution.ToggleGapCloser(out var s);
+                return s;
+            });
+            if (t.Wait(2000))
+                state = t.Result;
+        }
+        catch
+        {
+            // Fall through with the placeholder state.
+        }
+
+        return $"{{\"gapcloser\":\"{Esc(state)}\"}}";
+    }
+
     private static string TogglePotionJson()
     {
         var state = "—";
@@ -471,7 +502,8 @@ internal static class StreamDeckBridge
                    $"\"burst\":\"{Esc(_burst)}\"," +
                    $"\"burst1\":\"{Esc(_burst1)}\"," +
                    $"\"pos\":{{\"zone\":\"{Esc(_posZone)}\",\"tn\":{Bool(_posTn)}}}," +
-                   $"\"potion\":\"{Esc(_potion)}\"" +
+                   $"\"potion\":\"{Esc(_potion)}\"," +
+                   $"\"gapcloser\":\"{Esc(_gap)}\"" +
                    "}";
     }
 
