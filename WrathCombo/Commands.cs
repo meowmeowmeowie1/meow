@@ -84,6 +84,18 @@ public partial class WrathCombo
         { Job.PCT, [(Preset)20027, (Preset)20060, (Preset)20023, (Preset)20056] }, // Hammer combo + Steel Muse
     };
 
+    // Per-job gap-closer USAGE presets (the ones that make the rotation dash to
+    // the target). Only jobs whose Wrath rotation actually fires a gap closer
+    // are listed; the rest never auto-gap-close, so there's nothing to hold.
+    // Holding these keeps you from being yanked into the boss (uptime shifting).
+    internal static readonly Dictionary<Job, Preset[]> GapCloserPresetMap = new()
+    {
+        { Job.PLD, [(Preset)11011, (Preset)11037] },                             // Intervene (ST/AoE)
+        { Job.WAR, [(Preset)18008, (Preset)18071] },                             // Onslaught (ST/AoE)
+        { Job.SAM, [(Preset)15211] },                                            // Gyoten / Yaten
+        { Job.RDM, [(Preset)13017, (Preset)13214, (Preset)13008, (Preset)13206] }, // Corps-a-corps + melee-combo gap closer
+    };
+
     /// <summary>
     ///     Registers the base commands for the plugin.<br />
     ///     Also displays the biggest commands in Dalamud.
@@ -95,6 +107,7 @@ public partial class WrathCombo
             $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
             $"{Command} burst1 hold | resume → Same, but only the ~60s (odd-minute) subset.\n" +
+            $"{Command} gapcloser hold | resume → Hold/resume auto gap-closers for current job.\n" +
             $"{Command} potion on | off → Toggle automatic potions in openers (default off).\n" +
             $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
             $"{Command} tracker reset → Un-hide and re-center it if you lost it.\n" +
@@ -133,6 +146,11 @@ public partial class WrathCombo
 
             case "burst1":
                 HandleBurstControl(argumentParts, Burst1PresetMap, "1-minute burst"); break;
+
+            case "gapcloser":
+            case "gapclose":
+            case "gap":
+                HandleBurstControl(argumentParts, GapCloserPresetMap, "gap closer"); break;
 
             case "potion":
             case "potions":

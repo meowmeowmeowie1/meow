@@ -172,6 +172,9 @@ internal static class ActionResolution
     /// <summary>1-minute (odd-minute) subset — see Commands.Burst1PresetMap.</summary>
     internal static bool? IsBurst1Held() => IsBurstHeld(WrathCombo.Burst1PresetMap);
 
+    /// <summary>Gap-closer usage held — see Commands.GapCloserPresetMap.</summary>
+    internal static bool? IsGapCloserHeld() => IsBurstHeld(WrathCombo.GapCloserPresetMap);
+
     /// <inheritdoc cref="IsBurstHeld()" />
     internal static bool? IsBurstHeld(
         System.Collections.Generic.Dictionary<ECommons.ExcelServices.Job, Preset[]> map)
@@ -196,6 +199,10 @@ internal static class ActionResolution
     /// <summary>1-minute (odd-minute) subset — see Commands.Burst1PresetMap.</summary>
     internal static bool ToggleBurst1(out string state) =>
         ToggleBurst(WrathCombo.Burst1PresetMap, out state);
+
+    /// <summary>Gap-closer usage hold — see Commands.GapCloserPresetMap.</summary>
+    internal static bool ToggleGapCloser(out string state) =>
+        ToggleBurst(WrathCombo.GapCloserPresetMap, out state);
 
     /// <summary>
     ///     Current melee positional zone relative to the target, plus whether
