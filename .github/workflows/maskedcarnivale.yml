@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/ffxiv-plugin-downtime-alt-w9vr1r
+      - claude/keen-sagan-OCJeZ
     paths:
       - 'MaskedCarnivale/**'
       - '.github/workflows/maskedcarnivale.yml'
