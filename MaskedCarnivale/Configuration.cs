@@ -27,6 +27,20 @@ public class Configuration : IPluginConfiguration
 
     public bool doUpdate { get; set; } = false;
 
+    // "HUD without plugins" mode. When true, capture the game's composited-with-HUD render
+    // target (gameWindowWithUI, ~204) through the render-target shader path INSTEAD of the
+    // swapchain backbuffer. That buffer holds the game HUD but is produced before Dalamud
+    // draws its plugin overlays, so the recording shows the HUD but not Splatoon/other
+    // plugin drawings - reliably, not dependent on present-hook timing.
+    public bool cleanHudMode { get; set; } = false;
+
+    // Self-healing across game patches: the last render index confirmed to be a valid
+    // full-res, SRV-capable, non-backbuffer target, plus the game version it was found on.
+    // Re-validated on enable and whenever the swapchain size changes; auto-relocked if the
+    // layout drifted, so the clean feed doesn't silently start showing overlays after a patch.
+    public int lastGoodIndex { get; set; } = -1;
+    public string lastGoodGameVersion { get; set; } = "";
+
     // the below exist just to make saving less cumbersome
     public void Save()
     {

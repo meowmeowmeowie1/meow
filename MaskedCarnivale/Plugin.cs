@@ -78,6 +78,11 @@ public unsafe class Plugin : IDalamudPlugin
     private int gameWindowWithUI = 204;
     private int gameWindowWithoutUI = 71;
 
+    // Last swapchain size the clean-HUD index was validated against; a change triggers a
+    // re-validate/relock (0 = never validated this session).
+    private uint _lastValidatedW = 0;
+    private uint _lastValidatedH = 0;
+
     // Output-window (outputwindow.exe) process + one-shot rename bookkeeping. The native
     // window title is baked into the prebuilt exe, so we relabel it at runtime to
     // "FINAL FANTASY XIV" (also makes Discord/Medal list it as the game window).
@@ -684,6 +689,120 @@ public unsafe class Plugin : IDalamudPlugin
         }
     }
 
+    // Whether a flat index is a usable "clean HUD" candidate: full-resolution, has a
+    // shader-resource view, and is NOT the swapchain backbuffer (the backbuffer is where
+    // Dalamud composites its plugin overlays, so it must be excluded).
+    private unsafe bool IsCleanCandidate(int index, uint sw, uint sh, Texture* backBuffer)
+    {
+        Texture* t = SafeGetTexture(index);
+        if (t == null || t->D3D11Texture2D == null || t->D3D11ShaderResourceView == null)
+            return false;
+        if (t->ActualWidth != sw || t->ActualHeight != sh)
+            return false;
+        if (t == backBuffer)
+            return false;
+        return true;
+    }
+
+    // Finds the clean-HUD render index CLOSEST to the historical default (gameWindowWithUI),
+    // which biases toward the composited-with-HUD buffer while tolerating patch drift. Returns
+    // -1 if nothing suitable is found.
+    private unsafe int AutoScanCleanIndex(uint sw, uint sh, Texture* backBuffer)
+    {
+        int maxIndex = (sizeof(RenderTargetManager) - 0x20) / 0x8;
+        int best = -1, bestDist = int.MaxValue;
+        for (int i = 0; i <= maxIndex; i++)
+        {
+            if (!IsCleanCandidate(i, sw, sh, backBuffer))
+                continue;
+            int dist = Math.Abs(i - gameWindowWithUI);
+            if (dist < bestDist) { bestDist = dist; best = i; }
+        }
+        return best;
+    }
+
+    // Re-validate the current clean-HUD index and heal it if the game's render-target layout
+    // drifted (the usual cause of "the recording started showing Splatoon again" after a patch).
+    // Order: keep current if still clean -> fall back to last-good -> auto-scan near the default.
+    public unsafe void ValidateOrRelockIndex()
+    {
+        RenderTargetManager* rtm = RenderTargetManager.Instance();
+        if (rtm == null) return;
+        var dev = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
+        if (dev == null || dev->SwapChain == null) return;
+
+        uint sw = dev->SwapChain->Width;
+        uint sh = dev->SwapChain->Height;
+        Texture* backBuffer = rtm->SwapChainBackBuffer;
+        string ver = Svc_GameVersion();
+
+        if (!cfg.manualIndex && IsCleanCandidate(cfg.renderIndex, sw, sh, backBuffer))
+        {
+            cfg.lastGoodIndex = cfg.renderIndex;
+            cfg.lastGoodGameVersion = ver;
+            cfg.Save();
+            return;
+        }
+
+        if (cfg.lastGoodIndex >= 0 && IsCleanCandidate(cfg.lastGoodIndex, sw, sh, backBuffer))
+        {
+            cfg.renderIndex = cfg.lastGoodIndex;
+            cfg.lastGoodGameVersion = ver;
+            cfg.Save();
+            Log!.Info($"MaskedCarnivale: clean-HUD index restored from last-good -> {cfg.renderIndex}");
+            return;
+        }
+
+        int found = AutoScanCleanIndex(sw, sh, backBuffer);
+        if (found >= 0)
+        {
+            cfg.renderIndex = found;
+            cfg.lastGoodIndex = found;
+            cfg.lastGoodGameVersion = ver;
+            cfg.Save();
+            Log!.Info($"MaskedCarnivale: clean-HUD index auto-relocked -> {found} (nearest to {gameWindowWithUI})");
+        }
+        else
+        {
+            Log!.Warning("MaskedCarnivale: clean-HUD auto-relock found no candidate; use the candidate cycler.");
+        }
+    }
+
+    // Config-button entry point: force a fresh scan for the clean-HUD index (ignores the current
+    // value), then remember it. Turns off manual override so the pick takes effect.
+    public unsafe void RelockCleanHud()
+    {
+        RenderTargetManager* rtm = RenderTargetManager.Instance();
+        if (rtm == null) return;
+        var dev = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
+        if (dev == null || dev->SwapChain == null) return;
+
+        uint sw = dev->SwapChain->Width;
+        uint sh = dev->SwapChain->Height;
+        int found = AutoScanCleanIndex(sw, sh, rtm->SwapChainBackBuffer);
+        if (found >= 0)
+        {
+            cfg.manualIndex = false;
+            cfg.renderIndex = found;
+            cfg.lastGoodIndex = found;
+            cfg.lastGoodGameVersion = Svc_GameVersion();
+            _lastValidatedW = sw;
+            _lastValidatedH = sh;
+            cfg.Save();
+            Log!.Info($"MaskedCarnivale: RelockCleanHud -> idx {found}");
+        }
+        else
+        {
+            Log!.Warning("MaskedCarnivale: RelockCleanHud found no full-res non-backbuffer candidate.");
+        }
+    }
+
+    private static string Svc_GameVersion()
+    {
+        try { return FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GameVersionString; }
+        catch { return ""; }
+    }
+
     // Human-readable description of the currently-selected render target, for the config window.
     public unsafe string GetCurrentIndexInfo()
     {
@@ -730,7 +849,10 @@ public unsafe class Plugin : IDalamudPlugin
     // OFF = mirror the clean 3D scene render target (no HUD). The manual-index / candidate
     // cycler applies ONLY to the no-HUD (Show UI OFF) path, so it can never silently disable
     // the toggle again.
-    private bool UseBackbuffer => cfg.showUI;
+    // "HUD without plugins" mode forces the render-target shader path (sampling the
+    // composited-with-HUD buffer, gameWindowWithUI) instead of the backbuffer, so plugin
+    // overlays are excluded by construction rather than by present-hook timing.
+    private bool UseBackbuffer => cfg.showUI && !cfg.cleanHudMode;
 
     // Intermediate texture for backbuffer/HUD capture. The swapchain backbuffer has no SRV and
     // a format that can't be CopyResource'd straight into the shared texture, so we copy it into
@@ -867,9 +989,25 @@ public unsafe class Plugin : IDalamudPlugin
             // avoid fighting over the shared texture each frame.
             if (!UseBackbuffer)
             {
-                // Show UI OFF (and not manually overridden) => mirror the clean scene buffer.
+                // Clean-HUD mode re-validates its index whenever the swapchain size changes
+                // (a game patch or resolution change is the usual cause of index drift), so the
+                // feed heals itself instead of silently starting to show overlays.
+                if (cfg.cleanHudMode)
+                {
+                    uint sw = ffxivDevice->SwapChain->Width;
+                    uint sh = ffxivDevice->SwapChain->Height;
+                    if (sw != _lastValidatedW || sh != _lastValidatedH)
+                    {
+                        _lastValidatedW = sw;
+                        _lastValidatedH = sh;
+                        ValidateOrRelockIndex();
+                    }
+                }
+
+                // Default index: clean-HUD buffer (with HUD, no plugins) in cleanHudMode,
+                // otherwise the no-HUD scene buffer. Manual override wins over both.
                 if (!cfg.manualIndex)
-                    cfg.renderIndex = gameWindowWithoutUI;
+                    cfg.renderIndex = cfg.cleanHudMode ? gameWindowWithUI : gameWindowWithoutUI;
 
                 cfg.renderIndex = Math.Min(Math.Max(cfg.renderIndex, 0), 511);
 

@@ -44,6 +44,37 @@ public class ConfigWindow : Window, IDisposable
                 ? "ON: game + HUD (backbuffer capture)."
                 : "OFF: clean scene, no HUD.");
 
+            // HUD without plugins: capture the composited-with-HUD render target instead of the
+            // backbuffer, so the recording shows the game HUD but not Dalamud plugin overlays
+            // (Splatoon etc.). Requires Show UI ON (the HUD path).
+            bool cleanHud = cfg.cleanHudMode;
+            if (ImGui.Checkbox("HUD without plugins", ref cleanHud))
+            {
+                cfg.cleanHudMode = cleanHud;
+                cfg.Save();
+                if (cleanHud)
+                    plugin.RelockCleanHud(); // find the clean-HUD render target now
+            }
+            ImGui.TextDisabled(cfg.cleanHudMode
+                ? "Recording shows the HUD but NOT plugin overlays (Splatoon)."
+                : "Off: plugin overlays appear in the recording (backbuffer).");
+
+            if (cfg.cleanHudMode)
+            {
+                // One-click recovery after a game patch shifts the render-target layout: rescan
+                // and lock onto the clean-HUD buffer. If it picks the wrong full-res buffer, use
+                // the candidate cycler below and watch your recording until Splatoon disappears.
+                if (ImGui.Button("Re-lock clean capture"))
+                    plugin.RelockCleanHud();
+                ImGui.SameLine();
+                if (ImGui.Button("< Prev"))
+                    plugin.StepCandidate(-1);
+                ImGui.SameLine();
+                if (ImGui.Button("Next >"))
+                    plugin.StepCandidate(1);
+                ImGui.TextDisabled(plugin.GetCurrentIndexInfo());
+            }
+
 
             ImGui.BeginChild("WindowSettings", new Vector2(350, 120), true);
 
