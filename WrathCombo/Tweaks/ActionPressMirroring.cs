@@ -149,8 +149,19 @@ internal static unsafe class ActionPressMirroring
     private static bool MirrorPulse(
         AddonActionBarBase* ab, uint slotIndex, ulong a3, int a4)
     {
+        // Both can be null transiently (zoning, loading, addon teardown). Deref'd
+        // blind, the NRE bubbles to PulseActionBarSlotDetour's catch, which
+        // Log.Error's on EVERY pulse while unavailable — a growing per-frame log
+        // spam that shows up as mounting lag. Fall through to the game's own pulse
+        // quietly instead.
         var hotbarModule = RaptureHotbarModule.Instance();
+        if (hotbarModule is null)
+            return false;
+
         var pressedSlot = hotbarModule->GetSlotById(ab->RaptureHotbarId, slotIndex);
+        if (pressedSlot is null)
+            return false;
+
         var type = pressedSlot->CommandType;
         var commandId = pressedSlot->CommandId;
 
