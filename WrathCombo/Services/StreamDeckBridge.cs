@@ -133,7 +133,12 @@ internal static class StreamDeckBridge
                 return;
             }
 
-            ActionResolution.Refresh(); // throttled internally (~100ms)
+            // Only rebuild the snapshot on the frames Refresh actually recomputed
+            // (~every 100ms). Between ticks the resolved ids and states are
+            // unchanged, so the per-frame ActionName/ActionIcon lookups, string
+            // allocations and lock were pure waste while a deck was polling.
+            if (!ActionResolution.Refresh())
+                return;
 
             var job = Player.Job.ToString();
             var stHas = ActionResolution.TryGetSingleTarget(out var st);

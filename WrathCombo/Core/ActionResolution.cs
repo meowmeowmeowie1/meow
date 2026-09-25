@@ -27,14 +27,18 @@ internal static class ActionResolution
     /// <summary>
     ///     Recomputes the cached ST/AoE next actions, throttled to ~100ms.
     ///     Call once per frame from the window; a no-op on throttled frames.
+    ///     Returns true only on the frames it actually recomputed, so callers
+    ///     (e.g. the Stream Deck snapshot) can skip their own per-frame rebuild
+    ///     when nothing changed.
     /// </summary>
-    internal static void Refresh()
+    internal static bool Refresh()
     {
         if (!EzThrottler.Throttle("NextActionTracker", 100))
-            return;
+            return false;
 
         _stHas = Resolve(ComboTargetTypeKeys.SingleTarget, out _stCached);
         _aoeHas = Resolve(ComboTargetTypeKeys.MultiTarget, out _aoeCached);
+        return true;
     }
 
     internal static bool TryGetSingleTarget(out uint action)
