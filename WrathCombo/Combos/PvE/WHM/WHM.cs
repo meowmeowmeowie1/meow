@@ -44,7 +44,7 @@ internal partial class WHM : Healer
             {
                 if (ActionReady(PresenceOfMind) &&
                     ActionWatching.NumberOfGcdsUsed >= 3 &&
-                    !HasStatusEffect(Buffs.SacredSight))
+                    !LocalPlayer.HasStatus(Buffs.SacredSight))
                     return PresenceOfMind;
 
                 if (ActionReady(Assize) &&
@@ -61,11 +61,11 @@ internal partial class WHM : Healer
             
             var dotAction = OriginalHook(Aero);
             AeroList.TryGetValue(dotAction, out var dotDebuffID);
-            var target = IsMoving() && !BloodLilyReady && !HasStatusEffect(Buffs.SacredSight) && !FullLily
+            var target = IsMoving() && !BloodLilyReady && !LocalPlayer.HasStatus(Buffs.SacredSight) && !FullLily
                 ? SimpleTarget.DottableEnemy(dotAction, dotDebuffID, 0, 30, 99) //if moving and dont have other mobile gcds
                 : SimpleTarget.DottableEnemy(dotAction, dotDebuffID, 0, 3, 99); 
             
-            if (target is not null && ActionReady(dotAction) && CanApplyStatus(target, dotDebuffID) && !JustUsedOn(dotAction, target) && ActionLearned(Aero))
+            if (target is not null && ActionReady(dotAction) && target.CanApplyStatus(dotDebuffID) && !JustUsedOn(dotAction, target) && ActionLearned(Aero))
                 return dotAction.Retarget(actionID, target);
             
             // Blood Lily Spend
@@ -73,7 +73,7 @@ internal partial class WHM : Healer
                 return AfflatusMisery;
 
             // Glare IV
-            if (HasStatusEffect(Buffs.SacredSight))
+            if (LocalPlayer.HasStatus(Buffs.SacredSight))
                 return Glare4;
 
             // Lily Heal Overcap
@@ -108,7 +108,7 @@ internal partial class WHM : Healer
 
                 if (ActionReady(PresenceOfMind) &&
                     ActionWatching.NumberOfGcdsUsed >= 4 &&
-                    !HasStatusEffect(Buffs.SacredSight))
+                    !LocalPlayer.HasStatus(Buffs.SacredSight))
                     return PresenceOfMind;
 
                 if (Role.CanLucidDream(7500))
@@ -122,7 +122,7 @@ internal partial class WHM : Healer
             if (HasBattleTarget() && BloodLilyReady)
                 return AfflatusMisery;
           
-            if (HasStatusEffect(Buffs.SacredSight))
+            if (LocalPlayer.HasStatus(Buffs.SacredSight))
                 return OriginalHook(Glare4);
 
             if (ActionReady(AfflatusRapture) &&
@@ -202,7 +202,7 @@ internal partial class WHM : Healer
                 if (IsEnabled(Preset.WHM_ST_MainCombo_PresenceOfMind) &&
                     ActionReady(PresenceOfMind) &&
                     ActionWatching.NumberOfGcdsUsed >= 3 &&
-                    !HasStatusEffect(Buffs.SacredSight))
+                    !LocalPlayer.HasStatus(Buffs.SacredSight))
                     return PresenceOfMind;
 
                 if (IsEnabled(Preset.WHM_ST_MainCombo_Assize) &&
@@ -232,18 +232,18 @@ internal partial class WHM : Healer
                     return OriginalHook(Aero);
                 
                 //2 target Dotting System to maintain dots on 2 enemies. Works with the same sliders and one target
-                if (target is not null && ActionReady(dotAction) && CanApplyStatus(target, dotDebuffID) && !JustUsedOn(dotAction, target) && WHM_ST_MainCombo_DoT_TwoTarget)
+                if (target is not null && ActionReady(dotAction) && target.CanApplyStatus(dotDebuffID) && !JustUsedOn(dotAction, target) && WHM_ST_MainCombo_DoT_TwoTarget)
                     return dotAction.Retarget(replacedActions, target);
             }
             
             // Blood Lily Spend
             if (IsEnabled(Preset.WHM_ST_MainCombo_Misery) && BloodLilyReady && 
-                (AlmostFullLily || HasStatusEffect(Buffs.PresenceOfMind) || WHM_ST_MainCombo_Misery_Option == 1))
+                (AlmostFullLily || LocalPlayer.HasStatus(Buffs.PresenceOfMind) || WHM_ST_MainCombo_Misery_Option == 1))
                 return AfflatusMisery;
 
             // Glare IV
             if (IsEnabled(Preset.WHM_ST_MainCombo_GlareIV) &&
-                HasStatusEffect(Buffs.SacredSight))
+                LocalPlayer.HasStatus(Buffs.SacredSight))
                 return Glare4;
 
             // Lily Heal Overcap
@@ -328,7 +328,7 @@ internal partial class WHM : Healer
                 if (IsEnabled(Preset.WHM_AoE_DPS_PresenceOfMind) &&
                     ActionReady(PresenceOfMind) &&
                     ActionWatching.NumberOfGcdsUsed >= 4 &&
-                    !HasStatusEffect(Buffs.SacredSight))
+                    !LocalPlayer.HasStatus(Buffs.SacredSight))
                     return PresenceOfMind;
             }
 
@@ -337,11 +337,11 @@ internal partial class WHM : Healer
             #region GCDS and Casts
 
             if (IsEnabled(Preset.WHM_AoE_DPS_Misery) && HasBattleTarget() && BloodLilyReady && 
-                (AlmostFullLily || HasStatusEffect(Buffs.PresenceOfMind) || WHM_AoE_DPS_Misery_Option == 1))
+                (AlmostFullLily || LocalPlayer.HasStatus(Buffs.PresenceOfMind) || WHM_AoE_DPS_Misery_Option == 1))
                 return AfflatusMisery;
             
             if (IsEnabled(Preset.WHM_AoE_DPS_GlareIV) &&
-                HasStatusEffect(Buffs.SacredSight))
+                LocalPlayer.HasStatus(Buffs.SacredSight))
                 return OriginalHook(Glare4);
 
             if (IsEnabled(Preset.WHM_AoE_DPS_LilyOvercap) && ActionReady(AfflatusRapture) &&
@@ -392,7 +392,7 @@ internal partial class WHM : Healer
             
             bool cleansableTarget =
                 HealRetargeting.RetargetSettingOn && SimpleTarget.Stack.AllyToEsuna is not null ||
-                HasCleansableDebuff(healTarget);
+                healTarget.HasCleansableDebuff;
             
             if (ActionReady(Role.Esuna) &&
                 GetTargetHPPercent(healTarget) >= 40 &&
@@ -408,12 +408,12 @@ internal partial class WHM : Healer
                 return Asylum.Retarget(actionID ,SimpleTarget.Self);
             
             if (ActionReady(Regen) && 
-                GetStatusEffect(Buffs.Regen, healTarget) == null &&  
+                healTarget.Status(Buffs.Regen) == null &&  
                 GetTargetHPPercent(healTarget) >= 40)
                 return Regen.RetargetIfEnabled(actionID);
 
             if (ActionReady(DivineBenison) && 
-                GetStatusEffect(Buffs.DivineBenison, healTarget) == null)
+                healTarget.Status(Buffs.DivineBenison) == null)
                 return DivineBenison.RetargetIfEnabled(actionID);
 
             if (ActionReady(Aquaveil) && IsOffCooldown(Aquaveil) && (healTarget.IsInParty() && healTarget.Role is CombatRole.Tank || !IsInParty()))
@@ -458,7 +458,7 @@ internal partial class WHM : Healer
             if (ActionReady(OriginalHook(Temperance)) && 
                 (GetPartyAvgHPPercent() <= 70 ||
                  GroupDamageIncoming() ||
-                 HasStatusEffect(Buffs.DivineGrace)))
+                 LocalPlayer.HasStatus(Buffs.DivineGrace)))
                 return OriginalHook(Temperance);
             
             if (ActionLearned(LiturgyOfTheBell) &&
@@ -483,8 +483,8 @@ internal partial class WHM : Healer
                 return Cure3.RetargetIfEnabled(actionID);
 
             if (ActionReady(OriginalHook(Medica2)) &&
-                !HasStatusEffect(Buffs.Medica2) &&
-                !HasStatusEffect(Buffs.Medica3))
+                !LocalPlayer.HasStatus(Buffs.Medica2) &&
+                !LocalPlayer.HasStatus(Buffs.Medica3))
                 return OriginalHook(Medica2);
 
             return OriginalHook(Medica1);
@@ -510,7 +510,7 @@ internal partial class WHM : Healer
             var healTarget = SimpleTarget.Stack.OneButtonHealLogic;
 
             var canThinAir = ActionLearned(ThinAir) &&
-                             !HasStatusEffect(Buffs.ThinAir) &&
+                             !LocalPlayer.HasStatus(Buffs.ThinAir) &&
                              GetRemainingCharges(ThinAir) >
                              WHM_STHeals_ThinAir;
 
@@ -533,7 +533,7 @@ internal partial class WHM : Healer
             
             bool cleansableTarget =
                 HealRetargeting.RetargetSettingOn && SimpleTarget.Stack.AllyToEsuna is not null ||
-                HasCleansableDebuff(healTarget);
+                healTarget.HasCleansableDebuff;
             
             if (IsEnabled(Preset.WHM_STHeals_Esuna) &&
                 ActionReady(Role.Esuna) &&
@@ -549,7 +549,7 @@ internal partial class WHM : Healer
 
             // Divine Caress
             if (IsEnabled(Preset.WHM_STHeals_Temperance) &&
-                HasStatusEffect(Buffs.DivineGrace) &&
+                LocalPlayer.HasStatus(Buffs.DivineGrace) &&
                 (!WHM_STHeals_TemperanceOptions[1] || !InBossEncounter()) &&
                 (!WHM_STHeals_TemperanceOptions[0] || CanWeave()))
                 return OriginalHook(Temperance);
@@ -592,7 +592,7 @@ internal partial class WHM : Healer
             #region Variables
             var healTarget = SimpleTarget.Stack.OneButtonHealLogic;
             var canThinAir = ActionLearned(ThinAir) &&
-                             !HasStatusEffect(Buffs.ThinAir) &&
+                             !LocalPlayer.HasStatus(Buffs.ThinAir) &&
                              GetRemainingCharges(ThinAir) >
                              WHM_AoEHeals_ThinAir;
 
@@ -707,9 +707,9 @@ internal partial class WHM : Healer
             if (actionID != Role.Swiftcast)
                 return actionID;
 
-            if (IsOnCooldown(Role.Swiftcast) || HasStatusEffect(Role.Buffs.Swiftcast))
+            if (IsOnCooldown(Role.Swiftcast) || LocalPlayer.HasStatus(Role.Buffs.Swiftcast))
             {
-                if (IsEnabled(Preset.WHM_ThinAirRaise) && !HasStatusEffect(Buffs.ThinAir) && ActionReady(ThinAir))
+                if (IsEnabled(Preset.WHM_ThinAirRaise) && !LocalPlayer.HasStatus(Buffs.ThinAir) && ActionReady(ThinAir))
                     return ThinAir;
 
                 return IsEnabled(Preset.WHM_Raise_Retarget)
@@ -731,7 +731,7 @@ internal partial class WHM : Healer
                 return actionID;
 
             var healTarget = SimpleTarget.Stack.AllyToHeal;
-            var benisonShield = GetStatusEffect(Buffs.DivineBenison, healTarget);
+            var benisonShield = healTarget.Status(Buffs.DivineBenison);
 
             if (ActionReady(Aquaveil))
                 return IsEnabled(Preset.WHM_Re_Aquaveil)
