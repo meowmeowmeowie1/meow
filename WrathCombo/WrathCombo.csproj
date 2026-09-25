@@ -20,7 +20,10 @@
         <TargetFramework>net10.0-windows</TargetFramework>
         <Configurations>Debug;Release</Configurations>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
-        <NoWarn>CS1591</NoWarn>
+        <!-- PendingExcelSchema: BST (synced from upstream) reads Lumina experimental
+             Pet/XBMPet sheets that ship as evaluation-only; upstream suppresses the
+             same diagnostic. Without this it is emitted as an error. -->
+        <NoWarn>CS1591;PendingExcelSchema</NoWarn>
         <LangVersion>preview</LangVersion>
 
         <Platforms>x64</Platforms>
@@ -135,6 +138,11 @@
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
         <DependentUpon>AST_Config.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Resources\Localization\JobConfigs\BST_Config.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>BST_Config.resx</DependentUpon>
       </Compile>
       <Compile Update="Resources\Localization\JobConfigs\BLM_Config.Designer.cs">
         <DesignTime>True</DesignTime>
@@ -291,6 +299,10 @@
       <EmbeddedResource Update="Resources\Localization\JobConfigs\AST_Config.resx">
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>AST_Config.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Resources\Localization\JobConfigs\BST_Config.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>BST_Config.Designer.cs</LastGenOutput>
       </EmbeddedResource>
       <EmbeddedResource Update="Resources\Localization\JobConfigs\BLM_Config.resx">
         <Generator>ResXFileCodeGenerator</Generator>
