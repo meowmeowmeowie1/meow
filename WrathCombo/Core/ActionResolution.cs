@@ -291,4 +291,24 @@ internal static class ActionResolution
         state = enable ? "ON" : "OFF";
         return true;
     }
+
+    /// <summary>
+    ///     Whether the universal "Exclude Gap Closers" rotation filter is on.
+    ///     Plugin-wide switch, valid with no player logged in.
+    /// </summary>
+    internal static bool AreGapClosersExcluded() =>
+        Service.Configuration.ExcludeGapClosers;
+
+    /// <summary>
+    ///     Toggle the global exclude-gap-closers switch (command path or Stream
+    ///     Deck bridge); persists. <paramref name="state" /> is "ON" / "OFF".
+    /// </summary>
+    internal static bool ToggleGapExclude(out string state)
+    {
+        var enable = !Service.Configuration.ExcludeGapClosers;
+        Service.Configuration.ExcludeGapClosers = enable;
+        Service.Configuration.Save();
+        state = enable ? "ON" : "OFF";
+        return true;
+    }
 }

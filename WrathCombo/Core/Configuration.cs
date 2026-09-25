@@ -79,6 +79,17 @@ public partial class Configuration : IPluginConfiguration
     [Setting(Setting.Type.Toggle)]
     public bool EnableAutomaticPotions = false;
 
+    /// Universal rotation filter: when on, any combo that would resolve a press
+    /// into a gap closer / dash is suppressed and the base action is pressed
+    /// instead - on every job. Intentionally covers damage dashes too (DRG
+    /// Dragonfire Dive, SMN Crimson Cyclone, ...), so it can cost DPS; it is the
+    /// global switch behind the Stream Deck gap-exclude key and
+    /// "/mytweak gapexclude". Distinct from the per-job Gap Closer HOLD. Default: false.
+    /// <seealso cref="GapCloserData"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool ExcludeGapClosers = false;
+
     /// Mirrors the action-press pulse animation onto every hotbar copy of an
     /// action, not just the slot whose keybind was pressed. Default: false.
     /// <seealso cref="Tweaks.ActionPressMirroring"/>

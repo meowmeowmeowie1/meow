@@ -91,6 +91,17 @@ internal abstract partial class CustomCombo : CustomComboFunctions
             (actionID == resultingActionID && !hasException))
             return false;
 
+        // Universal "Exclude Gap Closers": if the rotation turned the pressed
+        // action into a gap closer / dash, suppress the swap so the base action
+        // is pressed instead. Only when the resolved id actually differs from the
+        // press (a directly-pressed gap closer is the user's own choice and passes
+        // through). Both resolution paths - the icon hook and the Performance-Mode
+        // UseAction path - funnel through here, so this one check covers both.
+        if (Service.Configuration.ExcludeGapClosers &&
+            resultingActionID != actionID &&
+            GapCloserData.GapClosers.Contains(resultingActionID))
+            return false;
+
         newActionID = resultingActionID;
 
         return true;

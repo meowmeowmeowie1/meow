@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "MyTweak Next Action",
-  "Version": "1.5.0",
+  "Version": "1.6.0",
   "Author": "meowmeowmeowie1",
   "URL": "https://github.com/meowmeowmeowie1/meow",
   "Description": "Shows your FFXIV next Single-Target / AoE action and burst state from the MyTweak plugin, and toggles burst. Talks to MyTweak's local API (127.0.0.1).",
@@ -110,6 +110,20 @@
       "Name": "Gap Closer Toggle",
       "Icon": "imgs/gap",
       "Tooltip": "Hold/resume automatic gap closers (Intervene/Onslaught/Gyoten/Corps-a-corps) for the current job. Shows ARMED/HELD.",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/gap",
+          "TitleAlignment": "middle",
+          "FontSize": "14"
+        }
+      ]
+    },
+    {
+      "UUID": "com.mytweak.wrath.gapexclude",
+      "Name": "Exclude Gap Closers",
+      "Icon": "imgs/gap",
+      "Tooltip": "Exclude ALL gap closers/dashes from the rotation on every job (includes damage dashes). Shows ON/OFF and toggles the global switch when pressed.",
       "SupportedInMultiActions": false,
       "States": [
         {

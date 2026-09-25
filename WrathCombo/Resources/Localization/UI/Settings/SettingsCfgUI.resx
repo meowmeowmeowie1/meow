@@ -485,6 +485,18 @@ This ensures that the target used to check HP% threshold logic for healing actio
   <data name="EnableAutomaticPotions_defaultValue" xml:space="preserve">
     <value>Off</value>
   </data>
+  <data name="ExcludeGapClosers_Name" xml:space="preserve">
+    <value>Exclude Gap Closers</value>
+  </data>
+  <data name="ExcludeGapClosers_helpMark" xml:space="preserve">
+    <value>Stops the rotation from turning a press into a gap closer / dash, on every job - the base action is pressed instead. This intentionally includes gap closers that deal damage (e.g. Dragonfire Dive, Crimson Cyclone), so it can cost DPS. Directly pressing a gap closer yourself still works. Toggle from the Stream Deck "Exclude Gap Closers" key or with /mytweak gapexclude. Separate from the per-job Gap Closer Hold.</value>
+  </data>
+  <data name="ExcludeGapClosers_recommendedValue" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="ExcludeGapClosers_defaultValue" xml:space="preserve">
+    <value>Off</value>
+  </data>
   <data name="DuplicateActionPresses_Name" xml:space="preserve">
     <value>Duplicate Action Presses Between Hotbars</value>
   </data>
