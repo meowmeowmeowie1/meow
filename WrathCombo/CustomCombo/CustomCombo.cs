@@ -6,6 +6,7 @@ using WrathCombo.Attributes;
 using WrathCombo.Combos.PvE;
 using WrathCombo.Core;
 using WrathCombo.CustomComboNS.Functions;
+using WrathCombo.Services;
 using WrathCombo.Services.ActionRequestIPC;
 using ECommonsJob = ECommons.ExcelServices.Job;
 
