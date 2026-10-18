@@ -779,19 +779,19 @@ internal partial class MCH
         ];
     }
 
-    // TOP (The Omega Protocol) opener. This now reuses the proven early-Wildfire
-    // opener sequence (identical to the "Early Wildfire" option) instead of a
-    // hand-authored one.
+    // TOP (The Omega Protocol) opener. Uses the proven STANDARD opener sequence,
+    // where Wildfire goes up in the real burst window (weaved around the 6th GCD
+    // with Full Metal Field + Hypercharge), not front-loaded.
     //
-    // Why: a custom hand-written sequence here desynced the 2-minute burst - the
-    // steady-state rotation is built to pick up from the sanctioned opener, so a
-    // non-standard sequence left it pooling Wildfire / Automaton Queen / tools /
-    // Reassemble after the opener and mistimed the following burst. The early-WF
-    // sequence aligns the 2-minute cycle correctly and hands off cleanly, and it
-    // already carries both Reassemble charges. The potion step auto-skips when
-    // automatic potions are off, so this stays no-potion unless you enable them.
-    // A genuinely bespoke TOP opener would need in-game parse verification.
-    internal class MCHLvl100TOPOpener : MCHLvl100EarlyWFOpener
+    // History: the early-Wildfire sequence put Wildfire up as the ~3rd GCD, which
+    // is too early for TOP; and the original hand-authored sequence desynced the
+    // 2-minute rotation (cooldowns pooled after the opener, following burst
+    // mistimed). WrathCombo's steady-state is built to hand off from the
+    // sanctioned openers, so TOP now inherits the standard opener: correct burst
+    // timing + 2-minute alignment, clean hand-off, both Reassemble charges. The
+    // potion step auto-skips when automatic potions are off (stays no-potion
+    // unless you enable them).
+    internal class MCHLvl100TOPOpener : MCHLvl100StandardOpener
     {
     }
 

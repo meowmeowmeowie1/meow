@@ -32,7 +32,7 @@ internal partial class MCH
 
                     DrawRadioButton(MCH_SelectedOpener,
                         "TOP Opener",
-                        "For The Omega Protocol (Ultimate). Uses the proven early-Wildfire opener so the 2-minute burst stays aligned; potion step auto-skips when automatic potions are off.", 2, descriptionAsTooltip: true);
+                        "For The Omega Protocol (Ultimate). Uses the standard opener timing - Wildfire goes up in the real burst window (with Full Metal Field + Hypercharge), not front-loaded; potion step auto-skips when automatic potions are off.", 2, descriptionAsTooltip: true);
 
                     DrawOpenerPrepullBlockChoice(MCH_Opener_PrepullBlock);
                     break;
