@@ -275,14 +275,18 @@ public abstract class WrathOpener
 
             if (OpenerStep <= OpenerActions.Count)
             {
+                actionID = CurrentOpenerAction = AllowUpgradeSteps.Any(x => x == OpenerStep) ? OriginalHook(OpenerActions[OpenerStep - 1].Invoke()) : OpenerActions[OpenerStep - 1].Invoke();
+
+                // Fork: gate opener potions behind the global EnableAutomaticPotions
+                // switch (UsePot = IncludePot && EnableAutomaticPotions) instead of
+                // upstream's bare IncludePot.
                 if (CurrentOpenerAction >= All.Items && (CurrentOpenerAction == All.Items || (!UsePot & CurrentOpenerAction >= All.Items) || !Items.ItemReady(CurrentOpenerAction - All.Items)))
                 {
                     Svc.Log.Debug($"Skipping item {CurrentOpenerAction.ActionName()} at step {OpenerStep}");
                     OpenerStep++;
-                    CurrentOpenerAction = OpenerActions[OpenerStep - 1].Invoke();
+                    return false;
                 }
 
-                bool skipped = false;
                 foreach (var (Step, Condition) in SkipSteps.Where(x => x.Steps.Any(y => y == OpenerStep)))
                 {
                     while (Step.Any(x => x == OpenerStep) && Condition())
@@ -298,14 +302,6 @@ public abstract class WrathOpener
                         return false;
                     }
                 }
-
-                if (skipped)
-                {
-                    actionID = All.Cease;
-                    return true;
-                }
-
-                actionID = CurrentOpenerAction = AllowUpgradeSteps.Any(x => x == OpenerStep) ? OriginalHook(OpenerActions[OpenerStep - 1].Invoke()) : OpenerActions[OpenerStep - 1].Invoke();
 
                 float startValue = (VeryDelayedWeaveSteps.Any(x => x == OpenerStep)) ? 1f : 1.25f;
                 if ((DelayedWeaveSteps.Any(x => x == OpenerStep) || VeryDelayedWeaveSteps.Any(x => x == OpenerStep)) && !CanDelayedWeave(startValue, 0) && RemainingGCD > 0)
