@@ -22,10 +22,11 @@ namespace WrathCombo.Services;
 /// </summary>
 /// <remarks>
 ///     Endpoints:
-///       GET /state         → JSON snapshot (job, st, aoe, burst, burst1, potion).
-///       GET /burst/toggle  → toggles burst, returns the new state as JSON.
-///       GET /burst1/toggle → toggles the 1-minute burst subset.
-///       GET /potion/toggle → toggles the global automatic-potions switch.
+///       GET /state             → JSON snapshot (job, st, aoe, burst, burst1, potion, gapexclude).
+///       GET /burst/toggle      → toggles burst, returns the new state as JSON.
+///       GET /burst1/toggle     → toggles the 1-minute burst subset.
+///       GET /potion/toggle     → toggles the global automatic-potions switch.
+///       GET /gapexclude/toggle → toggles the global exclude-gap-closers switch.
 ///     Thread-safety: the snapshot is built on the framework (game) thread in
 ///     <see cref="UpdateSnapshot" />; the HTTP worker thread only reads that
 ///     snapshot under a lock, and marshals toggles back onto the framework
@@ -44,7 +45,7 @@ internal static class StreamDeckBridge
     public static int Port { get; private set; }
 
     private static readonly object _lock = new();
-    private static string _job = "—", _burst = "—", _burst1 = "—", _posZone = "—", _potion = "—", _gap = "—";
+    private static string _job = "—", _burst = "—", _burst1 = "—", _posZone = "—", _potion = "—", _gap = "—", _gapExclude = "—";
     private static bool _posTn;
     private static bool _stHas, _aoeHas;
     private static uint _stId, _aoeId;
@@ -129,11 +130,17 @@ internal static class StreamDeckBridge
                     _posTn = false;
                     _potion = "—";
                     _gap = "—";
+                    _gapExclude = "—";
                 }
                 return;
             }
 
-            ActionResolution.Refresh(); // throttled internally (~100ms)
+            // Only rebuild the snapshot on the frames Refresh actually recomputed
+            // (~every 100ms). Between ticks the resolved ids and states are
+            // unchanged, so the per-frame ActionName/ActionIcon lookups, string
+            // allocations and lock were pure waste while a deck was polling.
+            if (!ActionResolution.Refresh())
+                return;
 
             var job = Player.Job.ToString();
             var stHas = ActionResolution.TryGetSingleTarget(out var st);
@@ -158,6 +165,7 @@ internal static class StreamDeckBridge
                 _ => "—",
             };
             var potion = ActionResolution.ArePotionsEnabled() ? "ON" : "OFF";
+            var gapExclude = ActionResolution.AreGapClosersExcluded() ? "ON" : "OFF";
 
             lock (_lock)
             {
@@ -176,6 +184,7 @@ internal static class StreamDeckBridge
                 _posTn = posTn;
                 _potion = potion;
                 _gap = gap;
+                _gapExclude = gapExclude;
             }
         }
         catch
@@ -276,6 +285,8 @@ internal static class StreamDeckBridge
             bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: true));
         else if (path.StartsWith("/burst/toggle", StringComparison.Ordinal))
             bytes = Encoding.UTF8.GetBytes(ToggleBurstJson(oneMinute: false));
+        else if (path.StartsWith("/gapexclude/toggle", StringComparison.Ordinal))
+            bytes = Encoding.UTF8.GetBytes(ToggleGapExcludeJson());
         else if (path.StartsWith("/gapcloser/toggle", StringComparison.Ordinal))
             bytes = Encoding.UTF8.GetBytes(ToggleGapCloserJson());
         else if (path.StartsWith("/potion/toggle", StringComparison.Ordinal))
@@ -490,6 +501,27 @@ internal static class StreamDeckBridge
         return $"{{\"potion\":\"{Esc(state)}\"}}";
     }
 
+    private static string ToggleGapExcludeJson()
+    {
+        var state = "—";
+        try
+        {
+            var t = Svc.Framework.RunOnFrameworkThread(() =>
+            {
+                ActionResolution.ToggleGapExclude(out var s);
+                return s;
+            });
+            if (t.Wait(2000))
+                state = t.Result;
+        }
+        catch
+        {
+            // Fall through with the placeholder state.
+        }
+
+        return $"{{\"gapexclude\":\"{Esc(state)}\"}}";
+    }
+
     private static string StateJson()
     {
         lock (_lock)
@@ -503,7 +535,8 @@ internal static class StreamDeckBridge
                    $"\"burst1\":\"{Esc(_burst1)}\"," +
                    $"\"pos\":{{\"zone\":\"{Esc(_posZone)}\",\"tn\":{Bool(_posTn)}}}," +
                    $"\"potion\":\"{Esc(_potion)}\"," +
-                   $"\"gapcloser\":\"{Esc(_gap)}\"" +
+                   $"\"gapcloser\":\"{Esc(_gap)}\"," +
+                   $"\"gapexclude\":\"{Esc(_gapExclude)}\"" +
                    "}";
     }
 

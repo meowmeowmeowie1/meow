@@ -280,6 +280,13 @@ internal sealed class ActionReplacer : IDisposable
         var playerJob = Player.Job;
         var upgradedJob = playerJob.GetUpgradedJob();
 
+        // Materialize the filtered set once per rebuild. FilteredCombos is a hot
+        // read: the icon hook, the Performance-Mode press path (ActionWatching),
+        // and the Next-Action tracker (ActionResolution, twice per 100ms refresh)
+        // all foreach over it. A lazy Where() re-ran the predicate on every one of
+        // those enumerations; the set only changes on job/PvP change, and
+        // EnsureFilteredCombosCurrent rebuilds on exactly those, so an array is
+        // both correct and far cheaper.
         FilteredCombos = CustomCombos.Where(x =>
         {
             var presetData = x.Preset.Attributes();
@@ -292,7 +299,7 @@ internal sealed class ActionReplacer : IDisposable
             return (presetData.JobInfo.Role is JobRole role &&
                 role.MatchesPlayerJob())
                 || presetData.JobInfo.Job == upgradedJob;
-        });
+        }).ToArray();
 
         FilteredForJob = playerJob;
         FilteredForPvP = CustomComboFunctions.InPvP();

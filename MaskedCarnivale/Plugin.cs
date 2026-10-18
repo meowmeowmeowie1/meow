@@ -251,6 +251,9 @@ public unsafe class Plugin : IDalamudPlugin
     private SharedMemoryManager smm = new SharedMemoryManager();
     private int sharedBufferSize = 1024;
     private OutputWindowSetup* outputWindowData = null;
+    // True when outputWindowData points at our own heap fallback (shared memory
+    // failed to open) rather than the memory-mapped view, so Destroy frees it.
+    private bool ownsOutputWindowData = false;
 
     public unsafe Plugin()
     {
@@ -386,6 +389,13 @@ public unsafe class Plugin : IDalamudPlugin
         shareMemType = smm.OpenSharedMemory(sharedBufferSize, "DebugTextureOutputWindow");
         if (shareMemType == 0)
         {
+            // Shared memory failed to open: outputWindowData is still null here, so
+            // writing *outputWindowData crashed. Back it with our own zeroed heap
+            // allocation instead (freed in Destroy) so the rest of setup and the
+            // per-frame writes have a valid target - the external window just won't
+            // be driven, which is the correct degraded behaviour.
+            outputWindowData = (OutputWindowSetup*)NativeMemory.AllocZeroed((nuint)sizeof(OutputWindowSetup));
+            ownsOutputWindowData = true;
             *outputWindowData = new OutputWindowSetup();
         }
         else
@@ -436,8 +446,13 @@ public unsafe class Plugin : IDalamudPlugin
 
     private void Destroy()
     {
-        outputWindowData->isGameActive = 0;
-        outputWindowData->doClose = true;
+        // Guard: Initialize may have bailed before assigning this (or left the
+        // heap fallback), so never deref blind.
+        if (outputWindowData != null)
+        {
+            outputWindowData->isGameActive = 0;
+            outputWindowData->doClose = true;
+        }
 
         DestroyTextures();
         DestroyBuffers();
@@ -451,6 +466,15 @@ public unsafe class Plugin : IDalamudPlugin
         presentHook = null;
 
         smm.CloseSharedMemory();
+
+        // Free our own fallback allocation (the mapped view is released by
+        // CloseSharedMemory, not owned by us).
+        if (ownsOutputWindowData && outputWindowData != null)
+        {
+            NativeMemory.Free(outputWindowData);
+            ownsOutputWindowData = false;
+        }
+        outputWindowData = null;
     }
 
     private void Enable()
@@ -726,6 +750,11 @@ public unsafe class Plugin : IDalamudPlugin
     // Order: keep current if still clean -> fall back to last-good -> auto-scan near the default.
     public unsafe void ValidateOrRelockIndex()
     {
+        // The user pinned a specific index via "Override index"; never auto-heal
+        // over it. Without this, a swapchain resize (the caller's trigger) drove
+        // the fallback branches below and silently clobbered their manual choice.
+        if (cfg.manualIndex) return;
+
         RenderTargetManager* rtm = RenderTargetManager.Instance();
         if (rtm == null) return;
         var dev = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
@@ -736,19 +765,25 @@ public unsafe class Plugin : IDalamudPlugin
         Texture* backBuffer = rtm->SwapChainBackBuffer;
         string ver = Svc_GameVersion();
 
-        if (!cfg.manualIndex && IsCleanCandidate(cfg.renderIndex, sw, sh, backBuffer))
+        // Saves below run on the present/render thread, so only touch disk when a
+        // value actually changed (avoids a SavePluginConfig every resize event).
+        if (IsCleanCandidate(cfg.renderIndex, sw, sh, backBuffer))
         {
-            cfg.lastGoodIndex = cfg.renderIndex;
-            cfg.lastGoodGameVersion = ver;
-            cfg.Save();
+            if (cfg.lastGoodIndex != cfg.renderIndex || cfg.lastGoodGameVersion != ver)
+            {
+                cfg.lastGoodIndex = cfg.renderIndex;
+                cfg.lastGoodGameVersion = ver;
+                cfg.Save();
+            }
             return;
         }
 
         if (cfg.lastGoodIndex >= 0 && IsCleanCandidate(cfg.lastGoodIndex, sw, sh, backBuffer))
         {
+            bool changed = cfg.renderIndex != cfg.lastGoodIndex || cfg.lastGoodGameVersion != ver;
             cfg.renderIndex = cfg.lastGoodIndex;
             cfg.lastGoodGameVersion = ver;
-            cfg.Save();
+            if (changed) cfg.Save();
             Log!.Info($"MaskedCarnivale: clean-HUD index restored from last-good -> {cfg.renderIndex}");
             return;
         }
@@ -756,10 +791,11 @@ public unsafe class Plugin : IDalamudPlugin
         int found = AutoScanCleanIndex(sw, sh, backBuffer);
         if (found >= 0)
         {
+            bool changed = cfg.renderIndex != found || cfg.lastGoodIndex != found || cfg.lastGoodGameVersion != ver;
             cfg.renderIndex = found;
             cfg.lastGoodIndex = found;
             cfg.lastGoodGameVersion = ver;
-            cfg.Save();
+            if (changed) cfg.Save();
             Log!.Info($"MaskedCarnivale: clean-HUD index auto-relocked -> {found} (nearest to {gameWindowWithUI})");
         }
         else
@@ -944,6 +980,8 @@ public unsafe class Plugin : IDalamudPlugin
         return presentHook!.Original(pSwapChain, syncInterval, flags);
     }
 
+    private bool loggedPresentFail = false;
+
     private unsafe void DXGIPresentFn(UInt64 a, UInt64 b)
     {
         if (!loggedDetourActive)
@@ -952,12 +990,18 @@ public unsafe class Plugin : IDalamudPlugin
             Log!.Info("MaskedCarnivale: DXGIPresent detour is active (hook firing).");
         }
 
-        FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device* ffxivDevice = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
-        Device11 dxDevice11 = (Device11)(IntPtr)ffxivDevice->D3D11Forwarder;
-        DeviceContext11 dxDevCon11 = (DeviceContext11)(IntPtr)ffxivDevice->D3D11DeviceContext;
-        SwapChain11 swapChain11 = (SwapChain11)(IntPtr)ffxivDevice->SwapChain->DXGISwapChain;
+        // Wrap the whole body: anything here (a stale index, a SharpDX throw, a
+        // transient null) must NOT unwind into the game's present chain, and the
+        // hooked Original must run every frame regardless, or the game's own
+        // presentation stalls. On failure, note it once and let the frame pass.
+        try
+        {
+            FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device* ffxivDevice = FFXIVClientStructs.FFXIV.Client.Graphics.Kernel.Device.Instance();
+            Device11 dxDevice11 = (Device11)(IntPtr)ffxivDevice->D3D11Forwarder;
+            DeviceContext11 dxDevCon11 = (DeviceContext11)(IntPtr)ffxivDevice->D3D11DeviceContext;
+            // (swapChain11 was created here but never used - removed.)
 
-        //----
+            //----
         // If the window is open and we havent connected to the shared texture yet, connect to it
         //----
         if (outputWindowData->isOutputActive > 0 && outputWindowData->sharedHandle > 0 && sharedTexture == null)
@@ -1053,11 +1097,22 @@ public unsafe class Plugin : IDalamudPlugin
         //----
         // If the window is not open and we have connected to the shared texture, disconnect from it
         //----
-        else if (outputWindowData->isOutputActive == 0 && outputWindowData->sharedHandle == 0 && sharedTexture != null)
-        {
-            DestroyTexturesShared();
+            else if (outputWindowData->isOutputActive == 0 && outputWindowData->sharedHandle == 0 && sharedTexture != null)
+            {
+                DestroyTexturesShared();
+            }
         }
-
-        DXGIPresentHook!.Original(a, b);
+        catch (Exception e)
+        {
+            if (!loggedPresentFail)
+            {
+                loggedPresentFail = true;
+                Log!.Warning($"MaskedCarnivale: DXGIPresent detour body threw ({e.Message}); mirror skipped this frame.");
+            }
+        }
+        finally
+        {
+            DXGIPresentHook!.Original(a, b);
+        }
     }
 }

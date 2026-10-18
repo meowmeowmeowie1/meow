@@ -9,6 +9,7 @@ const BURST = "com.mytweak.wrath.burst";
 const BURST1 = "com.mytweak.wrath.burst1";
 const POS = "com.mytweak.wrath.pos";
 const GAPCLOSER = "com.mytweak.wrath.gapcloser";
+const GAPEXCLUDE = "com.mytweak.wrath.gapexclude";
 const POTION = "com.mytweak.wrath.potion";
 
 let ws = null;
@@ -42,6 +43,8 @@ function onKeyDown(msg) {
     fetch(apiBase + "/burst1/toggle", { cache: "no-store" }).catch(() => {});
   } else if (msg.action === GAPCLOSER) {
     fetch(apiBase + "/gapcloser/toggle", { cache: "no-store" }).catch(() => {});
+  } else if (msg.action === GAPEXCLUDE) {
+    fetch(apiBase + "/gapexclude/toggle", { cache: "no-store" }).catch(() => {});
   } else if (msg.action === POTION) {
     fetch(apiBase + "/potion/toggle", { cache: "no-store" }).catch(() => {});
   }
@@ -129,6 +132,7 @@ async function loop() {
         else if (action === BURST) show(ctx, "Burst\n" + (d.burst || "—"), "");
         else if (action === BURST1) show(ctx, "1min\n" + (d.burst1 || "—"), "");
         else if (action === GAPCLOSER) show(ctx, "Gap\n" + (d.gapcloser || "—"), "");
+        else if (action === GAPEXCLUDE) show(ctx, "GapX\n" + (d.gapexclude || "—"), "");
         else if (action === POS) {
           const z = (d.pos && d.pos.zone) || "—";
           show(ctx, d.pos && d.pos.tn ? z + "\nTN" : z, "");

@@ -445,6 +445,26 @@ public static class UserConfig
     /// <param name="itemWidth"></param>
     /// <param name="isConditionalChoice"></param>
     /// <param name="indentDescription"></param>
+    // Ported from upstream (WrathCombo.Window.Functions.UserConfig): synced job
+    // configs (WHM, BLM, SAM, ... ~22 jobs) call this new helper. Fully qualified
+    // because this fork's UserConfig.cs does not import Window.Tabs or
+    // ECommons.GameHelpers.
+    internal static void DrawOpenerPrepullBlockChoice(UserBool config)
+    {
+        // This fork's DrawAdditionalBoolChoice returns void (upstream's returns
+        // whether the value changed), so read the stored value before and after to
+        // detect a toggle and reset the opener only then. global:: because
+        // 'WrathCombo' is also the plugin class, which shadows the namespace here.
+        bool before = Configuration.GetCustomBoolValue(config);
+        DrawAdditionalBoolChoice(config, "Include Pre-pull Blocks?",
+            "Adds Cease to the opener that will wait for correct countdown timings.");
+        bool after = Configuration.GetCustomBoolValue(config);
+
+        if (before != after &&
+            global::WrathCombo.Window.Tabs.PvEFeatures.OpenJob == global::ECommons.GameHelpers.Player.Job)
+            WrathOpener.CurrentOpener?.ResetOpener(true);
+    }
+
     internal static void DrawOpenerPotionChoice(UserBool config)
     {
         // Automatic potions have a global master switch (Settings ->

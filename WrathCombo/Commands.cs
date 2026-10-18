@@ -108,6 +108,7 @@ public partial class WrathCombo
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
             $"{Command} burst1 hold | resume → Same, but only the ~60s (odd-minute) subset.\n" +
             $"{Command} gapcloser hold | resume → Hold/resume auto gap-closers for current job.\n" +
+            $"{Command} gapexclude on | off → Exclude ALL gap closers from the rotation (every job).\n" +
             $"{Command} potion on | off → Toggle automatic potions in openers (default off).\n" +
             $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
             $"{Command} tracker reset → Un-hide and re-center it if you lost it.\n" +
@@ -155,6 +156,10 @@ public partial class WrathCombo
             case "potion":
             case "potions":
                 HandlePotionControl(argumentParts); break;
+
+            case "gapexclude":
+            case "excludegap":
+                HandleGapExcludeControl(argumentParts); break;
 
             case "disable":
             case "enable":
@@ -915,5 +920,22 @@ public partial class WrathCombo
         Service.Configuration.EnableAutomaticPotions = enable;
         Service.Configuration.Save();
         Svc.Log.Information($"[Potion] Automatic potions: {(enable ? "ON" : "OFF")}");
+    }
+
+    private void HandleGapExcludeControl(string[] argument)
+    {
+        var sub = argument.Length > 1 ? argument[1] : "";
+        var enable = sub switch
+        {
+            "off" => false,
+            "disable" => false,
+            "on" => true,
+            "enable" => true,
+            _ => !Service.Configuration.ExcludeGapClosers,
+        };
+
+        Service.Configuration.ExcludeGapClosers = enable;
+        Service.Configuration.Save();
+        Svc.Log.Information($"[GapExclude] Exclude gap closers from rotation: {(enable ? "ON" : "OFF")}");
     }
 }

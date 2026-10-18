@@ -350,7 +350,7 @@ public static class ActionWatching
                 }
             }
 
-            if (casterEntityId == Player.Object.EntityId && (actionType == ActionType.Action && ActionSheet.TryGetValue(actionId, out var actionSheet) && actionSheet.TargetArea) || actionType == ActionType.Item)
+            if (casterEntityId == Player.Object.EntityId && ((actionType == ActionType.Action && ActionSheet.TryGetValue(actionId, out var actionSheet) && actionSheet.TargetArea) || actionType == ActionType.Item))
             {
                 UpdateLastUsedAction(actionId, actionType, 0, 0);
             }
@@ -628,6 +628,11 @@ public static class ActionWatching
                     }
                 }
 
+                // Fork: upstream added a custom-action guard here that error-toasts when
+                // replacedWith >= All.SingleTargetDPS and an AutorotRaidwiding term to
+                // disablingReplacingTemp. Auto-rotation is stripped from the fork, and the
+                // fork dispatches its own custom actions (opener potions) above via
+                // customAct.OnClick, so keep the fork's original condition.
                 var disablingReplacingTemp = mode == ActionManager.UseActionMode.Queue && actionId < All.SingleTargetDPS;
                 if (disablingReplacingTemp) // This is so we can remove queue suppression
                     Service.ActionReplacer.DisableActionReplacingIfRequired(); // It gets re-enabled at the end of sending.
@@ -637,13 +642,6 @@ public static class ActionWatching
 
                 var changed = CheckForChangedTarget(pressed, ref changedTargetId,
                     out var _); //Passes the pressed action to the retargeting framework (Retargets are keyed by it), outputs a targetId
-
-                if (replacedWith >= All.SingleTargetDPS)
-                {
-                    if (replacedWith != All.Cease)
-                        Svc.Toasts.ShowError("This is a custom action, it does nothing on its own.");
-                    return false;
-                }
 
                 // If retargeting kicks in, update target ID
                 if (changed)
