@@ -779,47 +779,55 @@ internal partial class MCH
         ];
     }
 
-    // User-supplied TOP (The Omega Protocol) opener. Prepull Reassemble ->
-    // Chain Saw, tools + early Wildfire into an early Hypercharge window, then
-    // Slug/Clean into Queen. oGCD names are the Lv100 upgrades: Gauss Round =
-    // Double Check, Ricochet = Checkmate. No potion step by request.
+    // TOP (The Omega Protocol) opener. Prepull Reassemble -> Chain Saw, tools +
+    // early Wildfire into an early Hypercharge window, then 1-2-3 filler. oGCD
+    // names are the Lv100 upgrades: Gauss Round = Double Check, Ricochet =
+    // Checkmate. No potion step by request.
+    //
+    // Tuned pass: the first version omitted Excavator (the Chain Saw follow-up,
+    // free strong GCD + battery) and Full Metal Field (granted by Barrel
+    // Stabilizer, one of MCH's biggest burst GCDs), and summoned Automaton Queen
+    // far too late (step 25). Those are added here and a weak Heated Split Shot is
+    // dropped from inside the Wildfire window; the Reassemble -> Chain Saw prepull
+    // and early-Wildfire character are kept. Exact weave order is best confirmed
+    // against a parse in-game.
     internal class MCHLvl100TOPOpener : MCHLvl100OpenerBase
     {
         public override List<Func<uint>> OpenerActions { get; set; } =
         [
-            () => Reassemble,       // 1  [-5.0] prepull
-            () => Chainsaw,         // 2  [-0.3] Chain Saw
-            () => DoubleCheck,      // 3  [0.4]  Gauss Round
-            () => CheckMate,        // 4  [1.2]  Ricochet
-            () => Drill,            // 5  [2.3]
-            () => Reassemble,       // 6  [2.9]
-            () => BarrelStabilizer, // 7  [3.6]
-            () => AirAnchor,        // 8  [4.8]
-            () => DoubleCheck,      // 9  [5.5]  Gauss Round
-            () => Wildfire,         // 10 [6.7]
-            () => HeatedSplitShot,  // 11 [7.4]
-            () => DoubleCheck,      // 12 [8.0]  Gauss Round
-            () => Hypercharge,      // 13 [8.8]
-            () => BlazingShot,      // 14 [9.9]  Blazing Shot x5, weaving between each
-            () => CheckMate,        // 15
-            () => BlazingShot,      // 16
-            () => DoubleCheck,      // 17
-            () => BlazingShot,      // 18
-            () => CheckMate,        // 19
-            () => BlazingShot,      // 20
-            () => DoubleCheck,      // 21
-            () => BlazingShot,      // 22
-            () => HeatedSlugShot,   // 23 [17.4]
-            () => HeatedCleanShot,  // 24 [19.9]
-            () => AutomatonQueen,   // 25 [20.6]
-            () => Drill             // 26 [22.4]
+            () => Reassemble,       // 1  prepull, buffs Chain Saw
+            () => Chainsaw,         // 2  +battery; grants Excavator Ready
+            () => Excavator,        // 3  Chain Saw follow-up, +battery
+            () => DoubleCheck,      // 4  Gauss Round
+            () => CheckMate,        // 5  Ricochet
+            () => Drill,            // 6
+            () => Reassemble,       // 7  2nd charge (carries to Air Anchor)
+            () => BarrelStabilizer, // 8  grants Full Metal Field Ready
+            () => AirAnchor,        // 9  Reassemble-buffed, +battery
+            () => DoubleCheck,      // 10 Gauss Round
+            () => Wildfire,         // 11 early burst window
+            () => FullMetalField,   // 12 strongest GCD, under Wildfire
+            () => Hypercharge,      // 13 -> Heat Blast window
+            () => AutomatonQueen,   // 14 spend battery; attacks through the burst
+            () => BlazingShot,      // 15 Blazing Shot x5, weaving between each
+            () => CheckMate,        // 16
+            () => BlazingShot,      // 17
+            () => DoubleCheck,      // 18
+            () => BlazingShot,      // 19
+            () => CheckMate,        // 20
+            () => BlazingShot,      // 21
+            () => DoubleCheck,      // 22
+            () => BlazingShot,      // 23
+            () => Drill,            // 24
+            () => HeatedSplitShot,  // 25 1-2-3 filler
+            () => HeatedSlugShot,   // 26
+            () => HeatedCleanShot   // 27
         ];
 
-        // Wildfire is the second weave after Air Anchor; hold it late so it
-        // doesn't clip the following GCD.
+        // Hold Wildfire late in its weave slot so it doesn't clip the following GCD.
         public override List<int> DelayedWeaveSteps { get; set; } =
         [
-            10
+            11
         ];
     }
 
