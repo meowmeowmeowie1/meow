@@ -1,5 +1,4 @@
-﻿using FFXIVClientStructs.FFXIV.Component.Excel;
-using Lumina;
+﻿using Lumina;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
