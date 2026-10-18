@@ -32,7 +32,7 @@ internal partial class MCH
 
                     DrawRadioButton(MCH_SelectedOpener,
                         "TOP Opener",
-                        "Opener for The Omega Protocol (Ultimate): prepull Reassemble into Chain Saw, early Wildfire and Hypercharge window.", 2, descriptionAsTooltip: true);
+                        "For The Omega Protocol (Ultimate). Uses the proven early-Wildfire opener so the 2-minute burst stays aligned; potion step auto-skips when automatic potions are off.", 2, descriptionAsTooltip: true);
 
                     DrawOpenerPrepullBlockChoice(MCH_Opener_PrepullBlock);
                     break;
