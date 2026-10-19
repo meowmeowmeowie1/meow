@@ -56,7 +56,11 @@ public partial class WrathCombo
         { Job.BRD, [(Preset)3017, (Preset)3032] },
         // 8102/8112 were stale ids from an old enum revision (they no longer
         // exist); today's equivalents: Hypercharge = 8105, Stabilizer FMF = 8111.
-        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8107, (Preset)8103, (Preset)8105, (Preset)8111, (Preset)8301, (Preset)8303, (Preset)8304, (Preset)8307, (Preset)8308] },
+        // MCH burst hold = the 2-minute package only (Wildfire + Barrel Stabilizer
+        // + Full Metal Field, ST/AoE). The ~1-minute pieces (Hypercharge, Queen,
+        // Reassemble) are held separately via burst1, so "/mytweak burst" no longer
+        // sits on your 1-minute cooldowns while you're only trying to delay Wildfire.
+        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8111, (Preset)8307, (Preset)8308] },
         { Job.DNC, [(Preset)4018, (Preset)4045, (Preset)4019, (Preset)4046] },
         { Job.BLM, [(Preset)2103, (Preset)2202, (Preset)2102, (Preset)2201] },
         { Job.SMN, [(Preset)17053, (Preset)17017, (Preset)17020, (Preset)17061] },
