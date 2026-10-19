@@ -98,11 +98,12 @@ internal partial class MCH
         bool skipExcavatorHold = false,
         bool skipHyperchargeHold = false,
         float wildfireHyperchargeCutoff = 9f,
-        int wildfireBossOnlyOption = 1) =>
+        int wildfireBossOnlyOption = 1,
+        bool wildfireEnabled = true) =>
         onAoE
             ? UseHyperchargeAoE(useAirAnchor, toolHoldThreshold, hpThreshold)
             : UseHyperchargeST(hpThreshold, skipExcavatorHold, skipHyperchargeHold, wildfireHyperchargeCutoff,
-                wildfireBossOnlyOption);
+                wildfireBossOnlyOption, wildfireEnabled);
 
     private static bool IsHyperchargeReady() =>
         (ActionReady(Hypercharge) || LocalPlayer.HasStatus(Buffs.Hypercharged)) && !IsOverheated;
@@ -115,8 +116,14 @@ internal partial class MCH
         (IsChainSawCD(toolCutoff) || skipHyperchargeHold) &&
         (!LocalPlayer.HasStatus(Buffs.ExcavatorReady) || skipExcavatorHold);
 
-    private static bool ShouldUseHyperchargeST(int wildfireBossOnlyOption) =>
-        ActionReady(Wildfire) ||
+    // wildfireEnabled is false when the Wildfire preset is held/disabled (e.g. the
+    // "burst" hold delaying the 2-minute window). In that case the "Wildfire is up,
+    // fire Hypercharge with it" branch is suppressed so the Wildfire-aligned
+    // Hypercharge is POOLED until Wildfire is released - one button saves the
+    // Hypercharge for the window. The odd-minute Hypercharge still fires via the
+    // "Wildfire far away" branch, so it comes on time.
+    private static bool ShouldUseHyperchargeST(int wildfireBossOnlyOption, bool wildfireEnabled) =>
+        (wildfireEnabled && ActionReady(Wildfire)) ||
         JustUsed(FullMetalField, GCD / 2) ||
         wildfireBossOnlyOption == 1 && !TargetIsBoss() ||
         GetCooldownRemainingTime(Wildfire) > GCD * 15 ||
@@ -128,7 +135,8 @@ internal partial class MCH
         bool skipExcavatorHold = false,
         bool skipHyperchargeHold = false,
         float wildfireHyperchargeCutoff = 9f,
-        int wildfireBossOnlyOption = 1)
+        int wildfireBossOnlyOption = 1,
+        bool wildfireEnabled = true)
     {
         if (GetTargetHPPercent() <= hpThreshold)
             return false;
@@ -137,7 +145,7 @@ internal partial class MCH
                (!IsComboExpiring(6) || skipHyperchargeHold) &&
                AreHyperchargeToolsReady(wildfireHyperchargeCutoff, skipHyperchargeHold, skipExcavatorHold) &&
                !LocalPlayer.HasStatus(Buffs.FullMetalMachinist) &&
-               ShouldUseHyperchargeST(wildfireBossOnlyOption);
+               ShouldUseHyperchargeST(wildfireBossOnlyOption, wildfireEnabled);
     }
 
     private static bool UsedBioBlaster(float time = 9f) =>

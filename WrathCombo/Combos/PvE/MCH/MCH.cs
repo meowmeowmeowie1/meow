@@ -187,7 +187,8 @@ internal partial class MCH : PhysicalRanged
 
                 if (IsEnabled(Preset.MCH_ST_Adv_Hypercharge))
                 {
-                    bool wildfireAboutToBeUsed = IsEnabled(Preset.MCH_ST_Adv_WildFire) &&
+                    bool wildfireEnabled = IsEnabled(Preset.MCH_ST_Adv_WildFire);
+                    bool wildfireAboutToBeUsed = wildfireEnabled &&
                                                  IsWildfireAboutToBeUsed(WildfireHPThreshold, MCH_ST_WildfireBossOnlyOption);
 
                     if (UseHypercharge(false,
@@ -195,7 +196,8 @@ internal partial class MCH : PhysicalRanged
                         skipExcavatorHold: IsEnabled(Preset.MCH_ST_Adv_Tools_AllowExcavatorPostWildfire) && wildfireAboutToBeUsed,
                         skipHyperchargeHold: IsEnabled(Preset.MCH_ST_Adv_Tools_AllowClainsawPostWildfire) && wildfireAboutToBeUsed,
                         wildfireHyperchargeCutoff: wildfireAboutToBeUsed ? MCH_ST_WildfireHyperchargeCutoffThreshold : 9f,
-                        wildfireBossOnlyOption: MCH_ST_WildfireBossOnlyOption))
+                        wildfireBossOnlyOption: MCH_ST_WildfireBossOnlyOption,
+                        wildfireEnabled: wildfireEnabled))
                         return Hypercharge;
                 }
 
