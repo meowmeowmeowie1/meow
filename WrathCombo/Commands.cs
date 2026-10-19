@@ -884,17 +884,12 @@ public partial class WrathCombo
             _ => !PresetStorage.IsEnabled(presets[0]),
         };
 
-        // Cross-group guard (bare toggle only): while the FULL burst is held, a
-        // burst1 toggle must not silently re-arm the 1-min subset. An explicit
-        // "burst1 resume" still works, as does resuming the full burst.
-        if (enable && sub == ""
-            && ReferenceEquals(map, Burst1PresetMap)
-            && Core.ActionResolution.IsBurstHeld() == true)
-        {
-            Svc.Log.Information(
-                "[Burst] 1-min burst NOT re-armed: the full burst is held.");
-            return;
-        }
+        // burst (2-minute: Wildfire/Stabilizer/FMF) and burst1 (1-minute:
+        // Hypercharge/Queen/Reassemble) are disjoint groups, so burst1 is a fully
+        // independent hold - push it to hold or resume the 1-minute abilities
+        // regardless of whether the 2-minute burst is held. (The old cross-group
+        // guard here assumed the full burst still contained the 1-minute subset;
+        // it doesn't since the burst map was trimmed, so it was removed.)
 
         foreach (var preset in presets)
         {
