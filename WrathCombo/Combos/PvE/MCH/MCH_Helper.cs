@@ -787,20 +787,20 @@ internal partial class MCH
         ];
     }
 
-    // TOP (The Omega Protocol) opener. Uses the proven STANDARD opener sequence,
-    // where Wildfire goes up in the real burst window (weaved around the 6th GCD
-    // with Full Metal Field + Hypercharge), not front-loaded.
-    //
-    // History: the early-Wildfire sequence put Wildfire up as the ~3rd GCD, which
-    // is too early for TOP; and the original hand-authored sequence desynced the
-    // 2-minute rotation (cooldowns pooled after the opener, following burst
-    // mistimed). WrathCombo's steady-state is built to hand off from the
-    // sanctioned openers, so TOP now inherits the standard opener: correct burst
-    // timing + 2-minute alignment, clean hand-off, both Reassemble charges. The
-    // potion step auto-skips when automatic potions are off (stays no-potion
-    // unless you enable them).
-    internal class MCHLvl100TOPOpener : MCHLvl100StandardOpener
+    // TOP (The Omega Protocol) opener option for Lv100 (dummy / unsynced testing).
+    // In TOP itself you're synced below Lv96 and the Lv90 opener below runs; this
+    // class only applies at Lv100 (e.g. a striking dummy) so that selecting "TOP
+    // Opener" there previews the SAME Chain Saw-first sequence as in the fight.
+    // It inherits the Lv90 opener's action list (Reassemble -> Chain Saw -> Drill
+    // -> Reassemble -> Air Anchor -> 1-2-3 -> Wildfire/Hypercharge/Queen -> Blazing)
+    // rather than the standard Air-Anchor-first Lv100 opener, so dummy testing
+    // matches TOP. Excavator/Full Metal Field are intentionally absent (they don't
+    // exist at TOP's sync), so this is a TOP-practice opener, not an optimal Lv100
+    // one - use Standard/Early Wildfire for real Lv100 content.
+    internal class MCHLvl100TOPOpener : MCHLvl90EarlyToolsOpener
     {
+        public override int MinOpenerLevel => 100;
+        public override int MaxOpenerLevel => 100;
     }
 
     // Lv90-95 opener. This is what actually runs in The Omega Protocol (synced
