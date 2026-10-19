@@ -795,6 +795,12 @@ internal partial class MCH
     {
     }
 
+    // Lv90-95 opener. This is what actually runs in The Omega Protocol (synced
+    // below Lv96 - no Excavator/Full Metal Field), so the Lv100 opener options
+    // never apply there. Reordered to match a rank-5 TOP MCH parse: Reassemble
+    // into Chain Saw (prepull, highest-potency tool), then Drill, then a second
+    // Reassemble into Air Anchor, 1-2-3 with Wildfire -> Hypercharge -> Queen ->
+    // Blazing x5. Potion step auto-skips when automatic potions are off.
     internal class MCHLvl90EarlyToolsOpener : MCHOpenerBase
     {
         public override int MinOpenerLevel => 90;
@@ -803,43 +809,43 @@ internal partial class MCH
         public override List<Func<uint>> OpenerActions { get; set; } =
         [
             () => All.Cease, // 1
-            () => Reassemble, // 2
-            () => Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), // 3
-            () => AirAnchor, // 4
+            () => Reassemble, // 2  prepull, buffs Chain Saw
+            () => Items.UseItem(Items.GetStrongestPotionRow(Items.PotionType.Dex)), // 3 (auto-skips if potions off)
+            () => Chainsaw, // 4  GCD1 - Reassemble-buffed, highest-potency tool
             () => GaussRound, // 5
             () => Ricochet, // 6
-            () => Drill, // 7
-            () => BarrelStabilizer, // 8
-            () => Chainsaw, // 9
-            () => GaussRound, // 10
-            () => Ricochet, // 11
-            () => HeatedSplitShot, // 12
-            () => GaussRound, // 13
-            () => Ricochet, // 14
-            () => HeatedSlugShot, // 15
-            () => Wildfire, // 16
-            () => HeatedCleanShot, // 17
-            () => AutomatonQueen, // 18
-            () => Hypercharge, // 19
-            () => BlazingShot, // 20
-            () => Ricochet, // 21
-            () => BlazingShot, // 22
-            () => GaussRound, // 23
-            () => BlazingShot, // 24
-            () => Ricochet, // 25
-            () => BlazingShot, // 26
-            () => GaussRound, // 27
-            () => BlazingShot, // 28
-            () => Reassemble, // 29
+            () => Drill, // 7  GCD2
+            () => BarrelStabilizer, // 8  (heat for Hypercharge)
+            () => Reassemble, // 9  2nd charge, buffs Air Anchor
+            () => AirAnchor, // 10 GCD3 - Reassemble-buffed
+            () => GaussRound, // 11
+            () => Ricochet, // 12
+            () => HeatedSplitShot, // 13 GCD4
+            () => GaussRound, // 14
+            () => Ricochet, // 15
+            () => HeatedSlugShot, // 16 GCD5
+            () => Wildfire, // 17 weave
+            () => HeatedCleanShot, // 18 GCD6
+            () => AutomatonQueen, // 19 weave
+            () => Hypercharge, // 20 weave
+            () => BlazingShot, // 21 GCD7
+            () => Ricochet, // 22
+            () => BlazingShot, // 23
+            () => GaussRound, // 24
+            () => BlazingShot, // 25
+            () => Ricochet, // 26
+            () => BlazingShot, // 27
+            () => GaussRound, // 28
+            () => BlazingShot, // 29
             () => Drill // 30
         ];
 
         public override List<int> AllowUpgradeSteps { get; set; } =
-            [5, 6, 10, 11, 13, 14, 21, 23, 25, 27];
+            [5, 6, 11, 12, 14, 15, 22, 24, 26, 28];
 
         public override List<int> DelayedWeaveSteps { get; set; } =
         [
-            16
+            17
         ];
     }
 
