@@ -229,12 +229,11 @@ public partial class Configuration : IPluginConfiguration
     public bool ActionChanging = true;
 
     /// Stops actions being swapped on the hotbar; combos are still resolved at
-    /// button-press time via the UseAction hook (which still respects Action
-    /// Changing and the master kill-switch). Default: false.
+    /// button-press time via the UseAction hook (independent of Action Replacing;
+    /// only the master kill-switch stops it). Default: false.
     /// <seealso cref="ActionReplacer.ApplyActionChangingHookState"/>
     /// <seealso cref="Data.ActionWatching"/>
     [SettingCategory(Rotation_Behavior_Options)]
-    [SettingParent(nameof(ActionChanging))]
     [Setting(Setting.Type.Toggle)]
     public bool PerformanceMode = false;
 

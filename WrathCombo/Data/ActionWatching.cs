@@ -571,10 +571,9 @@ public static class ActionWatching
 
                 // Performance Mode: hotbar icons aren't swapped, so the incoming action
                 // is the original. Resolve the combo here before the rest of the detour.
-                // Respects the same switches as the icon hook: Action Changing and the
-                // master kill-switch.
+                // Independent of "Action Replacing" (that switch only governs the icon
+                // hook); only the master kill-switch stops it.
                 var perfPress = Service.Configuration.PerformanceMode
-                                && Service.Configuration.ActionChanging
                                 && !Service.Configuration.MasterDisabled;
                 if (perfPress)
                 {
@@ -604,15 +603,6 @@ public static class ActionWatching
                         if (actionId == pressed)
                             Service.ActionReplacer.LastActionInvokeFor[pressed] =
                                 actionManager->GetAdjustedActionId(pressed);
-
-                        // Keep the icon hook's movement / action-penalty blocks working
-                        // in Performance Mode too (same condition as GetAdjustedAction).
-                        if (actionId != pressed &&
-                            ((Service.Configuration.BlockSpellOnMove &&
-                              ActionManager.GetAdjustedCastTime(ActionType.Action, actionId) > 0 &&
-                              TimeMoving.Ticks > 0) ||
-                             (Service.Configuration.PenaltyPause > 0 && PlayerHasActionPenalty(false))))
-                            actionId = All.Cease;
                     }
                 }
 
