@@ -307,6 +307,8 @@ internal class Settings : ConfigWindow
                         setting.Value = value;
                         if (setting.FieldName == "ActionChanging")
                             Service.Configuration.SetActionChanging(value);
+                        if (setting.FieldName == "PerformanceMode")
+                            Service.Configuration.SetPerformanceMode(value);
                     }
 
                     break;

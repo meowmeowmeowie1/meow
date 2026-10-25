@@ -136,7 +136,7 @@ internal partial class BLM : Caster
 
         protected override uint Invoke(uint actionID)
         {
-            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Blizzard))
+            if (!CustomActionHelper.OneButtonRotationChecker(actionID, CustomActionType.SingleTargetDPS, Blizzard, Fire3))
                 return actionID;
 
             if (IsEnabled(Preset.BLM_ST_Opener) &&

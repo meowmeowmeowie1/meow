@@ -188,7 +188,7 @@ affecting this action will Conflict and may cause issues.</value>
     <value>Search:</value>
   </data>
   <data name="Hover_BurstToggle" xml:space="preserve">
-    <value>Adds or removes this option from the list of options that will be toggled using `/wrath burst custom`</value>
+    <value>Adds or removes this option from the list of options that will be toggled using `/mytweak burst custom`</value>
   </data>
   <data name="IncludedBurst" xml:space="preserve">
     <value>This option is currently included in the burst toggle.</value>

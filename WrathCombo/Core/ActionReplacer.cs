@@ -60,10 +60,34 @@ internal sealed class ActionReplacer : IDisposable
         isActionReplaceableHook = Svc.Hook.HookFromAddress<IsActionReplaceableDelegate>(Service.Address.IsActionIdReplaceable, IsActionReplaceableDetour);
 
         if (Service.Configuration.ActionChanging)
-        {
-            getActionHook.Enable();
             isActionReplaceableHook.Enable();
-        }
+
+        // The icon-swap hook only runs when action changing is on AND
+        // Performance Mode is off. See ApplyActionChangingHookState.
+        ApplyActionChangingHookState();
+    }
+
+    /// <summary>
+    ///     Applies the correct enabled-state to the icon-swap hook
+    ///     (<see cref="getActionHook" />) based on
+    ///     <see cref="Configuration.ActionChanging" /> and
+    ///     <see cref="Configuration.PerformanceMode" />.
+    /// </summary>
+    /// <remarks>
+    ///     In Performance Mode the hook is fully disabled so the game keeps its
+    ///     native hotbar icons (no per-frame swap work at all). Combos are still
+    ///     resolved at button-press time via
+    ///     <see cref="Data.ActionWatching" />'s UseAction hook.
+    /// </remarks>
+    internal void ApplyActionChangingHookState()
+    {
+        var shouldRun = Service.Configuration.ActionChanging
+                        && !Service.Configuration.PerformanceMode;
+
+        if (shouldRun && !getActionHook.IsEnabled)
+            getActionHook.Enable();
+        if (!shouldRun && getActionHook.IsEnabled)
+            getActionHook.Disable();
     }
 
     public void Dispose()
@@ -90,7 +114,10 @@ internal sealed class ActionReplacer : IDisposable
 
     public void EnableActionReplacingIfRequired()
     {
-        if (Service.Configuration.ActionChanging)
+        // Respect Performance Mode: the icon-swap hook must stay disabled while
+        // it is active, even after a temporary disable during action use.
+        if (Service.Configuration.ActionChanging
+            && !Service.Configuration.PerformanceMode)
             Service.ActionReplacer.getActionHook.Enable();
     }
 
@@ -114,8 +141,17 @@ internal sealed class ActionReplacer : IDisposable
     {
         try
         {
+            // Master kill-switch (/mytweak disable): leave the hotbar untouched.
+            if (Service.Configuration.MasterDisabled)
+                return OriginalHook(actionID);
+
             if (FilteredCombos is null)
                 UpdateFilteredCombos();
+
+            // Performance Mode: keep the hotbar icons unchanged. Combos are still
+            // resolved when the button is pressed, via ActionWatching.UseActionDetour.
+            if (Service.Configuration.PerformanceMode)
+                return OriginalHook(actionID);
 
             // Bail if not wanting to replace actions in this manner
             if (!Player.Available)
@@ -219,11 +255,43 @@ internal sealed class ActionReplacer : IDisposable
 
     public static IEnumerable<CustomCombo>? FilteredCombos;
 
+    /// <summary>
+    ///     The job and PvP state <see cref="FilteredCombos" /> was last built for,
+    ///     so consumers (e.g. the Next Action tracker) can detect a stale set and
+    ///     rebuild it. Needed because the icon hook that normally refreshes the set
+    ///     is disabled in Performance Mode.
+    /// </summary>
+    public static Job? FilteredForJob { get; private set; }
+
+    public static bool FilteredForPvP { get; private set; }
+
+    /// <summary>
+    ///     Rebuild <see cref="FilteredCombos" /> if it is stale for the current job /
+    ///     PvP state. The icon hook normally keeps it fresh, but it is disabled in
+    ///     Performance Mode, so consumers that resolve combos themselves (the
+    ///     Performance-Mode press path, the Next Action tracker and the action-press
+    ///     mirror) must call this first or they resolve through the PREVIOUS job's
+    ///     set after a job/zone change.
+    /// </summary>
+    public static void EnsureFilteredCombosCurrent()
+    {
+        if (FilteredCombos is null
+            || FilteredForJob != Player.Job
+            || FilteredForPvP != CustomComboFunctions.InPvP())
+            Service.ActionReplacer?.UpdateFilteredCombos();
+    }
+
     public void UpdateFilteredCombos()
     {
         var playerJob = Player.Job;
         var upgradedJob = playerJob.GetUpgradedJob();
 
+        // Materialize the filtered set once per rebuild. FilteredCombos is a hot
+        // read: the icon hook, the Performance-Mode press path (ActionWatching),
+        // the press mirror and the Next-Action tracker all foreach over it, and a
+        // lazy Where() re-ran the predicate on every one of those enumerations.
+        // The set only changes on job/PvP change, and EnsureFilteredCombosCurrent
+        // rebuilds on exactly those, so an array is both correct and far cheaper.
         FilteredCombos = CustomCombos.Where(x =>
         {
             var presetData = x.Preset.Attributes();
@@ -244,7 +312,10 @@ internal sealed class ActionReplacer : IDisposable
                 // Job Specific - Match against the upgraded job
                 _ => presetData.JobInfo.Job == upgradedJob
             };
-        });
+        }).ToArray();
+
+        FilteredForJob = playerJob;
+        FilteredForPvP = CustomComboFunctions.InPvP();
 
         var filteredCombos = FilteredCombos as CustomCombo[] ?? FilteredCombos.ToArray();
 

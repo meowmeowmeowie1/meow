@@ -1,0 +1,95 @@
+name: build
+
+on:
+  push:
+    branches:
+      - fresh-upstream
+    paths-ignore:
+      - 'pluginmaster.json'
+      - '**/*.md'
+      - '**/*.ps1'
+      - 'downtime/**'
+      - 'tools/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # The csproj references the Dalamud assemblies from
+      # $(HOME)/.xlcore/dalamud/Hooks/dev/ on Linux. The plugin targets
+      # DalamudApiLevel 15, which is the current staging (stg) Dalamud.
+      # If a future api bump is needed, change the URL below.
+      - name: Fetch Dalamud (staging)
+        run: |
+          mkdir -p "$HOME/.xlcore/dalamud/Hooks/dev"
+          curl -fsSL -o /tmp/dalamud.zip https://goatcorp.github.io/dalamud-distrib/stg/latest.zip
+          unzip -o -q /tmp/dalamud.zip -d "$HOME/.xlcore/dalamud/Hooks/dev"
+
+      - name: Build (Release)
+        run: |
+          set -o pipefail
+          dotnet build WrathCombo/WrathCombo.csproj -c Release -p:EnableWindowsTargeting=true 2>&1 | tee build.log
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
+
+      - name: Read plugin version
+        id: ver
+        run: |
+          v=$(grep -oPm1 '(?<=<Version>)[^<]+' WrathCombo/WrathCombo.csproj)
+          if [ -z "$v" ]; then
+            echo "Could not read <Version> from WrathCombo.csproj"; exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Plugin version: $v"
+
+      - name: Locate packaged zip
+        id: pkg
+        run: |
+          zip=$(find . -name 'latest.zip' -path '*bin*' | head -n1)
+          if [ -z "$zip" ]; then
+            echo "Could not find DalamudPackager output (latest.zip)"; exit 1
+          fi
+          echo "Found: $zip"
+          cp "$zip" MyTweak.zip
+          echo "zip=MyTweak.zip" >> "$GITHUB_OUTPUT"
+
+      # Package the Stream Deck companion plugin. A .streamDeckPlugin file is
+      # just a zip with the .sdPlugin folder at its root; double-clicking it
+      # installs the plugin into the Stream Deck app.
+      - name: Package Stream Deck plugin
+        id: sdplugin
+        run: |
+          cd streamdeck
+          zip -r -q ../MyTweak-StreamDeck.streamDeckPlugin com.mytweak.wrath.sdPlugin
+          cd ..
+          echo "file=MyTweak-StreamDeck.streamDeckPlugin" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mytweak-v${{ steps.ver.outputs.version }}
+          name: MyTweak v${{ steps.ver.outputs.version }}
+          make_latest: true
+          files: |
+            ${{ steps.pkg.outputs.zip }}
+            ${{ steps.sdplugin.outputs.file }}

@@ -10,7 +10,6 @@ using ECommons.Logging;
 using ECommons.Throttlers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -23,7 +22,6 @@ using WrathCombo.Window.Tabs;
 using static WrathCombo.Core.PresetStorage;
 using static WrathCombo.CustomComboNS.Functions.Jobs;
 using Debug = WrathCombo.Window.Tabs.Debug;
-using PunishGui = PunishLib.ImGuiMethods;
 namespace WrathCombo.Window;
 
 /// <summary> Plugin configuration window. </summary>
@@ -119,7 +117,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
     } = OpenWindow.PvE;
 
     /// <summary> Initializes a new instance of the <see cref="ConfigWindow"/> class. </summary>
-    public ConfigWindow() : base($"{P.Name} {P.GetType().Assembly.GetName().Version}###WrathCombo")
+    public ConfigWindow() : base($"{P.Name} {P.GetType().Assembly.GetName().Version}###MyTweakCfg")
     {
         RespectCloseHotkey = true;
 
@@ -194,7 +192,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
 
         using var alignText = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-        using var leftSide = (ImRaii.Child("###WrathLeftSide", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration));
+        using var leftSide = (ImRaii.Child("###CfgLeftSide", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration));
         if (!leftSide)
         {
             ImGui.Dummy(Vector2.Zero);
@@ -207,7 +205,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
             // Use the local image over a remote one
             imagePath = Path.Combine(
                 Svc.PluginInterface.AssemblyLocation.Directory?.FullName!,
-                "images\\wrathcombo.png");
+                "images\\qoltweaks.png");
             if (EzThrottler.Throttle("logTypeOfWrathIconUsed", 45000))
                 PluginLog.Verbose("Using Local WrathCombo Icon");
         }
@@ -219,11 +217,11 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
                 PluginLog.Verbose(
                     "Using Remote WrathCombo Icon\n             " +
                     Svc.PluginInterface.AssemblyLocation.Directory?.FullName! +
-                    "images\\wrathcombo.png");
+                    "images\\qoltweaks.png");
         }
 
         if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
-            ImGuiEx.LineCentered("###WrathLogo", () =>
+            ImGuiEx.LineCentered("###CfgLogo", () =>
                 ImGui.Image(logo.Handle, imageSize));
 
         ImGui.Spacing();
@@ -275,7 +273,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
         ImGui.TableSetupColumn("##RightColumn", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableNextColumn();
 
-        using var rightChild = ImRaii.Child("###WrathRightSide", Vector2.Zero, false);
+        using var rightChild = ImRaii.Child("###CfgRightSide", Vector2.Zero, false);
         if (!rightChild) return;
 
         if (OpenWindow == OpenWindow.None)
@@ -293,18 +291,7 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
                 Settings.Draw();
                 break;
             case OpenWindow.About:
-                PunishGui.AboutTab.Draw(P.Name);
-                ImGuiEx.LineCentered(() =>
-                {
-                    if (ImGuiEx.Button($"Additional custom action icons by alexisoffline"))
-                    {
-                        Process.Start(new ProcessStartInfo()
-                        {
-                            FileName = "https://ko-fi.com/alexisoffline/",
-                            UseShellExecute = true
-                        });
-                    }
-                });
+                DrawAboutTab();
                 break;
             case OpenWindow.Debug:
                 Debug.Draw();
@@ -317,6 +304,27 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
                 break;
         }
         ;
+    }
+
+    private static void DrawAboutTab()
+    {
+        var version = Svc.PluginInterface.Manifest.AssemblyVersion;
+        var winW = ImGui.GetContentRegionAvail().X;
+
+        var title = $"{P.Name} {version}";
+        ImGui.SetCursorPosX((winW - ImGui.CalcTextSize(title).X) * 0.5f);
+        ImGui.Text(title);
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        ImGui.TextWrapped("Personal WrathCombo fork: job rotation toggles, hold keys, " +
+                          "Stream Deck bridge and keyboard/mouse action-press mirror.");
+
+        ImGui.Spacing();
+        ImGui.Text("Repo:");
+        ImGui.SameLine();
+        ImGui.TextUnformatted("https://github.com/meowmeowmeowie1/meow");
     }
 
     private static void DrawCollapseButton()

@@ -231,7 +231,7 @@
     <value>ここに登録した NPC は自動ローテーションの対象外になります。
 同じ NPC の全出現個体が自動ターゲットから除外されます（手動は引き続き利用可能です）。
 一覧から削除するには対象を選んで下の削除ボタンを押してください。
-追加するには NPC をターゲットした状態で /wrath ignore を実行します。</value>
+追加するには NPC をターゲットした状態で /mytweak ignore を実行します。</value>
   </data>
   <data name="Button_DeleteFromIgnored" xml:space="preserve">
     <value>無視リストから削除</value>

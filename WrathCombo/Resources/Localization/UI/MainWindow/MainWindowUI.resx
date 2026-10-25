@@ -135,7 +135,7 @@ remove the conflicting setting in the plugins
 to prevent unexpected behavior and bugs.</value>
   </data>
   <data name="Tooltip_ConflictingWrathSettings" xml:space="preserve">
-    <value>The following Wrath settings are known to conflict with {0}'s Settings:
+    <value>The following MyTweak settings are known to conflict with {0}'s Settings:
 {1}
 
 It is recommended you disable these settings to prevent unexpected behavior and bugs.</value>
@@ -176,7 +176,7 @@ to prevent unexpected behavior and bugs.</value>
     <value>Unknown conflict type:</value>
   </data>
   <data name="Wrath_Combo" xml:space="preserve">
-    <value>Wrath Combo</value>
+    <value>MyTweak</value>
     <comment>Plugin Name</comment>
   </data>
   <data name="Button_CollapseSidebar" xml:space="preserve">

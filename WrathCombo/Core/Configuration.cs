@@ -54,6 +54,41 @@ public partial class Configuration : IPluginConfiguration
     [Setting(Setting.Type.Toggle)]
     public bool HideChildren = false;
 
+    /// Mirrors the action-press pulse animation onto the lowest visible hotbar
+    /// copy of the pressed action, instead of the slot whose keybind was pressed.
+    /// Default: false.
+    /// <seealso cref="Tweaks.ActionPressMirroring"/>
+    [SettingCategory(Main_UI_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool DuplicateActionPresses = false;
+
+    /// Stops actions being swapped on the hotbar; combos are still resolved at
+    /// button-press time via the UseAction hook. Default: false.
+    /// <seealso cref="ActionReplacer.ApplyActionChangingHookState"/>
+    /// <seealso cref="Data.ActionWatching"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool PerformanceMode = false;
+
+    /// Master gate for automatic potion use in openers. When off, every job's
+    /// "Include Potion?" opener option is ignored and no potion is used. This is
+    /// the global switch behind the Stream Deck potion key. Default: false.
+    /// <seealso cref="CustomComboNS.WrathOpener"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool EnableAutomaticPotions = false;
+
+    /// Universal rotation filter: when on, any combo that would resolve a press
+    /// into a gap closer / dash is suppressed and the base action is pressed
+    /// instead - on every job. Intentionally covers damage dashes too (DRG
+    /// Dragonfire Dive, SMN Crimson Cyclone, ...), so it can cost DPS; it is the
+    /// global switch behind the Stream Deck gap-exclude key and
+    /// "/mytweak gapexclude". Distinct from the per-job Gap Closer HOLD. Default: false.
+    /// <seealso cref="GapCloserData"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool ExcludeGapClosers = false;
+
     /// Whether to hide combos which conflict with enabled presets. Default: false.
     /// <seealso cref="Presets.DrawPreset"/>
     /// <seealso cref="PvEFeatures.DrawHeadingContents"/>
@@ -439,6 +474,19 @@ public partial class Configuration : IPluginConfiguration
     public AutoRotationConfig RotationConfig { get; set; } = new();
 
     public Dictionary<uint, uint> IgnoredNPCs { get; set; } = new();
+
+    /// MyTweak master kill-switch: when true, combo icon replacement, the
+    /// Performance-Mode press path, the action-press mirror and the Next Action
+    /// tracker all short-circuit. Slash: /mytweak disable | enable, or /tweak.
+    public bool MasterDisabled { get; set; }
+
+    /// Visibility of the floating "next action" tracker window (ST + AoE next
+    /// action + burst armed/held + positional). Toggle with /mytweak tracker.
+    public bool NextActionTrackerHidden { get; set; } = false;
+
+    /// One-time flag: reveal the tracker once on upgrade so existing users see
+    /// it, then leave their choice alone afterwards.
+    public bool NextActionTrackerIntroduced { get; set; } = false;
 
     #endregion
 

@@ -237,7 +237,7 @@ Features marked with an 'Auto-Mode' checkbox are able to be used with Auto-Rotat
     <value>These NPCs will be ignored by Auto-Rotation.
 Every instance of this NPC will be excluded from automatic targeting (Manual will still work).
 To remove an NPC from this list, select it and press the Delete button below.
-To add an NPC to this list, target the NPC and use the command: /wrath ignore</value>
+To add an NPC to this list, target the NPC and use the command: /mytweak ignore</value>
   </data>
   <data name="Button_DeleteFromIgnored" xml:space="preserve">
     <value>Delete From Ignored</value>

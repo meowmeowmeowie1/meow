@@ -5,18 +5,19 @@
     <PropertyGroup>
         <Authors>Team Wrath</Authors>
         <Company>-</Company>
-        <Version>1.0.4.27</Version>
+        <Version>1.1.0.0</Version>
         <!-- This is the version that will be used when pushing to the repo.-->
-        <Description>XIVCombo for very lazy players</Description>
+        <Description>Personal WrathCombo fork: job rotation toggles, hold keys, Stream Deck bridge and keyboard/mouse press mirror.</Description>
         <Copyright>Copyleft attick 2021 thanks attick UwU</Copyright>
-        <PackageProjectUrl>https://github.com/PunishXIV/WrathCombo</PackageProjectUrl>
-        <PackageId>WrathCombo</PackageId>
-        <Product>WrathCombo</Product>
+        <PackageProjectUrl>https://github.com/meowmeowmeowie1/meow</PackageProjectUrl>
+        <PackageId>MyTweak</PackageId>
+        <Product>MyTweak</Product>
     </PropertyGroup>
 
     <!-- Build Parameters -->
     <PropertyGroup>
         <AssemblyName>WrathCombo</AssemblyName>
+        <AssemblyName>MyTweak</AssemblyName>
         <TargetFramework>net10.0-windows</TargetFramework>
         <Configurations>Debug;Release</Configurations>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
@@ -44,8 +45,8 @@
     <!-- Required Paths -->
     <PropertyGroup>
         <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-        <DalamudDevPlugins>$(appdata)\XIVLauncher\devPlugins\WrathCombo\</DalamudDevPlugins>
-        <DalamudPluginPath>$(appdata)\XIVLauncher\installedPlugins\WrathCombo\$(version)</DalamudPluginPath>
+        <DalamudDevPlugins>$(appdata)\XIVLauncher\devPlugins\MyTweak\</DalamudDevPlugins>
+        <DalamudPluginPath>$(appdata)\XIVLauncher\installedPlugins\MyTweak\$(version)</DalamudPluginPath>
     </PropertyGroup>
 
     <!-- Path Overrides for Linux -->
@@ -72,7 +73,7 @@
 
     <!-- Logo -->
     <ItemGroup>
-        <Content Include="..\res\plugin\wrathcombo.png" Link="images\wrathcombo.png" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+        <Content Include="..\res\plugin\qoltweaks.png" Link="images\qoltweaks.png" CopyToOutputDirectory="PreserveNewest" Visible="false" />
     </ItemGroup>
 
     <!-- Dalamud Packaging -->
@@ -465,7 +466,7 @@
         <None Update="Resources\WrathAutoToggle.png">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="WrathCombo.json">
+        <None Update="MyTweak.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

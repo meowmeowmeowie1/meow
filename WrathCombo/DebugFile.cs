@@ -87,7 +87,7 @@ public static class DebugFile
     public static string GetDebugFilePath()
     {
         var separator = DesktopPath?.Contains('\\') == true ? "\\" : "/";
-        return $"{DesktopPath}{separator}WrathDebug.txt";
+        return $"{DesktopPath}{separator}MyTweakDebug.txt";
     }
 
     /// <summary>
@@ -172,10 +172,10 @@ public static class DebugFile
             AddLine("END DEBUG LOG");
 
             DuoLog.Information(
-                "WrathDebug.txt created on your desktop, for " +
+                "MyTweakDebug.txt created on your desktop, for " +
                 (job is null ? "all jobs" : job.Value.Abbreviation.ToString()) +
                 ". Upload this file where requested.\n" +
-                "If you're unsure of where the file was created, use: /wrath debug path");
+                "If you're unsure of where the file was created, use: /mytweak debug path");
         }
     }
 

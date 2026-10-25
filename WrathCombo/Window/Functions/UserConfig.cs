@@ -855,9 +855,18 @@ public static class UserConfig
 
     internal static void DrawOpenerPotionChoice(UserBool config)
     {
+        // Automatic potions have a global master switch (Settings ->
+        // "Automatic Potions", default off, also on the Stream Deck potion key).
+        // Keep this per-job checkbox normal and clickable regardless; when the
+        // master switch is off, say so in the grey helper text.
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
         {
-            DrawAdditionalBoolChoice(config, "Include Potion?", "Adds the strongest potion appropriate for your job to the opener.");
+            var desc = Service.Configuration.EnableAutomaticPotions
+                ? "Adds the strongest potion appropriate for your job to the opener."
+                : "Adds the strongest potion appropriate for your job to the opener. Automatic "
+                + "potions are currently off globally — turn them on with the Stream Deck potion "
+                + "key, /mytweak potion on, or the Settings toggle.";
+            DrawAdditionalBoolChoice(config, "Include Potion?", desc);
         }
     }
 

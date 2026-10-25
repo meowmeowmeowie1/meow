@@ -565,6 +565,52 @@ public static class ActionWatching
         {
             if (actionType is ActionType.Action)
             {
+                // The pressed (hotbar) action id: Retargets are keyed by it, so it
+                // must be captured before Performance Mode resolves the combo below.
+                var pressed = actionId;
+
+                // Performance Mode: hotbar icons aren't swapped, so the incoming action
+                // is the original. Resolve the combo here before the rest of the detour.
+                if (Service.Configuration.PerformanceMode && !Service.Configuration.MasterDisabled)
+                {
+                    global::WrathCombo.Core.ActionReplacer.EnsureFilteredCombosCurrent();
+                    if (global::WrathCombo.Core.ActionReplacer.FilteredCombos is not null)
+                    {
+                        foreach (var combo in global::WrathCombo.Core.ActionReplacer.FilteredCombos)
+                            if (combo.TryInvoke(pressed, out var resolved))
+                            {
+                                // The icon hook normally records this mapping; with it
+                                // disabled, retargeting's consumption gate
+                                // (LastActionInvokeFor[pressed] == retarget.Action)
+                                // starves unless written here.
+                                Service.ActionReplacer.LastActionInvokeFor[pressed] = resolved;
+                                actionId = resolved;
+                                break;
+                            }
+
+                        // Self-retargeting features (Clemency, Oblation, the Raises, ...)
+                        // register their Retarget during Invoke() while TryInvoke still
+                        // returns false - record the NATIVE-adjusted id (exactly what
+                        // the normal-mode icon hook writes via OriginalHook). For a
+                        // raise/self-retarget this is the id itself; for AST manual
+                        // cards it resolves Play1 -> the drawn card id, which is what
+                        // the retarget gate (LastActionInvokeFor[pressed]==retarget.Action)
+                        // requires - so manual card retargeting works in Performance Mode.
+                        if (actionId == pressed)
+                            Service.ActionReplacer.LastActionInvokeFor[pressed] =
+                                actionManager->GetAdjustedActionId(pressed);
+
+                        // Keep the icon hook's movement / action-penalty blocks working
+                        // in Performance Mode too (same condition as GetAdjustedAction).
+                        if (actionId != pressed &&
+                            ((Service.Configuration.BlockSpellOnMove &&
+                              ActionManager.GetAdjustedCastTime(ActionType.Action, actionId) > 0 &&
+                              TimeMoving.Ticks > 0) ||
+                             (Service.Configuration.PenaltyPause > 0 && PlayerHasActionPenalty(false))))
+                            actionId = All.Cease;
+                    }
+                }
+
                 if (P.CustomActions.Manager.Actions.TryGetFirst(x => x.Id == actionManager->GetAdjustedActionId(actionId), out var customAct))
                 {
                     if (customAct.OnClick != null)
@@ -574,8 +620,15 @@ public static class ActionWatching
                     }
                 }
 
-                var replacedWith = actionManager->GetAdjustedActionId(actionId);
-                var queuedAct = actionManager->GetAdjustedActionId(actionManager->QueuedActionId);
+                // Performance Mode: the icon hook is off, so the game cannot report the
+                // combo result - use the press-time resolution recorded above instead.
+                var replacedWith = Service.Configuration.PerformanceMode && actionId != pressed
+                    ? actionId
+                    : actionManager->GetAdjustedActionId(actionId);
+                var queuedAct = Service.Configuration.PerformanceMode &&
+                                Service.ActionReplacer.LastActionInvokeFor.TryGetValue(actionManager->QueuedActionId, out var queuedResolved)
+                    ? queuedResolved
+                    : actionManager->GetAdjustedActionId(actionManager->QueuedActionId);
 
                 if (IsEnabled(Preset.NIN_Anti_Rabbit))
                 {
@@ -607,12 +660,11 @@ public static class ActionWatching
                 if (disablingReplacingTemp) // This is so we can remove queue suppression
                     Service.ActionReplacer.DisableActionReplacingIfRequired(); // It gets re-enabled at the end of sending. 
 
-                var original = actionId; //Save the original action, do not modify
                 var originalTargetId = targetId; //Save the original target, do not modify
                 var changedTargetId = targetId; //This will get modified and used elsewhere
 
-                var changed = CheckForChangedTarget(original, ref changedTargetId,
-                    out var _); //Passes the original action to the retargeting framework, outputs a targetId and a replaced action
+                var changed = CheckForChangedTarget(pressed, ref changedTargetId,
+                    out var _); //Passes the PRESSED action to the retargeting framework (Retargets are keyed by it), outputs a targetId
 
                 // If retargeting kicks in, update target ID
                 if (changed)

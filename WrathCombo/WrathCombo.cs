@@ -37,6 +37,7 @@ using WrathCombo.Services;
 using WrathCombo.Services.ActionRequestIPC;
 using WrathCombo.Services.IPC;
 using WrathCombo.Services.IPC_Subscriber;
+using WrathCombo.Tweaks;
 using WrathCombo.Window;
 using WrathCombo.Window.Tabs;
 using GenericHelpers = ECommons.GenericHelpers;
@@ -50,6 +51,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
     internal readonly ConfigWindow ConfigWindow;
     private readonly MajorChangesWindow _majorChangesWindow;
     private readonly TargetHelper TargetHelper;
+    internal readonly NextActionTracker NextActionTracker;
     internal static WrathCombo? P;
     private readonly WindowSystem ws;
     private static readonly SocketsHttpHandler httpHandler = new()
@@ -182,7 +184,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
         P = this;
         pluginInterface.Create<Service>();
         ECommonsMain.Init(pluginInterface, this, Module.All);
-        PunishLibMain.Init(pluginInterface, "Wrath Combo");
+        PunishLibMain.Init(pluginInterface, "MyTweak");
         ActionRequestIPCProvider.Initialize();
 
         TM = new();
@@ -200,6 +202,8 @@ public sealed partial class WrathCombo : IDalamudPlugin
         Service.AutoRotationController = new AutoRotationController();
         ActionRetargeting = new ActionRetargeting();
         ActionWatching.Enable();
+        ActionPressMirroring.Enable();
+        StreamDeckBridge.Start();
         IPC = Provider.Init();
         PingPluginIPC.Init();
         ConflictingPluginsChecks.Begin();
@@ -219,10 +223,21 @@ public sealed partial class WrathCombo : IDalamudPlugin
         Settings.SanitiseSettings();
         _majorChangesWindow = new MajorChangesWindow();
         TargetHelper = new();
+        // One-time reveal of the Next Action Tracker on upgrade, so existing
+        // users (whose config saved it hidden) actually see it once.
+        if (!Service.Configuration.NextActionTrackerIntroduced)
+        {
+            Service.Configuration.NextActionTrackerHidden = false;
+            Service.Configuration.NextActionTrackerIntroduced = true;
+            Service.Configuration.Save();
+        }
+
+        NextActionTracker = new NextActionTracker { IsOpen = true };
         ws = new();
         ws.AddWindow(ConfigWindow);
         ws.AddWindow(_majorChangesWindow);
         ws.AddWindow(TargetHelper);
+        ws.AddWindow(NextActionTracker);
 
         Configuration.ConfigChanged += DebugFile.LoggingConfigChanges;
 
@@ -232,7 +247,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
 
         RegisterCommands();
 
-        DtrBarEntry ??= Svc.DtrBar.Get("Wrath Combo");
+        DtrBarEntry ??= Svc.DtrBar.Get("MyTweak");
         DtrBarEntry.OnClick = (c) =>
         {
             if (c.ClickType == MouseClickType.Right)
@@ -241,11 +256,11 @@ public sealed partial class WrathCombo : IDalamudPlugin
                 AutoRotationController.ToggleAutoRotation(!Service.Configuration.RotationConfig.Enabled);
         };
         DtrBarEntry.Tooltip = new SeString(
-        new TextPayload("Left Click to toggle Wrath Combo's Auto-Rotation.\n"),
-        new TextPayload("Right Click to toggle Wrath Combo's UI.\n"),
+        new TextPayload("Left Click to toggle MyTweak's Auto-Rotation.\n"),
+        new TextPayload("Right Click to toggle MyTweak's UI.\n"),
         new TextPayload("Disable this icon in /xlsettings -> Server Info Bar"));
 
-        OpenerDtr ??= Svc.DtrBar.Get("Wrath Combo Opener");
+        OpenerDtr ??= Svc.DtrBar.Get("MyTweak Opener");
 
         OpenerDtr.OnClick += (_) =>
         {
@@ -454,8 +469,8 @@ public sealed partial class WrathCombo : IDalamudPlugin
     {
         Task.Delay(TimeSpan.FromSeconds(5)).ContinueWith(_ => ResetFeatures());
 
-        if (!Service.Configuration.HideMessageOfTheDay)
-            Task.Delay(TimeSpan.FromSeconds(3)).ContinueWith(_ => PrintMotD());
+        // Chat stays silent: the login/version message goes to the plugin log only.
+        Svc.Log.Information($"MyTweak v{GetType().Assembly.GetName().Version} loaded.");
     }
 
     private void PrintMotD()
@@ -509,8 +524,8 @@ public sealed partial class WrathCombo : IDalamudPlugin
             }
 
         ws.RemoveAllWindows();
-        Svc.DtrBar.Remove("Wrath Combo");
-        Svc.DtrBar.Remove("Wrath Combo Opener");
+        Svc.DtrBar.Remove("MyTweak");
+        Svc.DtrBar.Remove("MyTweak Opener");
         Configuration.ConfigChanged -= DebugFile.LoggingConfigChanges;
         Svc.Framework.Update -= OnFrameworkUpdate;
         Svc.ClientState.TerritoryChanged -= ClientState_TerritoryChanged;
@@ -521,6 +536,8 @@ public sealed partial class WrathCombo : IDalamudPlugin
         Service.ComboCache.Dispose();
         Service.AutoRotationController.Dispose();
         ActionWatching.Dispose();
+        ActionPressMirroring.Dispose();
+        StreamDeckBridge.Stop();
         CustomComboFunctions.TimerDispose();
         IPC.Dispose();
         MoveHook.Dispose();

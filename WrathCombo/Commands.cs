@@ -30,94 +30,74 @@ namespace WrathCombo;
 
 public partial class WrathCombo
 {
-    private const string Command = "/wrath";
-    private const string OldCommand = "/scombo";
+    private const string Command = "/mytweak";
+    private const string OldCommand = "/qoltweaks";
+    private const string LegacyCommand = "/ccombo";
+    private const string LegacyCommand2 = "/customcombo";
+    private const string TweakToggleCommand = "/tweak";
 
-    private static readonly Dictionary<Job, Preset[]> BurstPresetMap = new()
+    // Per-job burst presets held by "/mytweak burst" (and the Stream Deck key).
+    // Hand-curated by numeric id so the list survives upstream renames; every id
+    // resolves in CustomComboPreset.cs.
+    internal static readonly Dictionary<Job, Preset[]> BurstPresetMap = new()
     {
-        { Job.PLD, [
-            Preset.PLD_ST_AdvancedMode_FoF, Preset.PLD_AoE_AdvancedMode_FoF,
-            Preset.PLD_ST_AdvancedMode_Requiescat, Preset.PLD_AoE_AdvancedMode_Requiescat,
-            Preset.PLD_ST_AdvancedMode_CircleOfScorn, Preset.PLD_AoE_AdvancedMode_CircleOfScorn,
-            Preset.PLD_ST_AdvancedMode_Intervene, Preset.PLD_AoE_AdvancedMode_Intervene,
-        ] },
-        { Job.WAR, [
-            Preset.WAR_ST_InnerRelease, Preset.WAR_AoE_InnerRelease,
-            Preset.WAR_ST_Infuriate, Preset.WAR_AoE_Infuriate,
-            Preset.WAR_ST_Onslaught, Preset.WAR_AoE_Onslaught,
-            Preset.WAR_ST_Upheaval, Preset.WAR_AoE_Orogeny,
-        ] },
-        { Job.DRK, [
-            Preset.DRK_ST_CD_Delirium, Preset.DRK_AoE_CD_Delirium,
-            Preset.DRK_ST_CD_Shadow, Preset.DRK_AoE_CD_Shadow,
-            Preset.DRK_ST_CD_Bringer, Preset.DRK_AoE_CD_Bringer,
-            Preset.DRK_ST_CD_Salt, Preset.DRK_AoE_CD_Salt,
-            Preset.DRK_ST_CD_Spit, Preset.DRK_AoE_CD_Drain,
-        ] },
-        { Job.GNB, [Preset.GNB_ST_NoMercy, Preset.GNB_AoE_NoMercy, Preset.GNB_ST_Bloodfest, Preset.GNB_AoE_Bloodfest] },
-        { Job.WHM, [
-            Preset.WHM_ST_MainCombo_PresenceOfMind, Preset.WHM_AoE_DPS_PresenceOfMind,
-            Preset.WHM_ST_MainCombo_Assize, Preset.WHM_AoE_DPS_Assize,
-            Preset.WHM_ST_MainCombo_Misery, Preset.WHM_AoE_DPS_Misery,
-        ] },
-        { Job.SCH, [Preset.SCH_ST_ADV_DPS_ChainStrat, Preset.SCH_AoE_ADV_DPS_ChainStrat] },
-        { Job.AST, [
-            Preset.AST_AOE_Divination, Preset.AST_DPS_Divination,
-            Preset.AST_ST_DPS_EarthlyStar, Preset.AST_AOE_DPS_EarthlyStar,
-            Preset.AST_DPS_LightSpeed, Preset.AST_AOE_LightSpeed,
-        ] },
-        { Job.SGE, [Preset.SGE_AoE_Adv_DPS_Psyche, Preset.SGE_AoE_Adv_DPS_Phlegma, Preset.SGE_ST_Adv_DPS_Psyche, Preset.SGE_ST_Adv_DPS_Phlegma] },
-        { Job.DRG, [
-            Preset.DRG_ST_BattleLitany, Preset.DRG_ST_LanceCharge,
-            Preset.DRG_AoE_BattleLitany, Preset.DRG_AoE_LanceCharge,
-            Preset.DRG_ST_DragonfireDive, Preset.DRG_AoE_DragonfireDive,
-            Preset.DRG_ST_LifeSurge, Preset.DRG_AoE_LifeSurge,
-            Preset.DRG_ST_HighJump, Preset.DRG_AoE_HighJump,
-            Preset.DRG_ST_Geirskogul, Preset.DRG_AoE_Geirskogul,
-        ] },
-        { Job.MNK, [Preset.MNK_STUseBrotherhood, Preset.MNK_STUseROF, Preset.MNK_STUseFiresReply, Preset.MNK_STUseMasterfulBlitz, Preset.MNK_AoEUseBrotherhood, Preset.MNK_AoEUseROF, Preset.MNK_AoEUseFiresReply, Preset.MNK_AoEUseMasterfulBlitz] },
-        { Job.NIN, [
-            Preset.NIN_ST_AdvancedMode_TrickAttack, Preset.NIN_ST_AdvancedMode_Mug,
-            Preset.NIN_AoE_AdvancedMode_TrickAttack, Preset.NIN_AoE_AdvancedMode_Mug,
-            Preset.NIN_ST_AdvancedMode_Bunshin, Preset.NIN_AoE_AdvancedMode_Bunshin,
-            Preset.NIN_ST_AdvancedMode_Kassatsu, Preset.NIN_AoE_AdvancedMode_Kassatsu,
-            Preset.NIN_ST_AdvancedMode_TenChiJin, Preset.NIN_AoE_AdvancedMode_TenChiJin,
-            Preset.NIN_ST_AdvancedMode_Assassinate, Preset.NIN_AoE_AdvancedMode_Assassinate,
-            Preset.NIN_ST_AdvancedMode_Meisui, Preset.NIN_AoE_AdvancedMode_Meisui,
-        ] },
-        { Job.SAM, [
-            Preset.SAM_ST_Adv_Ikishoten, Preset.SAM_AoE_Adv_Ikishoten,
-            Preset.SAM_ST_Adv_Meikyo, Preset.SAM_AoE_Adv_Meikyo,
-            Preset.SAM_ST_Adv_Shoha, Preset.SAM_AoE_Adv_Shoha,
-        ] },
-        { Job.RPR, [
-            Preset.RPR_ST_Gluttony, Preset.RPR_AoE_Gluttony,
-            Preset.RPR_ST_ArcaneCircle, Preset.RPR_AoE_ArcaneCircle,
-            Preset.RPR_ST_Enshroud, Preset.RPR_AoE_Enshroud,
-        ] },
-        { Job.VPR, [Preset.VPR_ST_SerpentsIre, Preset.VPR_ST_Reawaken, Preset.VPR_AoE_SerpentsIre, Preset.VPR_AoE_Reawaken, Preset.VPR_AoE_ReawakenCombo] },
-        { Job.BRD, [Preset.BRD_Adv_Buffs, Preset.BRD_AoE_Adv_Buffs] },
-        { Job.MCH, [Preset.MCH_ST_Adv_Stabilizer, Preset.MCH_ST_Adv_WildFire, Preset.MCH_ST_Adv_TurretQueen, Preset.MCH_ST_Adv_Reassemble, Preset.MCH_ST_Adv_Tools, Preset.MCH_AoE_Adv_Reassemble, Preset.MCH_AoE_Adv_Queen, Preset.MCH_AoE_Adv_Stabilizer, Preset.MCH_AoE_Adv_Tools] },
-        { Job.DNC, [Preset.DNC_ST_Adv_TS, Preset.DNC_ST_Adv_SS, Preset.DNC_ST_Adv_FanProccs, Preset.DNC_ST_Adv_Feathers, Preset.DNC_AoE_Adv_Devilment, Preset.DNC_AoE_Adv_Flourish, Preset.DNC_AoE_Adv_SS, Preset.DNC_AoE_Adv_FanProccs, Preset.DNC_AoE_Adv_Feathers, Preset.DNC_AoE_Adv_DawnDance] },
-        { Job.BLM, [
-            Preset.BLM_ST_LeyLines, Preset.BLM_AoE_LeyLines,
-            Preset.BLM_ST_Amplifier, Preset.BLM_AoE_Amplifier,
-            Preset.BLM_ST_Manafont, Preset.BLM_AoE_Manafont,
-            Preset.BLM_ST_Triplecast, Preset.BLM_AoE_Triplecast,
-            Preset.BLM_ST_UsePolyglot, Preset.BLM_AoE_UsePolyglot,
-        ] },
-        { Job.SMN, [
-            Preset.SMN_AoE_Advanced_Combo_SearingLight, Preset.SMN_ST_Advanced_Combo_SearingLight,
-            Preset.SMN_ST_Advanced_Combo_DemiSummons, Preset.SMN_AoE_Advanced_Combo_DemiSummons,
-            Preset.SMN_ST_Advanced_Combo_DemiSummons_Attacks, Preset.SMN_AoE_Advanced_Combo_DemiSummons_Attacks,
-        ] },
-        { Job.RDM, [
-            Preset.RDM_ST_Embolden, Preset.RDM_AoE_Embolden,
-            Preset.RDM_ST_Manafication, Preset.RDM_AoE_Manafication,
-            Preset.RDM_ST_Fleche, Preset.RDM_ST_ContreSixte,
-            Preset.RDM_AoE_Fleche, Preset.RDM_AoE_ContreSixte,
-        ] },
-        { Job.PCT, [Preset.PCT_ST_AdvancedMode_ScenicMuse, Preset.PCT_AoE_AdvancedMode_ScenicMuse, Preset.PCT_ST_AdvancedMode_HammerStampCombo, Preset.PCT_AoE_AdvancedMode_HammerStampCombo] },
+        { Job.PLD, [(Preset)11003, (Preset)11016, (Preset)11010, (Preset)11019] },
+        { Job.WAR, [(Preset)18003, (Preset)18019, (Preset)18007, (Preset)18018] },
+        { Job.DRK, [(Preset)5015, (Preset)5054, (Preset)5016, (Preset)5055, (Preset)5018, (Preset)5057] },
+        { Job.GNB, [(Preset)7008, (Preset)7201, (Preset)7011, (Preset)7204] },
+        { Job.WHM, [(Preset)19008, (Preset)19195] },
+        { Job.SCH, [(Preset)16003, (Preset)16054] },
+        { Job.AST, [(Preset)1043, (Preset)1016] },
+        { Job.SGE, [(Preset)14051, (Preset)14010, (Preset)14008, (Preset)14005] },
+        { Job.DRG, [(Preset)6103, (Preset)6104, (Preset)6203, (Preset)6204, (Preset)6107, (Preset)6207, (Preset)6106, (Preset)6206] },
+        { Job.MNK, [(Preset)9009, (Preset)9030, (Preset)9032, (Preset)9011] },
+        { Job.NIN, [(Preset)10006, (Preset)10007, (Preset)10022, (Preset)10023] },
+        { Job.SAM, [(Preset)15012, (Preset)15108, (Preset)15018, (Preset)15114] },
+        { Job.RPR, [(Preset)12009, (Preset)12108, (Preset)12006, (Preset)12105] },
+        { Job.VPR, [(Preset)30005, (Preset)30011, (Preset)30104, (Preset)30110, (Preset)30112] },
+        { Job.BRD, [(Preset)3017, (Preset)3032] },
+        // MCH burst hold = the 2-minute package only (Wildfire + Barrel Stabilizer
+        // + Full Metal Field, ST/AoE). The ~1-minute pieces (Hypercharge, Queen,
+        // Reassemble) are held separately via burst1, so "/mytweak burst" no longer
+        // sits on your 1-minute cooldowns while you're only trying to delay Wildfire.
+        { Job.MCH, [(Preset)8110, (Preset)8108, (Preset)8111, (Preset)8307, (Preset)8308] },
+        { Job.DNC, [(Preset)4018, (Preset)4045, (Preset)4019, (Preset)4046] },
+        { Job.BLM, [(Preset)2103, (Preset)2202, (Preset)2102, (Preset)2201] },
+        { Job.SMN, [(Preset)17053, (Preset)17017, (Preset)17020, (Preset)17061] },
+        { Job.RDM, [(Preset)13010, (Preset)13207, (Preset)13011, (Preset)13208] },
+        { Job.PCT, [(Preset)20021, (Preset)20054, (Preset)20027, (Preset)20060, (Preset)20022, (Preset)20055, (Preset)20023, (Preset)20056] },
+    };
+
+    // The ~60s-cooldown ("odd minute") subset of BurstPresetMap, so the 1-minute
+    // burst can be held on its own while the 2-minute pieces keep flowing.
+    // Jobs whose burst package is entirely 2-minute cooldowns are absent.
+    internal static readonly Dictionary<Job, Preset[]> Burst1PresetMap = new()
+    {
+        { Job.PLD, [(Preset)11003, (Preset)11016, (Preset)11010, (Preset)11019] }, // FoF + Requiescat (all 60s)
+        { Job.WAR, [(Preset)18003, (Preset)18019, (Preset)18007, (Preset)18018] }, // Inner Release + Infuriate (all 60s)
+        { Job.DRK, [(Preset)5015, (Preset)5054, (Preset)5018, (Preset)5057] },     // Delirium + Shadowbringer
+        { Job.GNB, [(Preset)7008, (Preset)7201] },                                 // No Mercy
+        { Job.SGE, [(Preset)14008, (Preset)14051] },                               // Psyche
+        { Job.DRG, [(Preset)6104, (Preset)6204, (Preset)6106, (Preset)6206] },     // Lance Charge + Life Surge
+        { Job.MNK, [(Preset)9011, (Preset)9032] },                                 // Riddle of Fire
+        { Job.NIN, [(Preset)10006, (Preset)10022] },                               // Trick Attack / Kunai's Bane
+        { Job.SAM, [(Preset)15018, (Preset)15114] },                               // Meikyo Shisui
+        { Job.RPR, [(Preset)12009, (Preset)12108] },                               // Gluttony
+        { Job.VPR, [(Preset)30011, (Preset)30110, (Preset)30112] },                // Reawaken
+        { Job.MCH, [(Preset)8103, (Preset)8301, (Preset)8107, (Preset)8304, (Preset)8105, (Preset)8303] }, // Reassemble + Queen + Hypercharge (ST/AoE)
+        { Job.PCT, [(Preset)20027, (Preset)20060, (Preset)20023, (Preset)20056] }, // Hammer combo + Steel Muse
+    };
+
+    // Per-job gap-closer USAGE presets (the ones that make the rotation dash to
+    // the target). Only jobs whose rotation actually fires a gap closer are
+    // listed; the rest never auto-gap-close, so there's nothing to hold.
+    // Holding these keeps you from being yanked into the boss (uptime shifting).
+    internal static readonly Dictionary<Job, Preset[]> GapCloserPresetMap = new()
+    {
+        { Job.PLD, [(Preset)11011, (Preset)11037] },                             // Intervene (ST/AoE)
+        { Job.WAR, [(Preset)18008, (Preset)18071] },                             // Onslaught (ST/AoE)
+        { Job.SAM, [(Preset)15211] },                                            // Gyoten / Yaten
+        { Job.RDM, [(Preset)13017, (Preset)13214, (Preset)13008, (Preset)13206] }, // Corps-a-corps + melee-combo gap closer
     };
 
     /// <summary>
@@ -127,11 +107,23 @@ public partial class WrathCombo
     private void RegisterCommands()
     {
         EzCmd.Add(Command, OnCommand,
-            "Open a window to edit custom combo settings.\n" +
+            "Open the MyTweak settings window.\n" +
+            $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
+            $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
+            $"{Command} burst1 hold | resume → Same, but only the ~60s (odd-minute) subset.\n" +
+            $"{Command} gapcloser hold | resume → Hold/resume auto gap-closers for current job.\n" +
+            $"{Command} gapexclude on | off → Exclude ALL gap closers from the rotation (every job).\n" +
+            $"{Command} potion on | off → Toggle automatic potions in openers (default off).\n" +
+            $"{Command} tracker show | hide → Toggle the next-action tracker window.\n" +
+            $"{Command} tracker reset → Un-hide and re-center it if you lost it.\n" +
             $"{Command} auto → Toggle Auto-rotation on/off.\n" +
-            $"{Command} debug → Dumps a debug log onto your desktop for developers.\n" +
-            $"{OldCommand} → Old alias from XIVSlothCombo, still works!");
+            $"{Command} debug → Dumps a debug log onto your desktop.\n" +
+            $"{OldCommand} → Short alias, still works!");
         EzCmd.Add(OldCommand, OnCommand);
+        EzCmd.Add(LegacyCommand, OnCommand);
+        EzCmd.Add(LegacyCommand2, OnCommand);
+        EzCmd.Add(TweakToggleCommand, OnTweakToggleCommand,
+            "Toggle MyTweak's master kill-switch (silent).");
     }
 
     /// <summary>
@@ -156,7 +148,32 @@ public partial class WrathCombo
         switch (argumentParts[0])
         {
             case "burst":
-                HandleBurstControl(argumentParts); break;
+                HandleBurstControl(argumentParts, BurstPresetMap, "burst"); break;
+
+            case "burst1":
+                HandleBurstControl(argumentParts, Burst1PresetMap, "1-minute burst"); break;
+
+            case "gapcloser":
+            case "gapclose":
+            case "gap":
+                HandleBurstControl(argumentParts, GapCloserPresetMap, "gap closer"); break;
+
+            case "potion":
+            case "potions":
+                HandlePotionControl(argumentParts); break;
+
+            case "gapexclude":
+            case "excludegap":
+                HandleGapExcludeControl(argumentParts); break;
+
+            case "disable":
+            case "enable":
+            case "off":
+            case "on":
+                HandleMasterToggle(argumentParts); break;
+
+            case "tracker":
+                HandleNextTrackerToggle(argumentParts); break;
 
             case "unsetall":
             case "set":
@@ -577,7 +594,7 @@ public partial class WrathCombo
                         return;
                     }
                 default:
-                    DuoLog.Error("Usage: /wrath auto target <damage|healer> <mode>");
+                    DuoLog.Error($"Usage: {Command} auto target <damage|healer> <mode>");
                     return;
             }
         }
@@ -663,7 +680,7 @@ public partial class WrathCombo
                 if (argument[1] == "path")
                 {
                     DuoLog.Information(
-                        $"WrathDebug.txt should have been created at:\n" +
+                        $"MyTweakDebug.txt should have been created at:\n" +
                         $"{DebugFile.GetDebugFilePath()}");
                     return;
                 }
@@ -862,25 +879,33 @@ public partial class WrathCombo
     }
 
     /// <summary>
-    ///     Handles the burst control command, toggling, holding, or resuming all burst presets for the current job.
+    ///     Handles the burst / burst1 / gap-closer hold commands: toggling,
+    ///     holding, or resuming every preset in <paramref name="map" /> for the
+    ///     current job. Feedback goes to the plugin log only (chat stays silent).
     /// </summary>
     /// <param name="argument">
-    ///     The subcommand: <c>hold</c>, <c>resume</c>, or blank to toggle based on current state.
+    ///     The subcommand: <c>hold</c>/<c>disable</c>, <c>resume</c>/<c>enable</c>,
+    ///     or blank to toggle based on the current state. For the main burst map
+    ///     only, <c>custom</c> operates on the user's own burst list instead.
     /// </param>
-    private void HandleBurstControl(string[] argument)
+    /// <param name="map"> The per-job preset map to operate on. </param>
+    /// <param name="label"> Human-readable name of the group, for log lines. </param>
+    private void HandleBurstControl(string[] argument,
+        Dictionary<Job, Preset[]> map, string label)
     {
-        if (!PresetStorage.AllPresets.Any(p => p.Value.JobInfo?.Job == Player.Job && p.Value.ComboType == ComboType.AdvancedDPS && PresetStorage.IsEnabled(p.Key)))
+        if (!PresetStorage.AllPresets.Any(p => p.Value.JobInfo?.Job == Player.Job && p.Value.ComboType is ComboType.AdvancedDPS or ComboType.AdvancedHealing && PresetStorage.IsEnabled(p.Key)))
         {
-            DuoLog.Error("This feature is for Advanced Mode Combos.");
+            Svc.Log.Information("[Burst] Ignored: no Advanced Mode combo enabled.");
             return;
         }
 
-        if (argument.Length > 1 && argument[1] == "custom")
+        // Upstream's user-defined burst list, kept for the main burst group.
+        if (ReferenceEquals(map, BurstPresetMap) && argument.Length > 1 && argument[1] == "custom")
         {
             var presetsToToggle = Service.Configuration.BurstPresets.Where(x => x.Key.Attributes()?.JobInfo.Job == Player.Job && x.Value);
             if (presetsToToggle.Count() == 0)
             {
-                DuoLog.Error("No custom burst presets defined for your current job. Please open the job in the UI to populate this list");
+                Svc.Log.Information("[Burst] Ignored: no custom burst presets defined for your current job. Open the job in the UI to populate this list.");
                 return;
             }
 
@@ -897,13 +922,13 @@ public partial class WrathCombo
                 if (toggle)
                     PresetStorage.TogglePreset(preset, ConfigChangeSource.Command);
             }
-            DuoLog.Information($"{Player.Job} Burst Custom {(toggle ? "TOGGLED" : resume ? "RESUMED" : "HELD")}");
+            Svc.Log.Information($"[Burst] {Player.Job} Burst Custom {(toggle ? "TOGGLED" : resume ? "RESUMED" : "HELD")}");
             return;
         }
 
-        if (!BurstPresetMap.TryGetValue(Player.Job, out var presets))
+        if (!map.TryGetValue(Player.Job, out var presets))
         {
-            DuoLog.Error("No burst presets defined for your current job.");
+            Svc.Log.Information($"[Burst] Ignored: no {label} presets defined for {Player.Job}.");
             return;
         }
 
@@ -915,6 +940,8 @@ public partial class WrathCombo
             _ => !PresetStorage.IsEnabled(presets[0]),
         };
 
+        // burst (2-minute) and burst1 (1-minute) are independent holds: there is
+        // no cross-group guard, each group is pushed to hold/resume on its own.
         foreach (var preset in presets)
         {
             if (enable)
@@ -923,6 +950,110 @@ public partial class WrathCombo
                 PresetStorage.DisablePreset(preset, ConfigChangeSource.Command);
         }
 
-        DuoLog.Information($"{Player.Job} Burst {(enable ? "RESUMED" : "HELD")}");
+        Svc.Log.Information($"[Burst] {Player.Job} {label} {(enable ? "RESUMED" : "HELD")}");
+    }
+
+    /// <summary>
+    ///     Toggles the next-action tracker window (ST + AoE next action + burst
+    ///     state). Subcommand: <c>show</c>/<c>on</c>, <c>hide</c>/<c>off</c>,
+    ///     <c>reset</c> (also <c>center</c>/<c>centre</c>/<c>find</c>) to un-hide
+    ///     and re-centre it, or blank to flip.
+    /// </summary>
+    private void HandleNextTrackerToggle(string[] argument)
+    {
+        var sub = argument.Length > 1 ? argument[1] : "";
+
+        // Recovery: un-hide AND snap to the centre of the screen, in case it was
+        // hidden or dragged off-screen and can't be found.
+        if (sub is "reset" or "center" or "centre" or "find")
+        {
+            Service.Configuration.NextActionTrackerHidden = false;
+            Service.Configuration.Save();
+            NextActionTracker?.Recenter();
+            Svc.Log.Information(
+                "Next-action tracker reset to the centre of your screen.");
+            return;
+        }
+
+        var hide = sub switch
+        {
+            "hide" or "off" => true,
+            "show" or "on" => false,
+            _ => !Service.Configuration.NextActionTrackerHidden,
+        };
+
+        Service.Configuration.NextActionTrackerHidden = hide;
+        Service.Configuration.Save();
+    }
+
+    /// <summary>
+    ///     Master kill-switch: <c>disable</c>/<c>off</c> turns the plugin's
+    ///     visible behaviour off, <c>enable</c>/<c>on</c> turns it back on, and a
+    ///     second word <c>toggle</c> flips it. Silent: nothing is printed.
+    /// </summary>
+    private void HandleMasterToggle(string[] argument)
+    {
+        var verb = argument[0];
+        var sub = argument.Length > 1 ? argument[1] : "";
+
+        var disable = verb switch
+        {
+            "disable" or "off" => true,
+            "enable" or "on" => false,
+            _ => !Service.Configuration.MasterDisabled,
+        };
+
+        if (sub is "toggle")
+            disable = !Service.Configuration.MasterDisabled;
+
+        Service.Configuration.MasterDisabled = disable;
+        Service.Configuration.Save();
+        Service.ActionReplacer.UpdateFilteredCombos();
+    }
+
+    /// <summary> <c>/tweak</c>: silently flips the master kill-switch (for macros). </summary>
+    private void OnTweakToggleCommand(string command, string arguments)
+    {
+        Service.Configuration.MasterDisabled = !Service.Configuration.MasterDisabled;
+        Service.Configuration.Save();
+        Service.ActionReplacer.UpdateFilteredCombos();
+    }
+
+    /// <summary>
+    ///     Toggles (or explicitly sets) the global automatic-potions switch,
+    ///     the same setting behind the Stream Deck potion key.
+    /// </summary>
+    private void HandlePotionControl(string[] argument)
+    {
+        var sub = argument.Length > 1 ? argument[1] : "";
+        var enable = sub switch
+        {
+            "off" or "disable" => false,
+            "on" or "enable" => true,
+            _ => !Service.Configuration.EnableAutomaticPotions,
+        };
+
+        Service.Configuration.EnableAutomaticPotions = enable;
+        Service.Configuration.Save();
+        Svc.Log.Information($"[Potion] Automatic potions: {(enable ? "ON" : "OFF")}");
+    }
+
+    /// <summary>
+    ///     Toggles (or explicitly sets) the universal "Exclude Gap Closers"
+    ///     rotation filter, the same setting behind the Stream Deck key.
+    /// </summary>
+    private void HandleGapExcludeControl(string[] argument)
+    {
+        var sub = argument.Length > 1 ? argument[1] : "";
+        var enable = sub switch
+        {
+            "off" or "disable" => false,
+            "on" or "enable" => true,
+            _ => !Service.Configuration.ExcludeGapClosers,
+        };
+
+        Service.Configuration.ExcludeGapClosers = enable;
+        Service.Configuration.Save();
+        Svc.Log.Information($"[GapExclude] Exclude gap closers from rotation: {(enable ? "ON" : "OFF")}");
     }
 }

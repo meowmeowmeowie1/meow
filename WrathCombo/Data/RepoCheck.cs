@@ -22,7 +22,7 @@ public static class RepoCheckFunctions
                 InstalledFromUrl = "!! Self-Built !!"
             };
         }
-        var manifest = Path.Join(f.DirectoryName, "WrathCombo.json");
+        var manifest = Path.Join(f.DirectoryName, "MyTweak.json");
 
         // Load the manifest
         try

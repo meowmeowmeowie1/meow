@@ -1692,8 +1692,8 @@ public enum Preset
     #region Single Target - Advanced
 
     [AutoAction(false, false)]
-    [ReplaceSkill(BLM.Blizzard)]
-    [ConflictingCombos(BLM_ST_SimpleMode, BLM_Blizzard1and3, BLM_B1toB4)]
+    [ReplaceSkill(BLM.Blizzard, BLM.Fire3)]
+    [ConflictingCombos(BLM_ST_SimpleMode, BLM_Blizzard1and3, BLM_B1toB4, BLM_Fire1and3)]
     [JobInfo(Job.BLM)]
     [AdvancedDPSCombo]
     BLM_ST_AdvancedMode = 2100,
@@ -1823,7 +1823,7 @@ public enum Preset
     BLM_TriplecastProtection = 2056,
 
     [ReplaceSkill(BLM.Fire, BLM.Fire3)]
-    [ConflictingCombos(BLM_F1toF4)]
+    [ConflictingCombos(BLM_F1toF4, BLM_ST_AdvancedMode)]
     [JobInfo(Job.BLM)]
     BLM_Fire1and3 = 2054,
 

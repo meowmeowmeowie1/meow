@@ -258,6 +258,7 @@ namespace WrathCombo.Window
             public static void Clear()
             {
                 _actionNameCache.Clear();
+                _itemNameCache.Clear();
                 _traitNameCache.Clear();
                 _statusNameCache.Clear();
             }

@@ -236,7 +236,7 @@ public class Search(Leasing leasing)
             pluginConfig =
                 pluginConfig
                     [..pluginConfig.LastIndexOf(Path.DirectorySeparatorChar)];
-            pluginConfig = Path.Combine(pluginConfig, "WrathCombo.json");
+            pluginConfig = Path.Combine(pluginConfig, "MyTweak.json");
             return pluginConfig;
         }
     }
