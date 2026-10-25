@@ -63,10 +63,12 @@ public partial class Configuration : IPluginConfiguration
     public bool DuplicateActionPresses = false;
 
     /// Stops actions being swapped on the hotbar; combos are still resolved at
-    /// button-press time via the UseAction hook. Default: false.
+    /// button-press time via the UseAction hook (which still respects Action
+    /// Changing and the master kill-switch). Default: false.
     /// <seealso cref="ActionReplacer.ApplyActionChangingHookState"/>
     /// <seealso cref="Data.ActionWatching"/>
     [SettingCategory(Rotation_Behavior_Options)]
+    [SettingParent(nameof(ActionChanging))]
     [Setting(Setting.Type.Toggle)]
     public bool PerformanceMode = false;
 
@@ -119,10 +121,10 @@ public partial class Configuration : IPluginConfiguration
     [Setting(Setting.Type.Toggle)]
     public bool SuppressAutorotCommand = false;
 
-    /// Hides the message of the day. Default: false.
+    /// Upstream's "hide the message of the day" flag. MyTweak never prints a
+    /// MotD (the login line goes to the plugin log only), so this is not shown in
+    /// Settings; the field is kept so existing config files still deserialize.
     /// <seealso cref="WrathCombo.PrintLoginMessage"/>
-    [SettingCategory(Main_UI_Options)]
-    [Setting(Setting.Type.Toggle)]
     public bool HideMessageOfTheDay = false;
 
     /// Whether to draw a box around targeted party members. Default: false.
@@ -476,8 +478,9 @@ public partial class Configuration : IPluginConfiguration
     public Dictionary<uint, uint> IgnoredNPCs { get; set; } = new();
 
     /// MyTweak master kill-switch: when true, combo icon replacement, the
-    /// Performance-Mode press path, the action-press mirror and the Next Action
-    /// tracker all short-circuit. Slash: /mytweak disable | enable, or /tweak.
+    /// Performance-Mode press path, Auto-Rotation, the action-press mirror and
+    /// the Next Action tracker all short-circuit. Slash: /mytweak disable | enable,
+    /// or /tweak.
     public bool MasterDisabled { get; set; }
 
     /// Visibility of the floating "next action" tracker window (ST + AoE next

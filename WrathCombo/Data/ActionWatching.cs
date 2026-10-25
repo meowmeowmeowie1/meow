@@ -571,7 +571,12 @@ public static class ActionWatching
 
                 // Performance Mode: hotbar icons aren't swapped, so the incoming action
                 // is the original. Resolve the combo here before the rest of the detour.
-                if (Service.Configuration.PerformanceMode && !Service.Configuration.MasterDisabled)
+                // Respects the same switches as the icon hook: Action Changing and the
+                // master kill-switch.
+                var perfPress = Service.Configuration.PerformanceMode
+                                && Service.Configuration.ActionChanging
+                                && !Service.Configuration.MasterDisabled;
+                if (perfPress)
                 {
                     global::WrathCombo.Core.ActionReplacer.EnsureFilteredCombosCurrent();
                     if (global::WrathCombo.Core.ActionReplacer.FilteredCombos is not null)
@@ -622,13 +627,12 @@ public static class ActionWatching
 
                 // Performance Mode: the icon hook is off, so the game cannot report the
                 // combo result - use the press-time resolution recorded above instead.
-                var replacedWith = Service.Configuration.PerformanceMode && actionId != pressed
+                // (The queue already holds a press-time resolved id in that mode, so the
+                // native adjust is right for it in both modes.)
+                var replacedWith = perfPress && actionId != pressed
                     ? actionId
                     : actionManager->GetAdjustedActionId(actionId);
-                var queuedAct = Service.Configuration.PerformanceMode &&
-                                Service.ActionReplacer.LastActionInvokeFor.TryGetValue(actionManager->QueuedActionId, out var queuedResolved)
-                    ? queuedResolved
-                    : actionManager->GetAdjustedActionId(actionManager->QueuedActionId);
+                var queuedAct = actionManager->GetAdjustedActionId(actionManager->QueuedActionId);
 
                 if (IsEnabled(Preset.NIN_Anti_Rabbit))
                 {

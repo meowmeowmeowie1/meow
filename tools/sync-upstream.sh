@@ -28,10 +28,10 @@ UPSTREAM_URL="https://github.com/PunishXIV/WrathCombo.git"
 UPSTREAM_BRANCH="main"
 STATE_FILE=".upstream-base"
 
-# Verified import baseline: upstream commit whose tree matches the squashed
-# import ee7fcf1a9 on every file the fork did not touch (between upstream
-# releases 1.0.4.7 and 1.0.4.8). Used only when $STATE_FILE does not exist.
-SEED_BASE="2dc4f708baf8bba73359ddca40ea628f292647bb"
+# Fallback base, used only when $STATE_FILE does not exist: the upstream
+# commit this branch was rebuilt on (the value .upstream-base was first
+# committed with). The state file is authoritative whenever it exists.
+SEED_BASE="95211afb800830ff16a8851e7bd29f6177043092"
 
 # Where upstream combat/rotation updates land. Everything outside these
 # paths is ignored by the sync on purpose. CustomCombo/ and Extensions/ are
@@ -53,8 +53,8 @@ PROTECTED=(
     ":(exclude)WrathCombo/WrathCombo.csproj"
     ":(exclude)pluginmaster.json"
     ":(exclude)WrathCombo/WrathCombo.json"
-    ":(exclude)WrathCombo/QoLTweaksKBM.json"
     ":(exclude)WrathCombo/MyTweak.json"
+    ":(exclude)res/ipc_status.txt"
     ":(exclude)WrathCombo/Tweaks"
     ":(exclude)WrathCombo/Services/StreamDeckBridge.cs"
     ":(exclude)WrathCombo/Core/ActionResolution.cs"
@@ -129,7 +129,7 @@ if [ -f "$STATE_FILE" ]; then
     read -r BASE < "$STATE_FILE" || die "cannot read $STATE_FILE"
 else
     BASE="$SEED_BASE"
-    log "No $STATE_FILE found — seeding from verified import baseline ${BASE:0:12}"
+    log "No $STATE_FILE found — seeding from rebuild baseline ${BASE:0:12}"
 fi
 git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null \
     || die "base commit $BASE not found locally — check $STATE_FILE, then 'git fetch $UPSTREAM_REMOTE'"

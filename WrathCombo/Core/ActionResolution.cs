@@ -73,13 +73,12 @@ internal static class ActionResolution
         // combos after a job change (showing another job's actions).
         ActionReplacer.EnsureFilteredCombosCurrent();
 
-        // FilteredCombos is scoped to the current job + PvP status, but only by
-        // ROLE: because every preset's JobInfo.Role is derived from its job,
-        // FilteredCombos also contains the OTHER jobs that share the player's role
-        // (e.g. Bard and Machinist while on Dancer). That's harmless for the icon
-        // hook — those combos never match the player's presses — but the tracker
-        // picks the first enabled combo, so we must restrict to the player's own
-        // job or it shows another job's skill.
+        // FilteredCombos (ActionReplacer.UpdateFilteredCombos) is exact-job for job
+        // presets, but it also carries role/content presets whose JobInfo.Job is
+        // Job.ADV (Variant, Bozja, Occult Crescent, Deep Dungeon, role actions),
+        // matched by the root parent's role. Restrict to the player's own job below
+        // so one of those is never chosen as the base action or allowed to rewrite
+        // it in the TryInvoke pass.
         var combos = ActionReplacer.FilteredCombos;
         if (combos is null) return false;
 

@@ -145,9 +145,6 @@ internal sealed class ActionReplacer : IDisposable
             if (Service.Configuration.MasterDisabled)
                 return OriginalHook(actionID);
 
-            if (FilteredCombos is null)
-                UpdateFilteredCombos();
-
             // Performance Mode: keep the hotbar icons unchanged. Combos are still
             // resolved when the button is pressed, via ActionWatching.UseActionDetour.
             if (Service.Configuration.PerformanceMode)
@@ -161,6 +158,11 @@ internal sealed class ActionReplacer : IDisposable
             if (!EzThrottler.Throttle("Actions" + actionID,
                     Service.Configuration.Throttle))
                 return LastActionInvokeFor[actionID];
+
+            // The combo set is a frozen array (upstream's lazy Where() re-evaluated
+            // InPvP() on every enumeration), so re-sync it with the current job /
+            // PvP state before resolving. Also covers the not-yet-built case.
+            EnsureFilteredCombosCurrent();
 
             // Actually get the action
             LastActionInvokeFor[actionID] = GetAdjustedAction(actionID);
@@ -257,9 +259,8 @@ internal sealed class ActionReplacer : IDisposable
 
     /// <summary>
     ///     The job and PvP state <see cref="FilteredCombos" /> was last built for,
-    ///     so consumers (e.g. the Next Action tracker) can detect a stale set and
-    ///     rebuild it. Needed because the icon hook that normally refreshes the set
-    ///     is disabled in Performance Mode.
+    ///     so <see cref="EnsureFilteredCombosCurrent" /> can detect a stale set and
+    ///     rebuild it.
     /// </summary>
     public static Job? FilteredForJob { get; private set; }
 
@@ -267,11 +268,10 @@ internal sealed class ActionReplacer : IDisposable
 
     /// <summary>
     ///     Rebuild <see cref="FilteredCombos" /> if it is stale for the current job /
-    ///     PvP state. The icon hook normally keeps it fresh, but it is disabled in
-    ///     Performance Mode, so consumers that resolve combos themselves (the
-    ///     Performance-Mode press path, the Next Action tracker and the action-press
-    ///     mirror) must call this first or they resolve through the PREVIOUS job's
-    ///     set after a job/zone change.
+    ///     PvP state. The set is a frozen array, so EVERY consumer that enumerates it
+    ///     (the icon hook, the Performance-Mode press path, the Next Action tracker
+    ///     and the action-press mirror) must call this first, or it resolves through
+    ///     the PREVIOUS job's / zone's set after a job or PvE&lt;-&gt;PvP change.
     /// </summary>
     public static void EnsureFilteredCombosCurrent()
     {
@@ -290,8 +290,9 @@ internal sealed class ActionReplacer : IDisposable
         // read: the icon hook, the Performance-Mode press path (ActionWatching),
         // the press mirror and the Next-Action tracker all foreach over it, and a
         // lazy Where() re-ran the predicate on every one of those enumerations.
-        // The set only changes on job/PvP change, and EnsureFilteredCombosCurrent
-        // rebuilds on exactly those, so an array is both correct and far cheaper.
+        // The set only changes on job/PvP change, and every consumer calls
+        // EnsureFilteredCombosCurrent first (which rebuilds on exactly those), so
+        // an array is both correct and far cheaper.
         FilteredCombos = CustomCombos.Where(x =>
         {
             var presetData = x.Preset.Attributes();

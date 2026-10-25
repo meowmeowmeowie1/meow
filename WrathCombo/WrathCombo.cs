@@ -357,7 +357,7 @@ public sealed partial class WrathCombo : IDalamudPlugin
     }
 
     public const string OptionControlledByIPC =
-        "(being overwritten by another plugin, check the setting in /wrath)";
+        "(being overwritten by another plugin, check the setting in " + Command + ")";
 
     private void OnFrameworkUpdate(IFramework framework)
     {

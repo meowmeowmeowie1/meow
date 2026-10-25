@@ -16,7 +16,6 @@
 
     <!-- Build Parameters -->
     <PropertyGroup>
-        <AssemblyName>WrathCombo</AssemblyName>
         <AssemblyName>MyTweak</AssemblyName>
         <TargetFramework>net10.0-windows</TargetFramework>
         <Configurations>Debug;Release</Configurations>

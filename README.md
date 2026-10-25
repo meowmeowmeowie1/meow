@@ -1,3 +1,15 @@
+> **MyTweak fork notice.** This repository is a personal fork of
+> [Wrath Combo](https://github.com/PunishXIV/WrathCombo), built as the plugin **MyTweak**
+> (it is not on the Puni.sh repo). Install it by adding
+> `https://raw.githubusercontent.com/meowmeowmeowie1/meow/main/pluginmaster.json` as a custom
+> Dalamud plugin repository and installing "MyTweak". The chat command is `/mytweak`
+> (aliases `/qoltweaks`, `/ccombo`, `/customcombo`; `/tweak` flips the master kill-switch), so read
+> every `/wrath ...` below as `/mytweak ...`. Fork-specific subcommands: `burst hold|resume`,
+> `burst1 hold|resume`, `gapcloser hold|resume`, `gapexclude on|off`, `potion on|off`,
+> `tracker show|hide|reset`, `disable|enable`. Fork-specific settings: Performance Mode,
+> Automatic Potions, Exclude Gap Closers, Duplicate Action Presses Between Hotbars. A companion
+> Stream Deck plugin lives in `streamdeck/`. Everything below this notice is upstream's README.
+
 <section id="top">
     <p style="text-align:center;" align="center">
         <img align="center" src="/res/plugin/wrathcombo.png" width="250" />

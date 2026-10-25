@@ -169,6 +169,7 @@ internal unsafe class AutoRotationController
     private static bool ShouldSkipAutorotation()
     {
         return !cfg.Enabled
+               || Service.Configuration.MasterDisabled // MyTweak master kill-switch
                || !Player.Available
                || Player.Object.IsDead
                || IsOccupied()
@@ -183,7 +184,7 @@ internal unsafe class AutoRotationController
     {
         cfg ??= new AutoRotationConfigIPCWrapper(Service.Configuration.RotationConfig);
 
-        if (!cfg.Enabled)
+        if (!cfg.Enabled || Service.Configuration.MasterDisabled)
             OverrideTarget = null;
 
         // Early exit for all conditions that should prevent autorotation

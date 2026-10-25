@@ -206,16 +206,16 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
             imagePath = Path.Combine(
                 Svc.PluginInterface.AssemblyLocation.Directory?.FullName!,
                 "images\\qoltweaks.png");
-            if (EzThrottler.Throttle("logTypeOfWrathIconUsed", 45000))
-                PluginLog.Verbose("Using Local WrathCombo Icon");
+            if (EzThrottler.Throttle("logTypeOfIconUsed", 45000))
+                PluginLog.Verbose("Using Local MyTweak Icon");
         }
         catch (Exception)
         {
             // Fallback to the remote icon if there are any issues
             imagePath = Svc.PluginInterface.Manifest.IconUrl ?? "";
-            if (EzThrottler.Throttle("logTypeOfWrathIconUsed", 45000))
+            if (EzThrottler.Throttle("logTypeOfIconUsed", 45000))
                 PluginLog.Verbose(
-                    "Using Remote WrathCombo Icon\n             " +
+                    "Using Remote MyTweak Icon\n             " +
                     Svc.PluginInterface.AssemblyLocation.Directory?.FullName! +
                     "images\\qoltweaks.png");
         }
@@ -325,6 +325,10 @@ internal class ConfigWindow : Dalamud.Interface.Windowing.Window
         ImGui.Text("Repo:");
         ImGui.SameLine();
         ImGui.TextUnformatted("https://github.com/meowmeowmeowie1/meow");
+
+        ImGui.Spacing();
+        ImGui.TextWrapped("Based on Wrath Combo by Team Wrath (https://github.com/PunishXIV/WrathCombo). " +
+                          "Additional custom action icons by alexisoffline (https://ko-fi.com/alexisoffline/).");
     }
 
     private static void DrawCollapseButton()

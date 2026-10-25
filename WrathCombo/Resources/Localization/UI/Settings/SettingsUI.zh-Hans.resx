@@ -143,7 +143,7 @@
 等同于使用以下命令：/mytweak debug</value>
   </data>
   <data name="Header_SettingsAbout" xml:space="preserve">
-    <value>此页签用于自定义 Wrath Combo 的全局设置。</value>
+    <value>此页签用于自定义 MyTweak 的全局设置。</value>
   </data>
   <data name="Text_RecommendedValue" xml:space="preserve">
     <value>推荐值：</value>
