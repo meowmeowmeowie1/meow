@@ -108,7 +108,7 @@ public partial class WrathCombo
     {
         EzCmd.Add(Command, OnCommand,
             "Open the MyTweak settings window.\n" +
-            $"{Command} disable | enable → Master kill-switch for combos + mirror.\n" +
+            $"{Command} disable | enable → Master kill-switch: stops combos, Auto-Rotation, the press-mirror and the tracker.\n" +
             $"{Command} burst hold | resume → Hold/resume burst presets for current job.\n" +
             $"{Command} burst1 hold | resume → Same, but only the ~60s (odd-minute) subset.\n" +
             $"{Command} gapcloser hold | resume → Hold/resume auto gap-closers for current job.\n" +
@@ -123,7 +123,7 @@ public partial class WrathCombo
         EzCmd.Add(LegacyCommand, OnCommand);
         EzCmd.Add(LegacyCommand2, OnCommand);
         EzCmd.Add(TweakToggleCommand, OnTweakToggleCommand,
-            "Toggle MyTweak's master kill-switch (silent).");
+            "Toggle MyTweak's master kill-switch (combos, Auto-Rotation, mirror, tracker; silent).");
     }
 
     /// <summary>

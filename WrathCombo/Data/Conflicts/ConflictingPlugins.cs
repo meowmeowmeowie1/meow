@@ -712,7 +712,7 @@ public static class ConflictingPlugins
                         "Action Replacing OFF" +
                         "    " +
                         "Your current job has no Combos enabled in Auto-Mode; " +
-                        "Wrath cannot work in this state."))
+                        "MyTweak cannot work in this state."))
                     .ToArray();
 
             if (ConflictingPluginsChecks.Wrath.ActionReplacingOffInPvP)
@@ -722,7 +722,7 @@ public static class ConflictingPlugins
                         "    " +
                         "Your current job has PvP Combos on, " +
                         "and you're in a PVP zone; " +
-                        "Wrath cannot work in this state."))
+                        "MyTweak cannot work in this state."))
                     .ToArray();
 
 #if !DEBUG

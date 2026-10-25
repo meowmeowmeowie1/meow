@@ -62,35 +62,6 @@ public partial class Configuration : IPluginConfiguration
     [Setting(Setting.Type.Toggle)]
     public bool DuplicateActionPresses = false;
 
-    /// Stops actions being swapped on the hotbar; combos are still resolved at
-    /// button-press time via the UseAction hook (which still respects Action
-    /// Changing and the master kill-switch). Default: false.
-    /// <seealso cref="ActionReplacer.ApplyActionChangingHookState"/>
-    /// <seealso cref="Data.ActionWatching"/>
-    [SettingCategory(Rotation_Behavior_Options)]
-    [SettingParent(nameof(ActionChanging))]
-    [Setting(Setting.Type.Toggle)]
-    public bool PerformanceMode = false;
-
-    /// Master gate for automatic potion use in openers. When off, every job's
-    /// "Include Potion?" opener option is ignored and no potion is used. This is
-    /// the global switch behind the Stream Deck potion key. Default: false.
-    /// <seealso cref="CustomComboNS.WrathOpener"/>
-    [SettingCategory(Rotation_Behavior_Options)]
-    [Setting(Setting.Type.Toggle)]
-    public bool EnableAutomaticPotions = false;
-
-    /// Universal rotation filter: when on, any combo that would resolve a press
-    /// into a gap closer / dash is suppressed and the base action is pressed
-    /// instead - on every job. Intentionally covers damage dashes too (DRG
-    /// Dragonfire Dive, SMN Crimson Cyclone, ...), so it can cost DPS; it is the
-    /// global switch behind the Stream Deck gap-exclude key and
-    /// "/mytweak gapexclude". Distinct from the per-job Gap Closer HOLD. Default: false.
-    /// <seealso cref="GapCloserData"/>
-    [SettingCategory(Rotation_Behavior_Options)]
-    [Setting(Setting.Type.Toggle)]
-    public bool ExcludeGapClosers = false;
-
     /// Whether to hide combos which conflict with enabled presets. Default: false.
     /// <seealso cref="Presets.DrawPreset"/>
     /// <seealso cref="PvEFeatures.DrawHeadingContents"/>
@@ -256,6 +227,35 @@ public partial class Configuration : IPluginConfiguration
     [SettingCategory(Rotation_Behavior_Options)]
     [Setting(Setting.Type.Toggle)]
     public bool ActionChanging = true;
+
+    /// Stops actions being swapped on the hotbar; combos are still resolved at
+    /// button-press time via the UseAction hook (which still respects Action
+    /// Changing and the master kill-switch). Default: false.
+    /// <seealso cref="ActionReplacer.ApplyActionChangingHookState"/>
+    /// <seealso cref="Data.ActionWatching"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [SettingParent(nameof(ActionChanging))]
+    [Setting(Setting.Type.Toggle)]
+    public bool PerformanceMode = false;
+
+    /// Master gate for automatic potion use in openers. When off, every job's
+    /// "Include Potion?" opener option is ignored and no potion is used. This is
+    /// the global switch behind the Stream Deck potion key. Default: false.
+    /// <seealso cref="CustomComboNS.WrathOpener"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool EnableAutomaticPotions = false;
+
+    /// Universal rotation filter: when on, any combo that would resolve a press
+    /// into a gap closer / dash is suppressed and the base action is pressed
+    /// instead - on every job. Intentionally covers damage dashes too (DRG
+    /// Dragonfire Dive, SMN Crimson Cyclone, ...), so it can cost DPS; it is the
+    /// global switch behind the Stream Deck gap-exclude key and
+    /// "/mytweak gapexclude". Distinct from the per-job Gap Closer HOLD. Default: false.
+    /// <seealso cref="GapCloserData"/>
+    [SettingCategory(Rotation_Behavior_Options)]
+    [Setting(Setting.Type.Toggle)]
+    public bool ExcludeGapClosers = false;
 
     [SettingCategory(Rotation_Behavior_Options)]
     [Setting(Setting.Type.Toggle)]
