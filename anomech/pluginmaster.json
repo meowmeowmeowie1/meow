@@ -1,0 +1,28 @@
+[
+  {
+    "Author": "Anomek",
+    "Name": "AnoMech",
+    "InternalName": "AnoMech",
+    "AssemblyVersion": "0.5.2.0",
+    "TestingAssemblyVersion": "0.5.2.0",
+    "Punchline": "Another FFXIV mechanics simulator. Go to an inn and start practice.",
+    "Description": "Fork of anomek/AnoMech with Dragonsong's Reprise (Ultimate) P5 Death of the Heavens and P6 Wroth Flames scenarios (LPDU strat). Spawns fake party members and bosses client-side so you can practice raid mechanics without a full party.",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/meowmeowmeowie1/meow",
+    "Tags": [
+      "dsr",
+      "dragonsong",
+      "top",
+      "umad",
+      "fru",
+      "ultimate",
+      "practice",
+      "simulator"
+    ],
+    "DalamudApiLevel": 15,
+    "DownloadLinkInstall": "https://github.com/meowmeowmeowie1/meow/releases/download/anomech-v0.5.2.0/AnoMech.zip",
+    "DownloadLinkUpdate": "https://github.com/meowmeowmeowie1/meow/releases/download/anomech-v0.5.2.0/AnoMech.zip",
+    "DownloadLinkTesting": "https://github.com/meowmeowmeowie1/meow/releases/download/anomech-v0.5.2.0/AnoMech.zip",
+    "DownloadCount": 0
+  }
+]

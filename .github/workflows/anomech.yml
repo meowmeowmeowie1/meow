@@ -1,0 +1,70 @@
+name: anomech
+
+on:
+  push:
+    branches:
+      - claude/kind-bohr-pgrbbx
+    paths:
+      - 'AnoMech/**'
+      - '.github/workflows/anomech.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # AnoMech targets the current Dalamud API level; the Dalamud.NET.Sdk resolves its
+      # references from the XIVLauncher dev folder, so fetch the release distribution there.
+      - name: Fetch Dalamud
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
+      - name: Build (Release)
+        shell: pwsh
+        run: dotnet build AnoMech/AnoMech.sln -c Release
+
+      # Every catalog scenario, each strat, random seeds, no deaths -- the DSR scenarios included.
+      - name: Test
+        shell: pwsh
+        run: dotnet test AnoMech/AnoMech.sln -c Release --no-build --logger GitHubActions
+
+      - name: Read plugin version
+        id: ver
+        shell: pwsh
+        run: |
+          $m = Select-String -Path AnoMech/AnoMech/AnoMech.csproj -Pattern '<Version>([^<]+)</Version>'
+          if (-not $m) { throw "Could not read <Version> from AnoMech.csproj" }
+          $v = $m.Matches[0].Groups[1].Value
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Plugin version: $v"
+
+      - name: Locate packaged zip
+        id: pkg
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem -Path AnoMech/AnoMech/bin -Recurse -Filter latest.zip | Select-Object -First 1
+          if (-not $zip) { throw "Could not find DalamudPackager output (latest.zip)" }
+          Copy-Item $zip.FullName AnoMech.zip
+          "zip=AnoMech.zip" >> $env:GITHUB_OUTPUT
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: anomech-v${{ steps.ver.outputs.version }}
+          name: AnoMech v${{ steps.ver.outputs.version }}
+          make_latest: false
+          files: ${{ steps.pkg.outputs.zip }}
