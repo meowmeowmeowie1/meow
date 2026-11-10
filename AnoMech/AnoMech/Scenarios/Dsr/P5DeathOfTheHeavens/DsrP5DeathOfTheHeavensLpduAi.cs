@@ -14,8 +14,8 @@ public sealed class DsrP5DeathOfTheHeavensLpduAi : IScenarioAi<DsrP5DeathOfTheHe
 
     private static readonly PartyRole[] Priority =
     [
-        PartyRole.MainTank, PartyRole.OffTank, PartyRole.RegenHealer, PartyRole.ShieldHealer,
         PartyRole.MeleeDpsA, PartyRole.MeleeDpsB, PartyRole.PhysRangedDps, PartyRole.CasterDps,
+        PartyRole.MainTank, PartyRole.OffTank, PartyRole.RegenHealer, PartyRole.ShieldHealer,
     ];
 
     private static readonly Vector2[] DoomLightningSpots = [new(-12.5f, 0f), new(-12.5f, -16f), new(12.5f, -16f), new(12.5f, 0f)];

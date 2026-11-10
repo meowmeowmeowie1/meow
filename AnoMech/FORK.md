@@ -26,8 +26,8 @@ data and community scripts rather than observed:
 - Orb-set geometry for Wroth Flames follows the Dragonsong-Sim layout (three orbs per set,
   diagonal line or zigzag), scaled to 6y-wide Flame Blast crosses.
 
-The LPDU priority orders (west-to-east line-up and spread order) are the usual
-MT > OT > H1 > H2 > M1 > M2 > R1 > R2; adjust `Priority` in the two `*LpduAi.cs` files if your
+The LPDU priority orders (west-to-east line-up and spread order) are melee first:
+M1 > M2 > R1 > R2 > MT > OT > H1 > H2; adjust `Priority` in the two `*LpduAi.cs` files if your
 group's toolbox differs.
 
 ## Building here

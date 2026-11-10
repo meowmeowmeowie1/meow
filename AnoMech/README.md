@@ -84,7 +84,7 @@ All using default NA pf strats unless noted otherwise:
 - Dragonsong's Reprise (Ultimate) _(this fork)_
     - P5 Death of the Heavens
       - LPDU: Guerrique is relative north, Dooms north / non-Dooms south in priority order
-        MT OT H1 H2 M1 M2 R1 R2 (west to east), static Playstation spots: circles E/W, crosses N/S,
+        M1 M2 R1 R2 MT OT H1 H2 (west to east), static Playstation spots: circles E/W, crosses N/S,
         Doom triangle SE / Doom square SW, non-Doom triangle NW / non-Doom square NE
     - P6 Wroth Flames
       - LPDU: Akh Morn stack opens in the corner Hraesvelgr spares and away from the second orb

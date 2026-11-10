@@ -9,7 +9,8 @@ namespace AnoMech.Tests;
 
 // Hraesvelgr dives down the west lane and the second orb set is SW, so the party opens NE
 // (19, -19.8) and steps west along the north wall; the debuffs resolve on the south row (z = 12).
-// MainTank spreads first (wall, (-20, 12)), OffTank second ((-12.6, 12)).
+// The supports spread, the DPS stack or go free, so by priority MainTank spreads first (wall,
+// (-20, 12)) and OffTank second ((-12.6, 12)).
 public class DsrP6WrothFlamesScenarioTests
 {
     private static NegativeRun<DsrP6WrothFlamesScenario> Tank(WrothRole tank = WrothRole.Spread, WrothRole offTank = WrothRole.Spread, bool hotWing = false)
@@ -22,6 +23,12 @@ public class DsrP6WrothFlamesScenarioTests
                 o.HotWing = hotWing;
                 o.Role[MainTank] = tank;
                 o.Role[OffTank] = offTank;
+                o.Role[RegenHealer] = WrothRole.Spread;
+                o.Role[ShieldHealer] = WrothRole.Spread;
+                o.Role[MeleeDpsA] = tank == WrothRole.Stack ? WrothRole.Spread : WrothRole.Stack;
+                o.Role[MeleeDpsB] = tank == WrothRole.Stack ? WrothRole.Spread : WrothRole.Stack;
+                o.Role[PhysRangedDps] = tank == WrothRole.Stack ? WrothRole.Stack : WrothRole.None;
+                o.Role[CasterDps] = WrothRole.None;
                 o.AkhMornTarget[MainTank] = false;
             });
 

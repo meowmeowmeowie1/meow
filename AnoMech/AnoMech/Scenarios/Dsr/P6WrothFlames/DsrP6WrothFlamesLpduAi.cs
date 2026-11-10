@@ -14,8 +14,8 @@ public sealed class DsrP6WrothFlamesLpduAi : IScenarioAi<DsrP6WrothFlamesState>
 
     private static readonly PartyRole[] Priority =
     [
-        PartyRole.MainTank, PartyRole.OffTank, PartyRole.RegenHealer, PartyRole.ShieldHealer,
         PartyRole.MeleeDpsA, PartyRole.MeleeDpsB, PartyRole.PhysRangedDps, PartyRole.CasterDps,
+        PartyRole.MainTank, PartyRole.OffTank, PartyRole.RegenHealer, PartyRole.ShieldHealer,
     ];
 
     private static readonly float[] SpreadX = [-20f, -12.6f, -5.2f, 2.2f];
