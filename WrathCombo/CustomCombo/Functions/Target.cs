@@ -62,13 +62,23 @@ internal abstract partial class CustomComboFunctions
         //16841, //testing dummy for Edewen's yard
     ];
 
+    /// Same idea, keyed by BNpcName id so every spawn variant of the add is
+    /// covered: these are treated as "boss encounter non-bosses" even if the
+    /// game data gives them boss rank.
+    private static readonly uint[] EnemyNamesThatShouldNotBeConsideredBosses =
+    [
+        3759, //Jagd Doll (A11 The Heart of the Creator)
+        9214, //Jagd Doll (TEA The Epic of Alexander)
+    ];
+
     /// <summary> Checks if an object is a boss. Defaults to CurrentTarget unless specified. </summary>
     internal static bool TargetIsBoss(IGameObject? optionalTarget = null)
     {
         if ((optionalTarget ?? CurrentTarget) is not IBattleChara chara)
             return false;
 
-        if (EnemiesThatShouldNotBeConsideredBosses.Contains(chara.BaseId))
+        if (EnemiesThatShouldNotBeConsideredBosses.Contains(chara.BaseId) ||
+            EnemyNamesThatShouldNotBeConsideredBosses.Contains(chara.NameId))
             return false;
 
         return chara.NameId == 541 || ActionWatching.BossesBaseIds.Contains(chara.BaseId);
